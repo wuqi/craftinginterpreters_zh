@@ -1,136 +1,86 @@
-> Take big bites. Anything worth doing is worth overdoing.
+> 大口去吃。任何值得做的事情都值得玩命去做。
 >
 > <cite>Robert A. Heinlein, <em>Time Enough for Love</em></cite>
 
-The first step in any compiler or interpreter is <span
-name="lexing">scanning</span>. The scanner takes in raw source code as a series
-of characters and groups it into a series of chunks we call **tokens**. These
-are the meaningful "words" and "punctuation" that make up the language's
-grammar.
+任何编译器或解释器的第一步都是<span name="lexing">scanning</span>(扫描)。扫描器以一系列字符的形式接收原始源代码，并将其分组为一系列我们称之为令牌( **tokens** )的块。这些是组成语言语法的有意义的“单词”和“标点”。
 
 <aside name="lexing">
 
-This task has been variously called "scanning" and "lexing" (short for "lexical
-analysis") over the years. Way back when computers were as big as Winnebagos but
-had less memory than your watch, some people used "scanner" only to refer to the
-piece of code that dealt with reading raw source code characters from disk and
-buffering them in memory. Then "lexing" was the subsequent phase that did useful
-stuff with the characters.
+多年来，这项任务被不同地称为 "scanning" 和 "lexing" ( "lexical
+analysis" 的简称)。很久以前，当计算机像Winnebagos房车一样大，但内存比你的手表还少时，一些人使用“scanner”仅指处理从磁盘读取原始源代码字符并将其缓冲在内存中的那段代码。然后“lexing”是对角色做有用的事情的后续阶段。
 
-These days, reading a source file into memory is trivial, so it's rarely a
-distinct phase in the compiler. Because of that, the two terms are basically
-interchangeable.
+如今，将源文件读入内存是很平常的事情，所以它很少是编译器中的一个独特阶段。因此，这两个术语基本上可以互换。
 
 </aside>
+扫描对我们来说也是一个很好的起点，因为这段代码并不难--几乎就是一个夸大的 `switch` 语句。它可以帮助我们在以后处理一些更有趣的材料之前进行热身。在本章结束时，我们将拥有一个全功能的、快速的扫描器，它可以处理任何字符串的Lox源代码并产生令牌，我们将在下一章中把这些令牌送入分析器。
 
-Scanning is a good starting point for us too because the code isn't very hard --
-pretty much a `switch` statement with delusions of grandeur. It will help us
-warm up before we tackle some of the more interesting material later. By the end
-of this chapter, we'll have a full-featured, fast scanner that can take any
-string of Lox source code and produce the tokens that we'll feed into the parser
-in the next chapter.
+## 解释器框架
 
-## The Interpreter Framework
-
-Since this is our first real chapter, before we get to actually scanning some
-code we need to sketch out the basic shape of our interpreter, jlox. Everything
-starts with a class in Java.
+因为这是我们真正的第一章，在我们开始实际扫描一些代码之前，我们需要勾画出我们的解释器jlox的基本形状。一切都是从Java中的一个类开始的。
 
 ^code lox-class
 
 <aside name="64">
 
-For exit codes, I'm using the conventions defined in the UNIX
-["sysexits.h"][sysexits] header. It's the closest thing to a standard I could
-find.
+对于退出代码，我使用UNIX中["sysexits.h"][sysexits]标头中定义的约定。这是我能找到的最接近标准的东西。
 
 [sysexits]: https://www.freebsd.org/cgi/man.cgi?query=sysexits&amp;apropos=0&amp;sektion=0&amp;manpath=FreeBSD+4.3-RELEASE&amp;format=html
 
 </aside>
 
-Stick that in a text file, and go get your IDE or Makefile or whatever set up.
-I'll be right here when you're ready. Good? OK!
+把它放在一个文本文件中，然后去获取你的IDE或者Makefile或者其他设置。我在这里等你准备完毕,准备好了?出发!
 
-Lox is a scripting language, which means it executes directly from source. Our
-interpreter supports two ways of running code. If you start jlox from the
-command line and give it a path to a file, it reads the file and executes it.
+Lox是一种脚本语言，这意味着它直接从源代码执行。我们的解释器支持两种运行代码的方式。如果从命令行启动jlox，并给它一个文件路径，它就会读取并执行该文件。
 
 ^code run-file
 
-If you want a more intimate conversation with your interpreter, you can also run
-it interactively. Fire up jlox without any arguments, and it drops you into a
-prompt where you can enter and execute code one line at a time.
+如果您想与解释器进行更亲密的对话，也可以交互运行它。在没有任何参数的情况下启动jlox，它会将您置于一个提示中，您可以在那里一次输入和执行一行代码。
 
 <aside name="repl">
 
-An interactive prompt is also called a "REPL" (pronounced like "rebel" but with
-a "p"). The name comes from Lisp where implementing one is as simple as
-wrapping a loop around a few built-in functions:
+交互式提示也被称为“REPL”（发音类似于“rebel”，但带有“p”）。这个名字来自Lisp，在Lisp中，实现一个函数就像围绕几个内置函数包装一个循环一样简单：
 
 ```lisp
 (print (eval (read)))
 ```
 
-Working outwards from the most nested call, you **R**ead a line of input,
-**E**valuate it, **P**rint the result, then **L**oop and do it all over again.
+从最嵌套的调用向外工作，您读取( **R**ead )一行输入，对其求值(**E**valuate)，打印(**P**rint)结果，然后循环(**L**oop)并再次执行。
 
 </aside>
 
 ^code prompt
 
-The `readLine()` function, as the name so helpfully implies, reads a line of
-input from the user on the command line and returns the result. To kill an
-interactive command-line app, you usually type Control-D. Doing so signals an
-"end-of-file" condition to the program. When that happens `readLine()` returns
-`null`, so we check for that to exit the loop.
+ `readLine()` 函数，顾名思义，从命令行读取用户输入的一行内容，并返回结果。要终止一个交互式命令行应用程序，你通常需要键入 Control-D。这样做会向程序发出“文件结束”(EOF)的信号。当发生这种情况时， `readLine()` 返回 `null` ，所以我们检查此情况以退出循环。
 
-Both the prompt and the file runner are thin wrappers around this core function:
+提示符和文件运行器都是这个核心功能的简单包装:
 
 ^code run
 
-It's not super useful yet since we haven't written the interpreter, but baby
-steps, you know? Right now, it prints out the tokens our forthcoming scanner
-will emit so that we can see if we're making progress.
+由于我们还没有写出解释器，所以它还不是很有用，但不积跬步无以至千里。现在，它打印出我们即将实现的扫描器将发出的令牌，这样我们就可以看到我们是否取得了进展。
 
-### Error handling
+### 错误处理
 
-While we're setting things up, another key piece of infrastructure is *error
-handling*. Textbooks sometimes gloss over this because it's more a practical
-matter than a formal computer science-y problem. But if you care about making a
-language that's actually *usable*, then handling errors gracefully is vital.
+在我们进行设置时，基础设施的另一个关键部分是*错误处理*。教科书有时会忽略这一点，因为它更像是一个实际问题而不是一个正式的计算机科学问题。但是，如果你想做一个真正*可用*的语言，那么优雅地处理错误是至关重要的。
 
-The tools our language provides for dealing with errors make up a large portion
-of its user interface. When the user's code is working, they aren't thinking
-about our language at all -- their headspace is all about *their program*. It's
-usually only when things go wrong that they notice our implementation.
+我们的语言为处理错误所提供的工具构成了其用户界面的很大一部分。当用户的代码在工作时，他们根本没有想到我们的语言--他们的头脑中全是*他们的程序*。通常只有当事情出错时，他们才会注意到我们的实现。
 
-<span name="errors">When</span> that happens, it's up to us to give the user all
-the information they need to understand what went wrong and guide them gently
-back to where they are trying to go. Doing that well means thinking about error
-handling all through the implementation of our interpreter, starting now.
+<span name="errors">当</span>这种情况发生时，我们有责任向用户提供他们需要的所有信息，让他们了解哪里出错了，并引导他们慢慢回到他们想去的地方。做好这一点意味着从现在开始，在我们解释器的整个实现过程中考虑错误处理。
 
 <aside name="errors">
 
-Having said all that, for *this* interpreter, what we'll build is pretty bare
-bones. I'd love to talk about interactive debuggers, static analyzers, and other
-fun stuff, but there's only so much ink in the pen.
+说了这么多，对于*这个*解释器来说，我们要建立的是非常原始的东西。我很想谈谈交互式调试器、静态分析器和其他有趣的东西，但篇幅有限。
 
 </aside>
 
 ^code lox-error
 
-This `error()` function and its `report()` helper tells the user some syntax
-error occurred on a given line. That is really the bare minimum to be able to
-claim you even *have* error reporting. Imagine if you accidentally left a
-dangling comma in some function call and the interpreter printed out:
+这个 `error()` 函数和它的 `report()` 助手告诉用户在给定的行中出现了一些语法错误。这是能够声称你*有*错误报告的底线。想象一下，如果您在某个函数调用中不小心留下了一个悬空逗号，解释器会打印出来:
 
 ```text
 Error: Unexpected "," somewhere in your code. Good luck finding it!
 ```
 
-That's not very helpful. We need to at least point them to the right line. Even
-better would be the beginning and end column so they know *where* in the line.
-Even better than *that* is to *show* the user the offending line, like:
+这不是很有帮助。我们至少需要把他们指向正确的行。更好的做法是列出开头和结尾栏，这样他们就能知道这一行的位置。比这更好的是向用户*展示*错误的那行，比如：
 
 ```text
 Error: Unexpected "," in argument list.
@@ -139,81 +89,52 @@ Error: Unexpected "," in argument list.
                                ^-- Here.
 ```
 
-I'd love to implement something like that in this book but the honest truth is
-that it's a lot of grungy string manipulation code. Very useful for users, but
-not super fun to read in a book and not very technically interesting. So we'll
-stick with just a line number. In your own interpreters, please do as I say and
-not as I do.
+我很想在这本书中实现类似的东西，但老实说，这是一个非常繁琐的字符串操作代码。对用户来说非常有用，但在书中阅读并不是非常有趣，而且在技术上也不是很有趣。所以我们只保留一个行号。在你们自己的翻译中，请照我说的去做，不要照我做的去做。
 
-The primary reason we're sticking this error reporting function in the main Lox
-class is because of that `hadError` field. It's defined here:
+我们把这个错误报告函数放在主Lox类中的主要原因是因为 `hadError` 字段。它的定义如下:
 
 ^code had-error (1 before)
 
-We'll use this to ensure we don't try to execute code that has a known error.
-Also, it lets us exit with a non-zero exit code like a good command line citizen
-should.
+我们将使用它来确保我们不会试图执行有已知错误的代码。此外，它让我们像一个好的命令行公民应该做的那样，用非零退出代码退出。
 
 ^code exit-code (1 before, 1 after)
 
-We need to reset this flag in the interactive loop. If the user makes a mistake,
-it shouldn't kill their entire session.
+我们需要在交互循环中重置此标志。如果用户犯了错误，它不应该终止他们的整个会话。
 
 ^code reset-had-error (1 before, 1 after)
 
-The other reason I pulled the error reporting out here instead of stuffing it
-into the scanner and other phases where the error might occur is to remind you
-that it's good engineering practice to separate the code that *generates* the
-errors from the code that *reports* them.
+我把错误报告放在这里而不是塞进扫描器和其他可能发生错误的阶段的另一个原因是为了提醒您，将*产生*错误的代码与*报告*错误的代码分开是一个很好的工程实践。
 
-Various phases of the front end will detect errors, but it's not really their
-job to know how to present that to a user. In a full-featured language
-implementation, you will likely have multiple ways errors get displayed: on
-stderr, in an IDE's error window, logged to a file, etc. You don't want that
-code smeared all over your scanner and parser.
+前端的各个阶段都会检测到错误，但是知道如何将错误呈现给用户并不是他们的工作。在全功能语言实现中，可能会有多种显示错误的方式:在 `stderr` 上，在IDE 的错误窗口中，记录到文件中，等等。您不希望这些代码遍布您的扫描器和解析器。
 
-Ideally, we would have an actual abstraction, some kind of <span
-name="reporter">"ErrorReporter"</span> interface that gets passed to the scanner
-and parser so that we can swap out different reporting strategies. For our
-simple interpreter here, I didn't do that, but I did at least move the code for
-error reporting into a different class.
+理想情况下，我们应该有一个实际的抽象，某种<span name="reporter">"ErrorReporter"</span>接口传递给扫描器和解析器，以便我们可以交换不同的报告策略。对于我们这里的简单解释器，我没有这样做，但我至少把错误报告的代码移到了不同的类中。
 
 <aside name="reporter">
 
-I had exactly that when I first implemented jlox. I ended up tearing it out
-because it felt over-engineered for the minimal interpreter in this book.
+在我第一次实现jlox的时候，就是这么干的。我最后把它移除了，因为对于这本书中的最小解释器来说，它感觉设计得过于复杂了。
 
 </aside>
 
-With some rudimentary error handling in place, our application shell is ready.
-Once we have a Scanner class with a `scanTokens()` method, we can start running
-it. Before we get to that, let's get more precise about what tokens are.
+有了一些基本的错误处理，我们的应用程序框架就准备好了。一旦我们有了一个带有 `scanTokens()` 方法的 Scanner 类，我们就可以开始运行它了。在这之前，让我们更精确地了解一下什么是令牌。
 
-## Lexemes and Tokens
 
-Here's a line of Lox code:
+## Lexemes 和 Tokens
+
+下面是一行Lox代码:
 
 ```lox
 var language = "lox";
 ```
 
-Here, `var` is the keyword for declaring a variable. That three-character
-sequence "v-a-r" means something. But if we yank three letters out of the
-middle of `language`, like "g-u-a", those don't mean anything on their own.
+这里，`var` 是声明变量( `variable` )的关键字。那个三个字符的序列“v-a-r”意味着什么。但是如果我们从 `language` 中间抽出三个字母，比如“g-u-a”，它们本身没有任何意义。 
 
-That's what lexical analysis is about. Our job is to scan through the list of
-characters and group them together into the smallest sequences that still
-represent something. Each of these blobs of characters is called a **lexeme**.
-In that example line of code, the lexemes are:
+这就是词法分析的目的。我们的工作是扫描字符列表，并把它们组合成仍然代表某些东西的最小序列。这些字符块中的每一个都被称为一个 **lexeme** 。在示例代码行中，lexemes 是:
 
 <img src="image/scanning/lexemes.png" alt="'var', 'language', '=', 'lox', ';'" />
 
-The lexemes are only the raw substrings of the source code. However, in the
-process of grouping character sequences into lexemes, we also stumble upon some
-other useful information. When we take the lexeme and bundle it together with
-that other data, the result is a token. It includes useful stuff like:
+Lexemes 只是源代码的原始子串。然而，在将字符序列组合成词位的过程中，我们也会偶然发现一些其他有用的信息。当我们把 lexemes 和其他数据捆绑在一起时，结果就是一个令牌(token)。它包括其他有用的东西，如:
 
-### Token type
+### 令牌类型
 
 Keywords are part of the shape of the language's grammar, so the parser often
 has code like, "If the next token is `while` then do..." That means the parser

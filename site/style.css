@@ -1,32 +1,32 @@
 @charset "UTF-8";
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-roman.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWBrightGB-Regular.woff") format("woff");
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-italic.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWBrightGB-Italic.woff") format("woff");
   font-style: italic;
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-semibold.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWBrightGB-Medium.woff") format("woff");
   font-weight: 600;
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-semibolditalic.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWBrightGB-MediumItalic.woff") format("woff");
   font-style: italic;
   font-weight: 600;
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-bold.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWWenKaiGB-Bold.woff") format("woff");
   font-weight: bold;
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-bolditalic.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWWenKaiGB-Bold.woff") format("woff");
   font-style: italic;
   font-weight: bold;
 }
@@ -51,25 +51,25 @@ img.dot {
 
 body {
   color: #222;
-  font: normal 16px/24px "Crimson", Georgia, serif;
+  font: normal 16px/24px "LXGWBrightGB", Georgia, serif;
 }
 
 article.chapter h2 {
-  font: 600 30px/24px "Crimson", Georgia, serif;
+  font: 600 30px/24px "LXGWBrightGB", Georgia, serif;
   margin: 69px 0 0 0;
   padding-bottom: 3px;
 }
 article.chapter h2 small {
-  font: 800 22px/24px "Crimson", Georgia, serif;
+  font: 800 22px/24px "LXGWBrightGB", Georgia, serif;
   float: right;
 }
 article.chapter h3 {
-  font: italic 24px/24px "Crimson", Georgia, serif;
+  font: italic 24px/24px "LXGWBrightGB", Georgia, serif;
   margin: 71px 0 0 0;
   padding-bottom: 1px;
 }
 article.chapter h3 small {
-  font: 600 16px/24px "Crimson", Georgia, serif;
+  font: 600 16px/24px "LXGWBrightGB", Georgia, serif;
   float: right;
 }
 article.chapter h2 a, article.chapter h3 a {
@@ -161,7 +161,7 @@ article.chapter table {
   border-collapse: collapse;
 }
 article.chapter table thead {
-  font: 700 15px "Crimson", Georgia, serif;
+  font: 700 15px "LXGWBrightGB", Georgia, serif;
 }
 article.chapter table td {
   border-bottom: solid 1px #dee9ed;
@@ -362,33 +362,33 @@ article.contents footer {
 }
 
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-roman.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWBrightGB-Regular.woff") format("woff");
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-italic.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWBrightGB-Italic.woff") format("woff");
   font-style: italic;
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-semibold.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWBrightGB-Medium.woff") format("woff");
   font-weight: 600;
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-semibolditalic.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWBrightGB-MediumItalic.woff") format("woff");
   font-style: italic;
   font-weight: 600;
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-bold.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWWenKaiGB-Bold.woff") format("woff");
   font-weight: bold;
 }
 @font-face {
-  font-family: "Crimson";
-  src: url("font/crimson-bolditalic.woff") format("woff");
+  font-family: "LXGWBrightGB";
+  src: url("font/LXGWWenKaiGB-Bold.woff") format("woff");
   font-style: italic;
   font-weight: bold;
 }
@@ -413,7 +413,7 @@ img.dot {
 
 body {
   color: #222;
-  font: normal 16px/24px "Crimson", Georgia, serif;
+  font: normal 16px/24px "LXGWBrightGB", Georgia, serif;
 }
 
 @media print {
@@ -714,7 +714,7 @@ article {
 }
 article h1 {
   position: relative;
-  font: 48px/48px "Crimson", Georgia, serif;
+  font: 48px/48px "LXGWBrightGB", Georgia, serif;
   padding: 109px 0 19px 0;
   z-index: 2;
 }
@@ -751,7 +751,7 @@ aside {
   position: absolute;
   right: -336px;
   width: 288px;
-  font: normal 14px/20px "Crimson", Georgia, serif;
+  font: normal 14px/20px "LXGWBrightGB", Georgia, serif;
   border-top: solid 1px #dee9ed;
 }
 aside p {
@@ -789,7 +789,7 @@ aside blockquote::before, aside blockquote::after {
 }
 aside blockquote p {
   margin: 0 12px;
-  font: italic 15px/20px "Crimson", Georgia, serif;
+  font: italic 15px/20px "LXGWBrightGB", Georgia, serif;
   color: inherit;
 }
 
@@ -805,7 +805,7 @@ blockquote {
 blockquote::before, blockquote::after {
   position: absolute;
   top: -20px;
-  font: italic 72px "Crimson", Georgia, serif;
+  font: italic 72px "LXGWBrightGB", Georgia, serif;
   color: #dee9ed;
 }
 blockquote::before {
@@ -818,7 +818,7 @@ blockquote::after {
 }
 blockquote p {
   margin: 0 48px;
-  font: italic 24px/36px "Crimson", Georgia, serif;
+  font: italic 24px/36px "LXGWBrightGB", Georgia, serif;
   color: #5985a6;
 }
 blockquote p em {

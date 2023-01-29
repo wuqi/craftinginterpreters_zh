@@ -1,5 +1,5 @@
 // Font stacks.
-$serif:   "Crimson", Georgia, serif;
+$serif:   "LXGWBrightGB", Georgia, serif;
 $mono:    "Source Code Pro", Menlo, Consolas, Monaco, monospace;
 $nav:     "Source Sans Pro", sans-serif;
 
@@ -34,38 +34,38 @@ $warm-5:     hsl(40, 20%, 95%);
 $col: 48px;
 
 @font-face {
-  font-family: 'Crimson';
-  src: url('font/crimson-roman.woff') format('woff');
+  font-family: 'LXGWBrightGB';
+  src: url('font/LXGWBrightGB-Regular.woff') format('woff');
 }
 
 @font-face {
-  font-family: 'Crimson';
-  src: url('font/crimson-italic.woff') format('woff');
+  font-family: 'LXGWBrightGB';
+  src: url('font/LXGWBrightGB-Italic.woff') format('woff');
   font-style: italic;
 }
 
 @font-face {
-  font-family: 'Crimson';
-  src: url('font/crimson-semibold.woff') format('woff');
+  font-family: 'LXGWBrightGB';
+  src: url('font/LXGWBrightGB-Medium.woff') format('woff');
   font-weight: 600;
 }
 
 @font-face {
-  font-family: 'Crimson';
-  src: url('font/crimson-semibolditalic.woff') format('woff');
+  font-family: 'LXGWBrightGB';
+  src: url('font/LXGWBrightGB-MediumItalic.woff') format('woff');
   font-style: italic;
   font-weight: 600;
 }
 
 @font-face {
-  font-family: 'Crimson';
-  src: url('font/crimson-bold.woff') format('woff');
+  font-family: 'LXGWBrightGB';
+  src: url('font/LXGWWenKaiGB-Bold.woff') format('woff');
   font-weight: bold;
 }
 
 @font-face {
-  font-family: 'Crimson';
-  src: url('font/crimson-bolditalic.woff') format('woff');
+  font-family: 'LXGWBrightGB';
+  src: url('font/LXGWWenKaiGB-Bold.woff') format('woff');
   font-style: italic;
   font-weight: bold;
 }

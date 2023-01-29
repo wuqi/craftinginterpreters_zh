@@ -1,217 +1,109 @@
-> You must have a map, no matter how rough. Otherwise you wander all over the
-> place. In *The Lord of the Rings* I never made anyone go farther than he could
-> on a given day.
+> 你必须有一张地图，无论多么粗糙。否则你只能到处乱逛。在《指环王》中，我从未让任何人在某一天走得比他能走得更远。
 >
 > <cite>J. R. R. Tolkien</cite>
 
-We don't want to wander all over the place, so before we set off, let's scan
-the territory charted by previous language implementers. It will help us
-understand where we are going and the alternate routes others have taken.
+我们不想到处乱逛，所以在我们出发之前，让我们扫一眼以前的语言实现者绘制的地图。它将帮助我们了解我们要去的地方和其他人选择的路线。
 
-First, let me establish a shorthand. Much of this book is about a language's
-*implementation*, which is distinct from the *language itself* in some sort of
-Platonic ideal form. Things like "stack", "bytecode", and "recursive descent",
-are nuts and bolts one particular implementation might use. From the user's
-perspective, as long as the resulting contraption faithfully follows the
-language's specification, it's all implementation detail.
+首先，让我建立一个缩写。本书的大部分内容都是关于语言的实现，它与柏拉图式的理想形式语言本身不同。像 "堆栈"、"字节码 "和 "递归下降 "这样的东西，是一个特定的实现可能使用的螺母和螺栓。从用户的角度来看，只要所产生的装置忠实地遵循语言的规范，那他就是实现细节。
 
-We're going to spend a lot of time on those details, so if I have to write
-"language *implementation*" every single time I mention them, I'll wear my
-fingers off. Instead, I'll use "language" to refer to either a language or an
-implementation of it, or both, unless the distinction matters.
+我们要在这些细节上花很多时间，所以如果我每次提到这些细节都要写 "语言实现 "的话，我会把我的手指磨断的。相反，我会用 "语言 "来指代一种语言或它的实现，或者两者都指代，除非这种区别很重要。
 
-## The Parts of a Language
+## 语言的组成部分
 
-Engineers have been building programming languages since the Dark Ages of
-computing. As soon as we could talk to computers, we discovered doing so was too
-hard, and we enlisted their help. I find it fascinating that even though today's
-machines are literally a million times faster and have orders of magnitude more
-storage, the way we build programming languages is virtually unchanged.
+自计算机的黑暗时代以来，工程师们一直在构建编程语言。一旦我们可以与电脑交谈，我们发现这样做太难了，我们征求他们的帮助。尽管今天的机器速度比以前快了一百万倍，存储数量级也比以前大了一百万倍，但我们构建编程语言的方式实际上并没有改变。
 
-Though the area explored by language designers is vast, the trails they've
-carved through it are <span name="dead">few</span>. Not every language takes the
-exact same path -- some take a shortcut or two -- but otherwise they are
-reassuringly similar, from Rear Admiral Grace Hopper's first COBOL compiler all
-the way to some hot, new, transpile-to-JavaScript language whose "documentation"
-consists entirely of a single, poorly edited README in a Git repository
-somewhere.
+虽然语言设计者探索的领域很广，但他们在其中开辟的小径却<span name="dead">很少</span>。并非每一种语言都走完全相同的道路--有些语言走了一两条捷径--但除此之外，它们都有令人欣慰的相似性，从海军少将格雷斯-霍珀的第一个COBOL编译器一直到一些热门的、新的、转译成JavaScript的语言，其 "文档" 完全由某个Git仓库中的一个编辑不善的README组成。
 
 <aside name="dead">
 
-There are certainly dead ends, sad little cul-de-sacs of CS papers with zero
-citations and now-forgotten optimizations that only made sense when memory was
-measured in individual bytes.
+当然，也有一些死胡同，即引用率为零的CS论文和现在已经被遗忘的优化，这些优化只有在内存以单个字节为单位时才有意义。
 
 </aside>
 
-I visualize the network of paths an implementation may choose as climbing a
-mountain. You start off at the bottom with the program as raw source text,
-literally just a string of characters. Each phase analyzes the program and
-transforms it to some higher-level representation where the semantics -- what
-the author wants the computer to do -- become more apparent.
+我将可实现的路径网络可视化为攀登一座山峰。你从底部开始，程序是原始的源文本，实际上只是一串字符。每个阶段都会分析程序，并将其转换为更高层次的表述，在这里，语义--作者希望计算机做什么--变得更加明显。
 
-Eventually we reach the peak. We have a bird's-eye view of the user's program
-and can see what their code *means*. We begin our descent down the other side of
-the mountain. We transform this highest-level representation down to
-successively lower-level forms to get closer and closer to something we know how
-to make the CPU actually execute.
+最终我们到达了顶峰。我们对用户的程序有了一个鸟瞰图，可以看到他们的代码意味着什么。我们开始从山的另一边下山。我们把这个最高级别的表示方法逐次转化为较低级别的形式，以便越来越接近我们知道如何让CPU实际执行的东西。
 
 <img src="image/a-map-of-the-territory/mountain.png" alt="The branching paths a language may take over the mountain." class="wide" />
 
-Let's trace through each of those trails and points of interest. Our journey
-begins on the left with the bare text of the user's source code:
+让我们追踪每一条线索和感兴趣的地点。我们的旅程从左边的用户源代码的文本开始:
 
 <img src="image/a-map-of-the-territory/string.png" alt="var average = (min + max) / 2;" />
 
-### Scanning
+### Scanning(扫描器)
 
-The first step is **scanning**, also known as **lexing**, or (if you're trying
-to impress someone) **lexical analysis**. They all mean pretty much the same
-thing. I like "lexing" because it sounds like something an evil supervillain
-would do, but I'll use "scanning" because it seems to be marginally more
-commonplace.
+第一步是扫描 **scanning** ，也被称为词法  **lexing** ，或(如果你想给某人留下深刻印象)词法分析 **lexical analysis** 。它们的意思都差不多。我喜欢 `lexing` ，因为它听起来像邪恶的超级反派会做的事情，但我会用 `scanning` ，因为它似乎更加常见。
 
-A **scanner** (or **lexer**) takes in the linear stream of characters and chunks
-them together into a series of something more akin to <span
-name="word">"words"</span>. In programming languages, each of these words is
-called a **token**. Some tokens are single characters, like `(` and `,`. Others
-may be several characters long, like numbers (`123`), string literals (`"hi!"`),
-and identifiers (`min`).
+一个 **扫描器** (或 **词法分析器** )接收字符的输入流，并将它们组合在一起，形成一系列更类似于<span name="word">"单词"</span>的东西。在编程语言中，这些单词中的每一个都称为标记。有些标记是单个字符，如( `and` `,` `.` 其他的可能是几个字符长，比如数字(123) ，字符串文字(  `"hi!"` )和标识符( `min` )。
 
 <aside name="word">
 
-"Lexical" comes from the Greek root "lex", meaning "word".
+“Lexical” 来自希腊语词根  “lex”, 意思是 “word” (单词). 
 
 </aside>
 
-Some characters in a source file don't actually mean anything. Whitespace is
-often insignificant, and comments, by definition, are ignored by the language.
-The scanner usually discards these, leaving a clean sequence of meaningful
-tokens.
+源文件中的某些字符实际上没有任何意义。空白通常是微不足道的，根据定义，注释被语言忽略。扫描器通常会丢弃这些标记，留下一系列有意义的标记。
 
 <img src="image/a-map-of-the-territory/tokens.png" alt="[var] [average] [=] [(] [min] [+] [max] [)] [/] [2] [;]" />
 
-### Parsing
+### Parsing (解析)
 
-The next step is **parsing**. This is where our syntax gets a **grammar** -- the
-ability to compose larger expressions and statements out of smaller parts. Did
-you ever diagram sentences in English class? If so, you've done what a parser
-does, except that English has thousands and thousands of "keywords" and an
-overflowing cornucopia of ambiguity. Programming languages are much simpler.
+下一步是解析 **parsing** 。这就是我们的语法获得语法 **grammar** 的地方ーー能够用较小的部分组成较大的表达式和语句。你在英语课上画过句子分词图吗？如果是这样，那么您已经完成了解析器的工作，只不过英语有成千上万的“关键字”和泛滥的歧义。编程语言要简单得多。
 
-A **parser** takes the flat sequence of tokens and builds a tree structure that
-mirrors the nested nature of the grammar. These trees have a couple of different
-names -- **parse tree** or **abstract syntax tree** -- depending on how
-close to the bare syntactic structure of the source language they are. In
-practice, language hackers usually call them **syntax trees**, **ASTs**, or
-often just **trees**.
+**解析器** 获取标记的平面序列，并构建反映文法嵌套特性的树结构。这些树有几个不同的名称ーー **解析树** 或 **抽象语法树** ーー 这取决于它们与源语言的纯语法结构的接近程度。在实践中，语言黑客通常称之为 **语法树** 、 **AST** 或者就称为 **树** 。
 
 <img src="image/a-map-of-the-territory/ast.png" alt="An abstract syntax tree." />
 
-Parsing has a long, rich history in computer science that is closely tied to the
-artificial intelligence community. Many of the techniques used today to parse
-programming languages were originally conceived to parse *human* languages by AI
-researchers who were trying to get computers to talk to us.
+解析在计算机科学中有着悠久而丰富的历史，与人工智能界紧密相连。今天用于解析编程语言的许多技术，最初是由试图让计算机与我们对话的人工智能研究人员为解析人类语言而构想的。
 
-It turns out human languages were too messy for the rigid grammars those parsers
-could handle, but they were a perfect fit for the simpler artificial grammars of
-programming languages. Alas, we flawed humans still manage to use those simple
-grammars incorrectly, so the parser's job also includes letting us know when we
-do by reporting **syntax errors**.
+事实证明，人类语言对于那些解析器所能处理的僵化语法来说太混乱了，但对于编程语言的较简单的人工语法来说，它们是完美的。唉，我们这些有缺陷的人类仍然设法错误地使用这些简单的语法，所以解析器的工作也包括通过报告 **语法错误** 来让我们知道何时使用这些语法。
 
-### Static analysis
+### Static analysis (静态分析)
 
-The first two stages are pretty similar across all implementations. Now, the
-individual characteristics of each language start coming into play. At this
-point, we know the syntactic structure of the code -- things like which
-expressions are nested in which -- but we don't know much more than that.
+前两个阶段在所有实现中都非常相似。现在，每种语言的个性特征开始发挥作用。此时，我们已经知道了代码的语法结构ーー比如哪些表达式嵌套在哪些表达式中ーー但除此之外，我们所知不多。
 
-In an expression like `a + b`, we know we are adding `a` and `b`, but we don't
-know what those names refer to. Are they local variables? Global? Where are they
-defined?
+在 `a + b` 这样的表达式中，我们知道要加上 `a` 和 `b` ，但我们不知道这些名字指的是什么。它们是局部变量吗？还是全局变量？它们在哪里被定义？
 
-The first bit of analysis that most languages do is called **binding** or
-**resolution**. For each **identifier**, we find out where that name is defined
-and wire the two together. This is where **scope** comes into play -- the region
-of source code where a certain name can be used to refer to a certain
-declaration.
+大多数语言所做的第一项分析被称为绑定( **binding** )或解析( **resolution** )。对于每个标识符( **identifier** )，我们要找出这个名字的定义位置，并将两者连接起来。这就是范围( **scope** )的作用--源代码中某个名字可以用来指代某个声明的区域。
 
-If the language is <span name="type">statically typed</span>, this is when we
-type check. Once we know where `a` and `b` are declared, we can also figure out
-their types. Then if those types don't support being added to each other, we
-report a **type error**.
+如果语言是<span name="type">静态类型</span>的，这就是我们进行类型检查的时候。一旦我们知道 `a` 和 `b` 是在哪里声明的，我们也可以弄清它们的类型。然后，如果这些类型不支持彼此相加，我们就报告一个 **类型错误** 。
 
 <aside name="type">
 
-The language we'll build in this book is dynamically typed, so it will do its
-type checking later, at runtime.
+我们将在本书中构建的语言是动态类型的，所以它将在以后的运行时进行类型检查。
 
 </aside>
 
-Take a deep breath. We have attained the summit of the mountain and a sweeping
-view of the user's program. All this semantic insight that is visible to us from
-analysis needs to be stored somewhere. There are a few places we can squirrel it
-away:
+深呼吸。我们已经到达了山顶，并对用户的程序有了全面的了解。所有这些从分析中可见的语义表现都需要存储在某个地方。有几个地方我们可以储藏起来:
 
-* Often, it gets stored right back as **attributes** on the syntax tree
-  itself -- extra fields in the nodes that aren't initialized during parsing
-  but get filled in later.
+* 通常，它被直接存储为语法树本身的属性(  **attributes**  )--节点中的额外字段，这些字段在解析过程中并没有被初始化，而是在之后被填入。
 
-* Other times, we may store data in a lookup table off to the side. Typically,
-  the keys to this table are identifiers -- names of variables and declarations.
-  In that case, we call it a **symbol table** and the values it associates with
-  each key tell us what that identifier refers to.
+* 其他时候，我们可能将数据存储在旁边的查找表中。通常，此表的键是标识符ーー变量和声明的名称。在这种情况下，我们称之为符号表(  **symbol table**  )，它与每个键关联的值告诉我们该标识符指的是什么。
 
-* The most powerful bookkeeping tool is to transform the tree into an entirely
-  new data structure that more directly expresses the semantics of the code.
-  That's the next section.
+* 最强大的簿记工具是将树转换成一个全新的数据结构，以更直接地表达代码的语义。那是下一部分。
 
-Everything up to this point is considered the **front end** of the
-implementation. You might guess everything after this is the **back end**, but
-no. Back in the days of yore when "front end" and "back end" were coined,
-compilers were much simpler. Later researchers invented new phases to stuff
-between the two halves. Rather than discard the old terms, William Wulf and
-company lumped those new phases into the charming but spatially paradoxical name
-**middle end**.
+到目前为止的一切都被认为是实现的前端。你可能会猜到这之后的一切都是后端，但不是。在“前端”( **front end** )和“后端”( **back end** )出现的年代，编译器要简单得多。后来的研究人员发明了新的阶段，以塞进这两部分之间。威廉-伍尔夫和他的公司没有抛弃旧的术语，而是将这些新的阶段归纳为迷人的但在空间上自相矛盾的名字--中间端( **middle end** )。
 
-### Intermediate representations
+### Intermediate representations(中间表示)
 
-You can think of the compiler as a pipeline where each stage's job is to
-organize the data representing the user's code in a way that makes the next
-stage simpler to implement. The front end of the pipeline is specific to the
-source language the program is written in. The back end is concerned with the
-final architecture where the program will run.
+您可以将编译器视为一个管道，其中每个阶段的工作都是组织表示用户代码的数据，使得下一个阶段的实现更加简单。管道的前端特定于用来编写程序的源语言。后端关注的是程序运行的最终体系结构。
 
-In the middle, the code may be stored in some <span name="ir">**intermediate
-representation**</span> (**IR**) that isn't tightly tied to either the source or
-destination forms (hence "intermediate"). Instead, the IR acts as an interface
-between these two languages.
+在中间，代码可能存储在一些<span name="ir">中间表示 **intermediate
+representation**</span>(**IR**)中，这些中间表示(IR)与源表单或目标表单都没有紧密联系(因此是“中间”)。相反，IR 充当这两种语言之间的接口。
 
 <aside name="ir">
 
-There are a few well-established styles of IRs out there. Hit your search engine
-of choice and look for "control flow graph", "static single-assignment",
-"continuation-passing style", and "three-address code".
+现在有几种成熟的IRs风格。点击你所选择的搜索引擎，寻找 "控制流图"、"静态单赋值"、"延体传递风格 "和 "三地址码"("control flow graph", "static single-assignment", "continuation-passing style",  "three-address code")。
 
 </aside>
 
-This lets you support multiple source languages and target platforms with less
-effort. Say you want to implement Pascal, C, and Fortran compilers, and you want
-to target x86, ARM, and, I dunno, SPARC. Normally, that means you're signing up
-to write *nine* full compilers: Pascal&rarr;x86, C&rarr;ARM, and every other
-combination.
+这使您可以更轻松地支持多种源语言和目标平台。假设您希望实现 Pascal、 C 和 Fortran 编译器，并且希望以 x86、 ARM 和(我不知道的) SPARC 为目标。通常，这意味着您要注册编写九个完整的编译器: Pascal&rarr;x86，C&rarr;ARM，以及其他所有组合。
 
-A <span name="gcc">shared</span> intermediate representation reduces that
-dramatically. You write *one* front end for each source language that produces
-the IR. Then *one* back end for each target architecture. Now you can mix and
-match those to get every combination.
+<span name="gcc">共享</span>的中间表示极大地减少了这种情况。您可以为生成 IR 的每种源语言编写 *一个* 前端。然后为每个目标体系结构设置 *一个* 后端。现在你可以混合和匹配这些得到每个组合。
 
 <aside name="gcc">
 
-If you've ever wondered how [GCC][] supports so many crazy languages and
-architectures, like Modula-3 on Motorola 68k, now you know. Language front ends
-target one of a handful of IRs, mainly [GIMPLE][] and [RTL][]. Target back ends
-like the one for 68k then take those IRs and produce native code.
+如果你曾经想知道 [GCC][] 是如何支持这么多疯狂的语言和架构的，比如摩托罗拉68k上的Modula-3，现在你知道了。语言前端的目标是少数几个IR中的一个，主要是 [GIMPLE][] 和 [RTL][] 。目标后端，如68k的后端，然后采用这些IRs并产生本地代码。
 
 [gcc]: https://en.wikipedia.org/wiki/GNU_Compiler_Collection
 [gimple]: https://gcc.gnu.org/onlinedocs/gccint/GIMPLE.html
@@ -219,80 +111,47 @@ like the one for 68k then take those IRs and produce native code.
 
 </aside>
 
-There's another big reason we might want to transform the code into a form that
-makes the semantics more apparent...
+还有一个很重要的原因，我们可能希望将代码转换成一种使语义更加明显的形式...
 
-### Optimization
+### Optimization 优化
 
-Once we understand what the user's program means, we are free to swap it out
-with a different program that has the *same semantics* but implements them more
-efficiently -- we can **optimize** it.
+一旦我们理解了用户程序的含义，我们就可以自由地将其与具有相同语义但实现效率更高的不同程序交换ーー我们可以对其进行 **优化**。
 
-A simple example is **constant folding**: if some expression always evaluates to
-the exact same value, we can do the evaluation at compile time and replace the
-code for the expression with its result. If the user typed in this:
+举个简单的例子, **常数折叠** : 如果某个表达式的求值总是完全相同，我们可以在编译时求值，并用结果替换表达式的代码。如果用户键入以下内容:
 
 ```java
 pennyArea = 3.14159 * (0.75 / 2) * (0.75 / 2);
 ```
 
-we could do all of that arithmetic in the compiler and change the code to:
+我们可以在编译器中做所有这些算术，然后把代码改为:
 
 ```java
 pennyArea = 0.4417860938;
 ```
 
-Optimization is a huge part of the programming language business. Many language
-hackers spend their entire careers here, squeezing every drop of performance
-they can out of their compilers to get their benchmarks a fraction of a percent
-faster. It can become a sort of obsession.
+优化是编程语言业务的一个巨大部分。许多语言黑客在这里度过了他们的整个职业生涯，从他们的编译器中榨取每一滴性能，以使他们的基准速度提高百分之零点一。这可以上瘾。
 
-We're mostly going to <span name="rathole">hop over that rathole</span> in this
-book. Many successful languages have surprisingly few compile-time
-optimizations. For example, Lua and CPython generate relatively unoptimized
-code, and focus most of their performance effort on the runtime.
+在本书中，我们主要是要跳过这个<span name="rathole">老鼠洞</span>。许多成功的语言的编译时优化都少得令人吃惊。例如，Lua和CPython生成的代码相对来说没有优化，它们的大部分性能努力都集中在运行时。
 
 <aside name="rathole">
 
-If you can't resist poking your foot into that hole, some keywords to get you
-started are "constant propagation", "common subexpression elimination", "loop
-invariant code motion", "global value numbering", "strength reduction", "scalar
-replacement of aggregates", "dead code elimination", and "loop unrolling".
+如果你忍不住把脚伸进那个洞里，一些关键词可以让你开始行动，它们是 "常量传播"、"公共子表达式删除"、"循环不变式外提"、"全局值编号优化"、"强度折减"、"标量替换"、"死码消除 "和 "循环展开"。("constant propagation", "common subexpression elimination", "loop invariant code motion", "global value numbering", "strength reduction", "scalar replacement of aggregates", "dead code elimination", and "loop unrolling")
 
 </aside>
 
-### Code generation
+### Code generation 代码生成
 
-We have applied all of the optimizations we can think of to the user's program.
-The last step is converting it to a form the machine can actually run. In other
-words, **generating code** (or **code gen**), where "code" here usually refers to
-the kind of primitive assembly-like instructions a CPU runs and not the kind of
-"source code" a human might want to read.
+我们已经将所有我们能想到的优化应用到用户的程序中。最后一步是将其转换为计算机实际可以运行的形式。换句话说， **生成代码** (或者 **代码生成器**) ，这里的“代码”通常指的是 CPU 运行的那种类似汇编的原始指令，而不是人类可能想要读取的那种“源代码”。
 
-Finally, we are in the **back end**, descending the other side of the mountain.
-From here on out, our representation of the code becomes more and more
-primitive, like evolution run in reverse, as we get closer to something our
-simple-minded machine can understand.
+最后，我们到了山的后端( **back end** )，从山的另一边下山。从现在开始，我们对代码的表示变得越来越原始，就像进化倒着运行一样，因为我们越来越接近我们头脑简单的机器所能理解的东西。
 
-We have a decision to make. Do we generate instructions for a real CPU or a
-virtual one? If we generate real machine code, we get an executable that the OS
-can load directly onto the chip. Native code is lightning fast, but generating
-it is a lot of work. Today's architectures have piles of instructions, complex
-pipelines, and enough <span name="aad">historical baggage</span> to fill a 747's
-luggage bay.
+我们有一个决定要做。我们是为真实的CPU生成指令还是为虚拟的CPU生成指令？如果我们生成真正的机器代码，我们就会得到一个可执行文件，操作系统可以直接加载到芯片上。原生代码的速度快如闪电，但生成它的工作却很繁重。今天的架构有成堆的指令，复杂的流水线，以及足以填满747行李舱的<span name="aad">历史包袱</span>。
 
-Speaking the chip's language also means your compiler is tied to a specific
-architecture. If your compiler targets [x86][] machine code, it's not going to
-run on an [ARM][] device. All the way back in the '60s, during the
-Cambrian explosion of computer architectures, that lack of portability was a
-real obstacle.
+使用芯片的语言也意味着你的编译器被捆绑在一个特定的架构上。如果你的编译器以 [x86][] 机器代码为目标，那么它就不能在 [ARM][] 设备上运行。早在60年代，在计算机体系结构的寒武纪爆炸期间，缺乏可移植性是一个真正的障碍。
 
 <aside name="aad">
 
-For example, the [AAD][] ("ASCII Adjust AX Before Division") instruction lets
-you perform division, which sounds useful. Except that instruction takes, as
-operands, two binary-coded decimal digits packed into a single 16-bit register.
-When was the last time *you* needed BCD on a 16-bit machine?
+例如， [AAD][] （"ASCII调整AX除法前"）指令让你进行除法，这听起来很有用。只是这条指令的操作数是两个二进制编码的十进制数字，装入一个16位寄存器。你上次在16位机器上需要BCD是什么时候？
 
 [aad]: http://www.felixcloutier.com/x86/AAD.html
 
@@ -301,263 +160,129 @@ When was the last time *you* needed BCD on a 16-bit machine?
 [x86]: https://en.wikipedia.org/wiki/X86
 [arm]: https://en.wikipedia.org/wiki/ARM_architecture
 
-To get around that, hackers like Martin Richards and Niklaus Wirth, of BCPL and
-Pascal fame, respectively, made their compilers produce *virtual* machine code.
-Instead of instructions for some real chip, they produced code for a
-hypothetical, idealized machine. Wirth called this **p-code** for *portable*,
-but today, we generally call it **bytecode** because each instruction is often a
-single byte long.
+为了避免这种情况，像 Martin Richards 和 Niklaus Wirth 这样分别以 BCPL 和 Pascal 闻名的黑客，让他们的编译器产生虚拟机代码。他们不是为某个真实的芯片编写指令，而是为一个假想的、理想化的机器编写代码。Wirth称这种代码为可移植代码( **p-code** for *portable*)，但今天，我们通常称它为 **字节码** ，因为每条指令通常只有一个字节长。
 
-These synthetic instructions are designed to map a little more closely to the
-language's semantics, and not be so tied to the peculiarities of any one
-computer architecture and its accumulated historical cruft. You can think of it
-like a dense, binary encoding of the language's low-level operations.
+这些合成指令的设计目的是更贴近语言的语义，而不是与任何一种计算机体系结构的特性及其累积的历史残渣绑定在一起。您可以把它看作是语言低级操作的一种密集的二进制编码。
 
-### Virtual machine
+### Virtual machine 虚拟机
 
-If your compiler produces bytecode, your work isn't over once that's done. Since
-there is no chip that speaks that bytecode, it's your job to translate. Again,
-you have two options. You can write a little mini-compiler for each target
-architecture that converts the bytecode to native code for that machine. You
-still have to do work for <span name="shared">each</span> chip you support, but
-this last stage is pretty simple and you get to reuse the rest of the compiler
-pipeline across all of the machines you support. You're basically using your
-bytecode as an intermediate representation.
+如果你的编译器产生字节码，一旦完成，你的工作还没有结束。由于没有芯片能说这种字节码，你的工作就是翻译。同样，你有两个选择。你可以为每个目标架构写一个小的迷你编译器，将字节码转换为该机器的本地代码。你仍然要为你支持的<span name="shared">每一个</span>芯片做工作，但最后一个阶段是非常简单的，你可以在你支持的所有机器上重复使用编译器的其余管道。你基本上是把字节码作为IR。
 
 <aside name="shared" class="bottom">
 
-The basic principle here is that the farther down the pipeline you push the
-architecture-specific work, the more of the earlier phases you can share across
-architectures.
+这里的基本原则是，你把特定架构的工作在管道中推得越远，你就可以在不同的架构中分享更多的早期阶段的内容。
 
-There is a tension, though. Many optimizations, like register allocation and
-instruction selection, work best when they know the strengths and capabilities
-of a specific chip. Figuring out which parts of your compiler can be shared and
-which should be target-specific is an art.
+不过，有一个矛盾。许多优化，如寄存器分配和指令选择，在了解特定芯片的优势和能力时效果最好。弄清楚你的编译器中哪些部分可以共享，哪些部分应该是针对特定目标的，是一门艺术。
 
 </aside>
 
-Or you can write a <span name="vm">**virtual machine**</span> (**VM**), a
-program that emulates a hypothetical chip supporting your virtual architecture
-at runtime. Running bytecode in a VM is slower than translating it to native
-code ahead of time because every instruction must be simulated at runtime each
-time it executes. In return, you get simplicity and portability. Implement your
-VM in, say, C, and you can run your language on any platform that has a C
-compiler. This is how the second interpreter we build in this book works.
+或者你可以写一个<span name="vm">**虚拟机**</span> （ **VM** ），一个在运行时模拟支持你的虚拟架构的假想芯片的程序。在虚拟机中运行字节码比提前将其翻译成本地代码要慢，因为每条指令在每次执行时都必须在运行时进行模拟。作为回报，你可以获得简单性和可移植性。用C语言实现你的虚拟机，你可以在任何有C编译器的平台上运行你的语言。这就是我们在本书中构建的第二个解释器的工作方式。
 
 <aside name="vm">
 
-The term "virtual machine" also refers to a different kind of abstraction. A
-**system virtual machine** emulates an entire hardware platform and operating
-system in software. This is how you can play Windows games on your Linux
-machine, and how cloud providers give customers the user experience of
-controlling their own "server" without needing to physically allocate separate
-computers for each user.
+术语 "虚拟机 "也是指一种不同的抽象概念。一个 **system virtual machine**  在软件中模拟了整个硬件平台和操作系统。这就是为什么你可以在你的Linux机器上玩Windows游戏，以及云供应商如何给客户提供控制他们自己的 "服务器 "的用户体验，而不需要为每个用户分配单独的计算机。
 
-The kind of VMs we'll talk about in this book are **language virtual machines**
-or **process virtual machines** if you want to be unambiguous.
+我们在本书中要讨论的那种虚拟机是 **language virtual machines** ，如果你不想搞混的话，更准确的说是 **process virtual machines**。
 
 </aside>
 
-### Runtime
+### Runtime 运行时
 
-We have finally hammered the user's program into a form that we can execute. The
-last step is running it. If we compiled it to machine code, we simply tell the
-operating system to load the executable and off it goes. If we compiled it to
-bytecode, we need to start up the VM and load the program into that.
+我们终于把用户的程序打造成了一种可以执行的形式。最后一步是运行它。如果我们将它编译成机器代码，我们只需告诉操作系统加载可执行文件，然后就可以运行了。如果我们将其编译为字节码，则需要启动 VM 并将程序加载到其中。
 
-In both cases, for all but the basest of low-level languages, we usually need
-some services that our language provides while the program is running. For
-example, if the language automatically manages memory, we need a garbage
-collector going in order to reclaim unused bits. If our language supports
-"instance of" tests so you can see what kind of object you have, then we need
-some representation to keep track of the type of each object during execution.
+在这两种情况下，除了最基本的低级语言之外，我们通常都需要在程序运行时语言提供的一些服务。例如，如果语言自动管理内存，我们需要一个垃圾收集器来回收未使用的数据。如果我们的语言支持“实例”测试，这样您就可以看到您拥有什么类型的对象，那么我们需要一些表示来在执行过程中跟踪每个对象的类型。
 
-All of this stuff is going at runtime, so it's called, appropriately, the
-**runtime**. In a fully compiled language, the code implementing the runtime
-gets inserted directly into the resulting executable. In, say, [Go][], each
-compiled application has its own copy of Go's runtime directly embedded in it.
-If the language is run inside an interpreter or VM, then the runtime lives
-there. This is how most implementations of languages like Java, Python, and
-JavaScript work.
+所有这些东西都是在运行时进行的，因此它被恰当地称为 **运行时** 。在一个完整的编译语言中，实现运行时的代码直接插入到生成的可执行文件中。例如，在 [Go][] 中，每个已编译的应用程序都有自己的 Go 运行时副本直接嵌入其中。如果语言是在解释器或 VM 中运行的，那么运行时就存在于其中。这就是 Java、 Python 和 JavaScript 等语言的大多数实现的工作方式。
 
 [go]: https://golang.org/
 
-## Shortcuts and Alternate Routes
+## 捷径和备用路线
 
-That's the long path covering every possible phase you might implement. Many
-languages do walk the entire route, but there are a few shortcuts and alternate
-paths.
+这是涵盖您可能实现的每个可能阶段的漫长道路。许多语言确实走完了整条道路，但也有一些捷径和替代路径。
 
-### Single-pass compilers
+### Single-pass compilers 单程编译器
 
-Some simple compilers interleave parsing, analysis, and code generation so that
-they produce output code directly in the parser, without ever allocating any
-syntax trees or other IRs. These <span name="sdt">**single-pass
-compilers**</span> restrict the design of the language. You have no intermediate
-data structures to store global information about the program, and you don't
-revisit any previously parsed part of the code. That means as soon as you see
-some expression, you need to know enough to correctly compile it.
+一些简单的编译器将解析、分析和代码生成交错在一起，以便直接在解析器中生成输出代码，而不需要分配任何语法树或其他 IR。这些<span name="sdt">**单程编译器**</span>限制了语言的设计。没有中间数据结构来存储关于程序的全局信息，也不需要重新访问任何以前解析过的代码部分。这意味着一旦看到某个表达式，就需要足够的知识来正确地编译它。
 
 <aside name="sdt">
 
-[**Syntax-directed translation**][pass] is a structured technique for building
-these all-at-once compilers. You associate an *action* with each piece of the
-grammar, usually one that generates output code. Then, whenever the parser
-matches that chunk of syntax, it executes the action, building up the target
-code one rule at a time.
+[**Syntax-directed translation**][pass] 是一种结构化的技术，用于构建这些一次性的编译器。你将一个动作与语法的每一个部分联系起来，通常是产生输出代码的动作。然后，每当解析器与那块语法相匹配时，它就会执行该动作，每次都建立起目标代码的规则。
 
 [pass]: https://en.wikipedia.org/wiki/Syntax-directed_translation
 
 </aside>
 
-Pascal and C were designed around this limitation. At the time, memory was so
-precious that a compiler might not even be able to hold an entire *source file*
-in memory, much less the whole program. This is why Pascal's grammar requires
-type declarations to appear first in a block. It's why in C you can't call a
-function above the code that defines it unless you have an explicit forward
-declaration that tells the compiler what it needs to know to generate code for a
-call to the later function.
+Pascal 和 C 就是围绕这个限制设计的。当时，内存是如此宝贵，以至于编译器甚至不能在内存中保存整个源文件，更不用说整个程序了。这就是 Pascal 语法要求类型声明首先出现在块中的原因。这就是为什么在 C 语言中，你不能在定义函数的代码之上调用函数，除非你有一个明确的前向声明，告诉编译器它需要知道什么来生成调用后面函数的代码。
 
-### Tree-walk interpreters
+### Tree-walk interpreters 树遍历解释器
 
-Some programming languages begin executing code right after parsing it to an AST
-(with maybe a bit of static analysis applied). To run the program, the
-interpreter traverses the syntax tree one branch and leaf at a time, evaluating
-each node as it goes.
+一些编程语言在将代码解析成AST后就开始执行代码（也许还应用了一点静态分析）。为了运行程序，解释器每次都会在语法树上的一个分支和一个叶子上遍历，一边走一边评估每个节点。
 
-This implementation style is common for student projects and little languages,
-but is not widely used for <span name="ruby">general-purpose</span> languages
-since it tends to be slow. Some people use "interpreter" to mean only these
-kinds of implementations, but others define that word more generally, so I'll
-use the inarguably explicit **tree-walk interpreter** to refer to these. Our
-first interpreter rolls this way.
+这种实现方式在学生项目和小语言中很常见，但在<span name="ruby">通用语言</span>中却没有被广泛使用，因为它往往很慢。有些人用 "解释器 "只指这类实现，但其他人对这个词的定义更为宽泛，所以我将用无可争辩的明确的 **树遍历解释器** 来指这些。我们的第一个解释器是这样运行的。
 
 <aside name="ruby">
 
-A notable exception is early versions of Ruby, which were tree walkers. At 1.9,
-the canonical implementation of Ruby switched from the original MRI (Matz's Ruby
-Interpreter) to Koichi Sasada's YARV (Yet Another Ruby VM). YARV is a
-bytecode virtual machine.
+一个值得注意的例外是Ruby的早期版本，它是树形解释器。在1.9版本中，Ruby的典型实现从最初的MRI（Matz's Ruby Interpreter）转向Koichi Sasada的YARV（Yet Another Ruby VM）。YARV是一个字节码虚拟机。
 
 </aside>
 
-### Transpilers
+### Transpilers 转译器
 
-<span name="gary">Writing</span> a complete back end for a language can be a lot
-of work. If you have some existing generic IR to target, you could bolt your
-front end onto that. Otherwise, it seems like you're stuck. But what if you
-treated some other *source language* as if it were an intermediate
-representation?
+为一种语言<span name="gary">编写</span>一个完整的后端可能是一个很大的工作。如果你有一些现有的通用IR作为目标，你可以把你的前端栓在那里。否则，你就会被卡住。但是，如果你把其他的 **源语言** 当作是一种中间表示法呢？
 
-You write a front end for your language. Then, in the back end, instead of doing
-all the work to *lower* the semantics to some primitive target language, you
-produce a string of valid source code for some other language that's about as
-high level as yours. Then, you use the existing compilation tools for *that*
-language as your escape route off the mountain and down to something you can
-execute.
+你为你的语言写一个前端。然后，在后端，你不需要做所有的工作来降低语义到一些原始的目标语言，而是产生一串有效的源代码，用于其他一些和你的语言一样高级的语言。然后，你使用该语言的现有编译工具作为你的逃亡路线，从山上下来，变成你可以执行的东西。
 
-They used to call this a **source-to-source compiler** or a **transcompiler**.
-After the rise of languages that compile to JavaScript in order to run in the
-browser, they've affected the hipster sobriquet **transpiler**.
+他们曾经把这叫做源码到源码的编译器( **source-to-source compiler** )或反编译器( **transcompiler** )。在那些为了在浏览器中运行而编译成JavaScript的语言兴起之后，他们将其昵称为转译器( **transpiler** )。
 
 <aside name="gary">
 
-The first transcompiler, XLT86, translated 8080 assembly into 8086 assembly.
-That might seem straightforward, but keep in mind the 8080 was an 8-bit chip and
-the 8086 a 16-bit chip that could use each register as a pair of 8-bit ones.
-XLT86 did data flow analysis to track register usage in the source program and
-then efficiently map it to the register set of the 8086.
+第一个反编译器，XLT86，将8080汇编翻译成8086汇编。这似乎很简单，但请记住，8080是一个8位的芯片，而8086是一个16位的芯片，可以将每个寄存器作为一对8位的1使用。XLT86做了数据流分析，跟踪源程序中的寄存器使用情况，然后有效地将其映射到8086的寄存器集。
 
-It was written by Gary Kildall, a tragic hero of computer science if there
-ever was one. One of the first people to recognize the promise of
-microcomputers, he created PL/M and CP/M, the first high-level language and OS
-for them.
+它是由Gary Kildall编写的，如果有的话，他是计算机科学界的一个悲剧性英雄。他是最早认识到微型计算机前景的人之一，他创造了PL/M和CP/M，这是第一个用于微型计算机的高级语言和操作系统。
 
-He was a sea captain, business owner, licensed pilot, and motorcyclist. A TV
-host with the Kris Kristofferson-esque look sported by dashing bearded dudes in
-the '80s. He took on Bill Gates and, like many, lost, before meeting his end in
-a biker bar under mysterious circumstances. He died too young, but sure as hell
-lived before he did.
+他是一位船长、企业主、持证飞行员和摩托车手。他是一名电视节目主持人，拥有80年代潇洒的大胡子帅哥所拥有的Kris Kristofferson式的外表。他与比尔-盖茨竞争，和许多人一样，他输了，然后在神秘的情况下在一个摩托车酒吧里结束了自己的生命。他死得太早，但他活过。
 
 </aside>
 
-While the first transcompiler translated one assembly language to another,
-today, most transpilers work on higher-level languages. After the viral spread
-of UNIX to machines various and sundry, there began a long tradition of
-compilers that produced C as their output language. C compilers were available
-everywhere UNIX was and produced efficient code, so targeting C was a good way
-to get your language running on a lot of architectures.
+虽然第一个反编译器将一种汇编语言翻译成另一种语言，但今天，大多数反编译器都是在高级语言上工作。在UNIX病毒性地传播到各种机器上之后，开始了一个长期的编译器传统，将C作为其输出语言。在UNIX存在的地方都有C语言编译器，并能产生高效的代码，所以针对C语言是让你的语言在很多架构上运行的好方法。
 
-Web browsers are the "machines" of today, and their "machine code" is
-JavaScript, so these days it seems [almost every language out there][js] has a
-compiler that targets JS since that's the <span name="js">main</span> way to get
-your code running in a browser.
+网络浏览器是当今的 "机器"，而它们的 "机器代码 "是JavaScript，所以这些天，似乎几乎每一种语言都有针对  [almost every language out there][js] 的编译器，因为这是让你的代码在浏览器中运行的<span name="js">主要</span>途径。
 
 [js]: https://github.com/jashkenas/coffeescript/wiki/list-of-languages-that-compile-to-js
 
 <aside name="js">
 
-JS used to be the *only* way to execute code in a browser. Thanks to
-[WebAssembly][], compilers now have a second, lower-level language they can
-target that runs on the web.
+JS曾经是在浏览器中执行代码的唯一方式。由于有了[WebAssembly][]，编译器现在有了第二种可以在网络上运行的较低级别的语言作为目标。
 
 [webassembly]: https://github.com/webassembly/
 
 </aside>
 
-The front end -- scanner and parser -- of a transpiler looks like other
-compilers. Then, if the source language is only a simple syntactic skin over the
-target language, it may skip analysis entirely and go straight to outputting the
-analogous syntax in the destination language.
+转译器的前端--扫描器和解析器看起来和其他编译器一样。然后，如果源语言只是目标语言的一个简单的句法皮肤，它可能会完全跳过分析，直接输出目标语言的类似句法。
 
-If the two languages are more semantically different, you'll see more of the
-typical phases of a full compiler including analysis and possibly even
-optimization. Then, when it comes to code generation, instead of outputting some
-binary language like machine code, you produce a string of grammatically correct
-source (well, destination) code in the target language.
+如果这两种语言在语义上有更多的不同，你会看到一个完整的编译器的更多典型阶段，包括分析，甚至可能是优化。然后，当涉及到代码生成时，你不是输出一些像机器码一样的二进制语言，而是在目标语言中产生一串语法正确的源码（嗯，目标语言）。
 
-Either way, you then run that resulting code through the output language's
-existing compilation pipeline, and you're good to go.
+无论哪种方式，你都可以通过输出语言现有的编译管道运行生成的代码，然后你就可以开始了。
 
-### Just-in-time compilation
+### Just-in-time compilation 即时编撰
 
-This last one is less a shortcut and more a dangerous alpine scramble best
-reserved for experts. The fastest way to execute code is by compiling it to
-machine code, but you might not know what architecture your end user's machine
-supports. What to do?
+这最后一条与其说是捷径，不如说是危险的高山攀登，最好留给专家。执行代码的最快方式是将其编译为机器代码，但你可能不知道你的最终用户的机器支持什么架构。该怎么做呢？
 
-You can do the same thing that the HotSpot Java Virtual Machine (JVM),
-Microsoft's Common Language Runtime (CLR), and most JavaScript interpreters do.
-On the end user's machine, when the program is loaded -- either from source in
-the case of JS, or platform-independent bytecode for the JVM and CLR -- you
-compile it to native code for the architecture their computer supports.
-Naturally enough, this is called **just-in-time compilation**. Most hackers just
-say "JIT", pronounced like it rhymes with "fit".
+你可以做HotSpot Java虚拟机（JVM）、微软的通用语言运行时（CLR）和大多数JavaScript解释器所做的同样事情。在终端用户的机器上，当程序被加载时--无论是从JS的源代码，还是JVM和CLR的平台独立字节码--你都要把它编译成他们计算机支持的架构的本地代码。很自然地，这被称为即时编译( **just-in-time compilation** )。大多数黑客只是说 "JIT"，读起来好像和 "fit "押韵。
 
-The most sophisticated JITs insert profiling hooks into the generated code to
-see which regions are most performance critical and what kind of data is flowing
-through them. Then, over time, they will automatically recompile those <span
-name="hot">hot spots</span> with more advanced optimizations.
+最复杂的JIT在生成的代码中插入剖析钩子，以查看哪些区域是最关键的性能，以及什么样的数据正在流经它们。然后，随着时间的推移，它们会自动用更先进的优化方法重新编译这些<span name="hot">热点</span>区域。
 
 <aside name="hot">
 
-This is, of course, exactly where the HotSpot JVM gets its name.
+当然，这正是HotSpot JVM的名字来源
 
 </aside>
 
-## Compilers and Interpreters
+## 编译器和解释器
 
-Now that I've stuffed your head with a dictionary's worth of programming
-language jargon, we can finally address a question that's plagued coders since
-time immemorial: What's the difference between a compiler and an interpreter?
+现在，我已经用字典里的编程语言术语塞满了你的脑袋，我们终于可以解决一个自古以来一直困扰着编码者的问题。编译器和解释器之间有什么区别？
 
-It turns out this is like asking the difference between a fruit and a vegetable.
-That seems like a binary either-or choice, but actually "fruit" is a *botanical*
-term and "vegetable" is *culinary*. One does not strictly imply the negation of
-the other. There are fruits that aren't vegetables (apples) and vegetables that
-aren't fruits (carrots), but also edible plants that are both fruits *and*
-vegetables, like tomatoes.
+事实证明，这就像问水果和蔬菜的区别一样。这似乎是一个二选一的选择，但实际上 "水果 "是一个植物学术语，而 "蔬菜 "是烹饪术语。一个并不严格意味着对另一个的否定。有的水果不是蔬菜（苹果），有的蔬菜不是水果（胡萝卜），但也有既是水果又是蔬菜的可食用植物，如西红柿。
 
 <span name="veg"></span>
 
@@ -565,61 +290,33 @@ vegetables, like tomatoes.
 
 <aside name="veg">
 
-Peanuts (which are not even nuts) and cereals like wheat are actually fruit, but
-I got this drawing wrong. What can I say, I'm a software engineer, not a
-botanist. I should probably erase the little peanut guy, but he's so cute that I
-can't bear to.
+花生（甚至不是坚果）和小麦等谷物实际上是水果，但我把这个图画错了。我能说什么呢，我是个软件工程师，不是植物学家。我也许应该把这个花生小家伙擦掉，但他太可爱了，我不忍心擦掉。
 
-Now *pine nuts*, on the other hand, are plant-based foods that are neither
-fruits nor vegetables. At least as far as I can tell.
+现在，松子，另一方面，是基于植物的食物，既不是水果也不是蔬菜。至少在我看来是这样。
 
 </aside>
 
-So, back to languages:
+所以，回到语言上。
 
-* **Compiling** is an *implementation technique* that involves translating a
-  source language to some other -- usually lower-level -- form. When you
-  generate bytecode or machine code, you are compiling. When you transpile to
-  another high-level language, you are compiling too.
+* **编译** 是一种 *实现技术* ，它涉及到将源语言翻译成某种其他的--通常是较低级别的--形式。当你生成字节码或机器码时，你就是在进行编译。当你转译成另一种高级语言时，你也在进行编译。
 
-* When we say a language implementation "is a **compiler**", we mean it
-  translates source code to some other form but doesn't execute it. The user has
-  to take the resulting output and run it themselves.
+* 当我们说一个语言实现 "是一个编译器 "时，我们的意思是它把源代码翻译成其他形式，但不执行它。用户必须拿着输出的结果，自己去运行它。
 
-* Conversely, when we say an implementation "is an **interpreter**", we mean it
-  takes in source code and executes it immediately. It runs programs "from
-  source".
+* 相反，当我们说一个实现 "是一个解释器 "时，我们的意思是它接受源代码并立即执行它。它 "从源头 "运行程序。
 
-Like apples and oranges, some implementations are clearly compilers and *not*
-interpreters. GCC and Clang take your C code and compile it to machine code. An
-end user runs that executable directly and may never even know which tool was
-used to compile it. So those are *compilers* for C.
+就像苹果和桔子一样，有些实现显然是编译器而不是解释器。GCC和Clang将你的C语言代码编译成机器代码。终端用户直接运行这个可执行文件，甚至可能不知道是用哪个工具来编译的。所以这些是C语言的编译器。
 
-In older versions of Matz's canonical implementation of Ruby, the user ran Ruby
-from source. The implementation parsed it and executed it directly by traversing
-the syntax tree. No other translation occurred, either internally or in any
-user-visible form. So this was definitely an *interpreter* for Ruby.
+在Matz的Ruby经典实现的旧版本中，用户从源代码运行Ruby。该实现解析了它，并通过遍历语法树直接执行它。没有其他翻译发生，无论是在内部还是在任何用户可见的形式。所以这绝对是一个Ruby的解释器。
 
-But what of CPython? When you run your Python program using it, the code is
-parsed and converted to an internal bytecode format, which is then executed
-inside the VM. From the user's perspective, this is clearly an interpreter --
-they run their program from source. But if you look under CPython's scaly skin,
-you'll see that there is definitely some compiling going on.
+但是CPython呢？当你用它运行你的Python程序时，代码被解析并转换为内部字节码格式，然后在虚拟机内执行。从用户的角度来看，这显然是一个解释器--他们从源代码中运行他们的程序。但如果你看一下CPython的鳞片状皮肤，你会发现肯定有一些编译工作在进行。
 
-The answer is that it is <span name="go">both</span>. CPython *is* an
-interpreter, and it *has* a compiler. In practice, most scripting languages work
-this way, as you can see:
+答案是，它<span name="go">两者都是</span>。CPython是一个解释器，它也有一个编译器。在实践中，大多数脚本语言都是这样工作的，你可以看到。
 
 <aside name="go">
 
-The [Go tool][go] is even more of a horticultural curiosity. If you run `go
-build`, it compiles your Go source code to machine code and stops. If you type
-`go run`, it does that, then immediately executes the generated executable.
-
-So `go` *is* a compiler (you can use it as a tool to compile code without
-running it), *is* an interpreter (you can invoke it to immediately run a program
-from source), and also *has* a compiler (when you use it as an interpreter, it
-is still compiling internally).
+ [Go tool][go]更是一种园艺上的好奇心。如果你运行 `go build` ，它会将你的Go源代码编译成机器代码并停止。如果你输入 `go run` ，它就会这么做，然后立即执行生成的可执行文件。
+ 
+ 所以 `go` 是一个编译器（你可以把它作为一个工具来编译代码，而不运行它），是一个解释器（你可以调用它来立即运行一个源程序），也有一个编译器（当你把它作为一个解释器使用时，它仍然在进行内部编译）。
 
 [go tool]: https://golang.org/cmd/go/
 
@@ -627,44 +324,30 @@ is still compiling internally).
 
 <img src="image/a-map-of-the-territory/venn.png" alt="A Venn diagram of compilers and interpreters" />
 
-That overlapping region in the center is where our second interpreter lives too,
-since it internally compiles to bytecode. So while this book is nominally about
-interpreters, we'll cover some compilation too.
+中间重叠的区域也是我们的第二个解释器所在的地方，因为它在内部编译成字节码。所以尽管这本书名义上是关于解释器的，我们也会涉及一些编译。
 
-## Our Journey
+## 我们的旅程
 
-That's a lot to take in all at once. Don't worry. This isn't the chapter where
-you're expected to *understand* all of these pieces and parts. I just want you
-to know that they are out there and roughly how they fit together.
+一下子要接受的东西太多了。不要担心。这一章并不期望你理解所有这些碎片和部分。我只是想让你知道它们就在那里，并大致了解它们是如何结合在一起的。
 
-This map should serve you well as you explore the territory beyond the guided
-path we take in this book. I want to leave you yearning to strike out on your
-own and wander all over that mountain.
+当你在本书的指导下探索其他领域时，这张地图应该对你有帮助。我想让你渴望自己出击，在那座山上到处游荡。
 
-But, for now, it's time for our own journey to begin. Tighten your bootlaces,
-cinch up your pack, and come along. From <span name="here">here</span> on out,
-all you need to focus on is the path in front of you.
+但是，现在，是时候开始我们自己的旅程了。系紧你的鞋带，收紧你的背包，然后一起走吧。从span name="here">现在</span>开始，你所需要关注的是你面前的道路。
 
 <aside name="here">
 
-Henceforth, I promise to tone down the whole mountain metaphor thing.
+从今往后，我保证淡化整个山体隐喻的事情。
 
 </aside>
 
 <div class="challenges">
 
-## Challenges
+## 挑战
 
-1. Pick an open source implementation of a language you like. Download the
-   source code and poke around in it. Try to find the code that implements the
-   scanner and parser. Are they handwritten, or generated using tools like
-   Lex and Yacc? (`.l` or `.y` files usually imply the latter.)
+1. 选择一种你喜欢的语言的开源实现。下载源代码并在其中探索。尝试找到实现扫描器和解析器的代码。它们是手写的，还是使用Lex和Yacc等工具生成的？(`.I` 或者 `.y` 文件通常暗示的是后者。)
 
-1. Just-in-time compilation tends to be the fastest way to implement dynamically
-   typed languages, but not all of them use it. What reasons are there to *not*
-   JIT?
+1. 即时编译往往是实现动态类型语言的最快方式，但并不是所有的语言都使用它。有什么理由不采用JIT呢？
 
-1. Most Lisp implementations that compile to C also contain an interpreter that
-   lets them execute Lisp code on the fly as well. Why?
+1. 大多数编译成C语言的Lisp实现也包含一个解释器，让它们也能在运行中执行Lisp代码。为什么呢？
 
 </div>

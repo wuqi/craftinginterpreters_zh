@@ -1,14 +1,12 @@
-This is the repo used for the in-progress book "[Crafting Interpreters][]". It
-contains the Markdown text of the book, full implementations of both
-interpreters, as well as the build system to weave the two together into the
-final site.
+这是正在进行的"[Crafting Interpreters][]"一书所使用的repo。它包含了该书的Markdown文本，两个解释器的完整实现，以及将两者结合起来的构建系统。解释器的完整实现，以及构建系统，以便将两者结合起来，形成一个 最终网站。
+
 
 [crafting interpreters]: http://craftinginterpreters.com
 
 If you find an error or have a suggestion, please do file an issue here. Thank
 you!
 
-## Contributing
+## Contributing 
 
 One of the absolute best things about writing a book online and putting it out
 there before it's done is that people like you have been kind enough to give me

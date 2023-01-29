@@ -1,37 +1,28 @@
-> What nicer thing can you do for somebody than make them breakfast?
+> 除了给别人做早餐，你还能为他们做什么更好的事情呢?
 >
 > <cite>Anthony Bourdain</cite>
 
-We'll spend the rest of this book illuminating every dark and sundry corner of
-the Lox language, but it seems cruel to have you immediately start grinding out
-code for the interpreter without at least a glimpse of what we're going to end
-up with.
+我们将用本书的其余部分来阐明Lox语言的每一个黑暗和杂乱的角落，但让你立即开始为解释器编写代码，而不至少看一看我们最终会得到什么，这似乎很残酷。
 
-At the same time, I don't want to drag you through reams of language lawyering
-and specification-ese before you get to touch your text <span
-name="home">editor</span>. So this will be a gentle, friendly introduction to
-Lox. It will leave out a lot of details and edge cases. We've got plenty of time
-for those later.
+同时，我也不想在你接触文本<span name="home">编辑器</span>之前，就把你拖入成堆的语言律条和规范术语中。因此，这将是对Lox的一个温和、友好的介绍。它将撇开很多细节和边缘案例。我们以后有足够的时间来了解这些。
 
 <aside name="home">
 
-A tutorial isn't very fun if you can't try the code out yourself. Alas, you
-don't have a Lox interpreter yet, since you haven't built one!
+如果你不能亲自尝试代码，那么教程就没有什么意思了。唉，你还没有一个Lox解释器，因为你还没有建立一个Lox解释器!
 
-Fear not. You can use [mine][repo].
+别担心。你可以使用[我的库][repo]
 
 [repo]: https://github.com/munificent/craftinginterpreters
 
 </aside>
 
-## Hello, Lox
+## 你好，Lox
 
-Here's your very first taste of <span name="salmon">Lox</span>:
+这是你第一次尝到<span name="salmon">Lox</span>的滋味 :
 
 <aside name="salmon">
 
-Your first taste of Lox, the language, that is. I don't know if you've ever had
-the cured, cold-smoked salmon before. If not, give it a try too.
+你第一次品尝Lox，语言，就是这样。我不知道你以前是否吃过这种腌制、冷熏的三文鱼。如果没有，也请你试一试。
 
 </aside>
 
@@ -40,168 +31,101 @@ the cured, cold-smoked salmon before. If not, give it a try too.
 print "Hello, world!";
 ```
 
-As that `//` line comment and the trailing semicolon imply, Lox's syntax is a
-member of the C family. (There are no parentheses around the string because
-`print` is a built-in statement, and not a library function.)
+正如那个 `//` 行注释和尾部的分号所暗示的，Lox的语法是C家族的一员。(字符串周围没有括号，因为 `print` 是一个内置语句，而不是一个库函数)。
 
-Now, I won't claim that <span name="c">C</span> has a *great* syntax. If we
-wanted something elegant, we'd probably mimic Pascal or Smalltalk. If we wanted
-to go full Scandinavian-furniture-minimalism, we'd do a Scheme. Those all have
-their virtues.
+现在，我不会声称<span name="c">C</span>语言有一个伟大的语法。如果我们想要优雅的东西，我们可能会模仿Pascal或Smalltalk。如果我们想完全采用北欧极简装修风格的话，我们会采用Scheme。他们各有优劣。
 
 <aside name="c">
 
-I'm surely biased, but I think Lox's syntax is pretty clean. C's most egregious
-grammar problems are around types. Dennis Ritchie had this idea called
-"[declaration reflects use][use]", where variable declarations mirror the
-operations you would have to perform on the variable to get to a value of the
-base type. Clever idea, but I don't think it worked out great in practice.
+我肯定有偏见，但我认为Lox的语法是相当干净的。C语言最令人震惊的语法问题是围绕着类型。Dennis Ritchie有一个叫做 [declaration reflects use][use] 的想法，在这里，变量的声明反映了你必须对变量进行的操作，以获得一个基本类型的值。这个想法很聪明，但我认为它在实践中的效果并不好。
 
 [use]: http://softwareengineering.stackexchange.com/questions/117024/why-was-the-c-syntax-for-arrays-pointers-and-functions-designed-this-way
 
-Lox doesn't have static types, so we avoid that.
+Lox没有静态类型，所以我们避免了这一点。
 
 </aside>
 
-What C-like syntax has instead is something you'll often find more valuable
-in a language: *familiarity*. I know you are already comfortable with that style
-because the two languages we'll be using to *implement* Lox -- Java and C --
-also inherit it. Using a similar syntax for Lox gives you one less thing to
-learn.
+类似C语言的语法所具有的反而是你经常会发现在一种语言中更有价值的东西：熟悉性。我知道你对这种风格已经很熟悉了，因为我们用来实现Lox的两种语言--Java和C--也都继承了这种风格。在Lox中使用类似的语法，可以让你少学一点东西。
 
-## A High-Level Language
+## 高级语言
 
-While this book ended up bigger than I was hoping, it's still not big enough to
-fit a huge language like Java in it. In order to fit two complete
-implementations of Lox in these pages, Lox itself has to be pretty compact.
+虽然这本书最终比我希望的要厚，但它仍然不够厚，不能把像Java这样庞大的语言装进去。为了在这几页中容纳两个完整的Lox的实现，Lox本身必须相当紧凑。
 
-When I think of languages that are small but useful, what comes to mind are
-high-level "scripting" languages like <span name="js">JavaScript</span>, Scheme,
-and Lua. Of those three, Lox looks most like JavaScript, mainly because most
-C-syntax languages do. As we'll learn later, Lox's approach to scoping hews
-closely to Scheme. The C flavor of Lox we'll build in [Part III][] is heavily
-indebted to Lua's clean, efficient implementation.
+当我想到那些小而有用的语言时，我想到的是高级 "脚本 "语言，如<span name="js">JavaScript</span> 、Scheme和Lua。在这三种语言中，Lox看起来最像JavaScript，主要是因为大多数C-语法语言都是如此。稍后我们将了解到，Lox的范围界定方法与Scheme非常接近。我们将在[Part III][]建立的Lox的C语言实现，在很大程度上得益于Lua的简洁、高效的实现。
 
 [part iii]: a-bytecode-virtual-machine.html
 
 <aside name="js">
 
-Now that JavaScript has taken over the world and is used to build ginormous
-applications, it's hard to think of it as a "little scripting language". But
-Brendan Eich hacked the first JS interpreter into Netscape Navigator in *ten
-days* to make buttons animate on web pages. JavaScript has grown up since then,
-but it was once a cute little language.
+现在，JavaScript已经占领了世界，并被用来建立巨大的应用程序，很难再把它看作是一种 "小脚本语言"。但是Brendan Eich在十天内将第一个JS解释器黑进了Netscape Navigator，使网页上的按钮变成了动画。从那时起，JavaScript已经长大了，但它曾经是一种可爱的小语言。
 
-Because Eich slapped JS together with roughly the same raw materials and time as
-an episode of MacGyver, it has some weird semantic corners where the duct tape
-and paper clips show through. Things like variable hoisting, dynamically bound
-`this`, holes in arrays, and implicit conversions.
+因为Eich用与一季《百战天龙》大致相同的原材料和时间将JS拼凑在一起，所以它有一些奇怪的语义角落，在那里，胶带和回形针会露出来。像变量提升、动态绑定 `this` 、数组中的漏洞和隐式转换。
 
-I had the luxury of taking my time on Lox, so it should be a little cleaner.
+我在Lox上花了不少时间，所以它应该更干净一些。
 
 </aside>
 
-Lox shares two other aspects with those three languages:
+Lox与这三种语言还有两个共同点:
 
-### Dynamic typing
+### 动态类型
 
-Lox is dynamically typed. Variables can store values of any type, and a single
-variable can even store values of different types at different times. If you try
-to perform an operation on values of the wrong type -- say, dividing a number by
-a string -- then the error is detected and reported at runtime.
+Lox是动态类型语言。变量可以存储任何类型的值，单个变量甚至可以在不同时间存储不同类型的值。如果你试图对错误类型的值进行操作--例如，用一个数字除以一个字符串--那么这个错误会在运行时才被检测到并报告。
 
-There are plenty of reasons to like <span name="static">static</span> types, but
-they don't outweigh the pragmatic reasons to pick dynamic types for Lox. A
-static type system is a ton of work to learn and implement. Skipping it gives
-you a simpler language and a shorter book. We'll get our interpreter up and
-executing bits of code sooner if we defer our type checking to runtime.
+<span name="static">静态</span>类型有很多优点，但它们没有一个比实用性更重要。静态类型系统需要大量工作去学习和实现。跳过它，你会得到一个更简单的语言和一本更薄的书。如果我们把类型检查推迟到运行时，我们就能更快地启动解释器并执行一些代码。
 
 <aside name="static">
 
-After all, the two languages we'll be using to *implement* Lox are both
-statically typed.
+毕竟，我们将用来实现Lox的两种语言都是静态类型的。
 
 </aside>
 
-### Automatic memory management
+### 自动内存管理
 
-High-level languages exist to eliminate error-prone, low-level drudgery, and what
-could be more tedious than manually managing the allocation and freeing of
-storage? No one rises and greets the morning sun with, "I can't wait to figure
-out the correct place to call `free()` for every byte of memory I allocate
-today!"
+高级语言的存在是为了消除容易出错的、低层次的繁琐工作，还有什么比手动管理存储的分配和释放更繁琐的呢？没有人在起床后迎接早晨的太阳，"我迫不及待地想知道我今天分配的每一个字节的内存的正确位置，以调用 `free()` ！"
 
-There are two main <span name="gc">techniques</span> for managing memory:
-**reference counting** and **tracing garbage collection** (usually just called
-**garbage collection** or **GC**). Ref counters are much simpler to implement --
-I think that's why Perl, PHP, and Python all started out using them. But, over
-time, the limitations of ref counting become too troublesome. All of those
-languages eventually ended up adding a full tracing GC, or at least enough of
-one to clean up object cycles.
+有两种管理内存的主要<span name="gc">技术</span>：**引用计数** 和 **追踪式垃圾回收** （通常只称为 **垃圾回收** 或 **GC** ）。引用计数的实现要简单得多，我想这就是为什么Perl、PHP和Python一开始都使用它们。但是，随着时间的推移，参考计数的限制变得太麻烦了。所有这些语言最终都增加了一个完整的追踪式GC，或者至少是足以清理对象周期的GC。
 
 <aside name="gc">
 
-In practice, ref counting and tracing are more ends of a continuum than
-opposing sides. Most ref counting systems end up doing some tracing to handle
-cycles, and the write barriers of a generational collector look a bit like
-retain calls if you squint.
+在实践中，参考计数和GC更像是一个连续体的两端，而不是对立面。大多数参考计数系统最终都会做一些跟踪来处理循环，如果你仔细看的话，生成GC的写障碍看起来有点像保留调用。
 
-For lots more on this, see "[A Unified Theory of Garbage Collection][gc]" (PDF).
+关于这个问题的更多信息，请参考 "[A Unified Theory of Garbage Collection][gc]"（PDF）。
 
 [gc]: https://researcher.watson.ibm.com/researcher/files/us-bacon/Bacon04Unified.pdf
 
 </aside>
 
-Tracing garbage collection has a fearsome reputation. It *is* a little harrowing
-working at the level of raw memory. Debugging a GC can sometimes leave you
-seeing hex dumps in your dreams. But, remember, this book is about dispelling
-magic and slaying those monsters, so we *are* going to write our own garbage
-collector. I think you'll find the algorithm is quite simple and a lot of fun to
-implement.
+追踪式垃圾回收有一个可怕的名声。在原始内存的层面上工作有点令人痛苦。调试GC有时会让你在梦中看到十六进制转储。但是，请记住，这本书是关于消除魔法和杀死那些怪物的，所以我们要编写自己的垃圾回收器。我想你会发现这个算法很简单，实现起来很有趣。
 
-## Data Types
+## 数据类型
 
-In Lox's little universe, the atoms that make up all matter are the built-in
-data types. There are only a few:
+在Lox的小宇宙中，构成所有物质的原子都是内置的数据类型。只有几个:
 
-*   **<span name="bool">Booleans</span>.** You can't code without logic and you
-    can't logic without Boolean values. "True" and "false", the yin and yang of
-    software. Unlike some ancient languages that repurpose an existing type to
-    represent truth and falsehood, Lox has a dedicated Boolean type. We may
-    be roughing it on this expedition, but we aren't *savages*.
+*   **<span name="bool">布尔值</span>.** 没有逻辑就没有代码，没有布尔值就没有逻辑。"真 "和 "假"，是软件的阴和阳。不像一些古老的语言，重新利用现有的类型来表示真和假，Lox有一个专门的布尔类型。我们在这次探险中可能是粗暴的，但我们不是野蛮人。
 
     <aside name="bool">
 
-    Boolean variables are the only data type in Lox named after a person, George
-    Boole, which is why "Boolean" is capitalized. He died in 1864, nearly a
-    century before digital computers turned his algebra into electricity. I
-    wonder what he'd think to see his name all over billions of lines of Java
-    code.
+    Boolean变量是Lox中唯一以乔治·布尔命名的数据类型，这就是为什么“Boolean”是大写的。他于1864年去世，比数字计算机将他的代数转化为电学早了近一个世纪。我想知道他看到自己的名字出现在数十亿行Java代码中会怎么想。 
 
     </aside>
 
-    There are two Boolean values, obviously, and a literal for each one.
+    显然，下面有两个字面布尔值。
 
     ```lox
     true;  // Not false.
     false; // Not *not* false.
     ```
 
-*   **Numbers.** Lox has only one kind of number: double-precision floating
-    point. Since floating-point numbers can also represent a wide range of
-    integers, that covers a lot of territory, while keeping things simple.
+*   **Numbers.** Lox只有一种数字：双精度浮点。由于浮点数也可以代表广泛的整数，这涵盖了很多领域，同时保持了简单。
 
-    Full-featured languages have lots of syntax for numbers -- hexadecimal,
-    scientific notation, octal, all sorts of fun stuff. We'll settle for basic
-    integer and decimal literals.
+    功能齐全的语言有很多数字的语法--十六进制、科学符号、八进制，各种有趣的东西。我们将满足于基本的整数和小数字。
 
     ```lox
     1234;  // An integer.
     12.34; // A decimal number.
     ```
 
-*   **Strings.** We've already seen one string literal in the first example.
-    Like most languages, they are enclosed in double quotes.
+*   **Strings.** 我们已经在第一个例子中看到了一个字符串字面。像大多数语言一样，它们被括在双引号中。
 
     ```lox
     "I am a string";
@@ -209,39 +133,25 @@ data types. There are only a few:
     "123"; // This is a string, not a number.
     ```
 
-    As we'll see when we get to implementing them, there is quite a lot of
-    complexity hiding in that innocuous sequence of <span
-    name="char">characters</span>.
+    当我们开始实现它们时，我们会看到，在这一连串无害的<span     name="char">字符</span>中隐藏着相当多的复杂性。
 
     <aside name="char">
 
-    Even that word "character" is a trickster. Is it ASCII? Unicode? A
-    code point or a "grapheme cluster"? How are characters encoded? Is each
-    character a fixed size, or can they vary?
+    即使是 "character "这个词，也是一个骗局。它是 ASCII 的? Unicode ？一个码位还是一个 "字形簇"？字符是如何编码的？每个字符的大小是固定的，还是可以变化的？
 
     </aside>
 
-*   **Nil.** There's one last built-in value who's never invited to the party
-    but always seems to show up. It represents "no value". It's called "null" in
-    many other languages. In Lox we spell it `nil`. (When we get to implementing
-    it, that will help distinguish when we're talking about Lox's `nil` versus
-    Java or C's `null`.)
+*   **Nil.** 有一个最后的内在价值，他从未被邀请参加聚会，但似乎总是出现在这里。它代表 "无效值"。它在许多其他语言中被称为 "null"。在Lox中，我们把它拼成  `nil` 。(当我们实现它时，这将有助于区分我们在谈论Lox的  `nil` 和Java或C中的  `null` )。
 
-    There are good arguments for not having a null value in a language since
-    null pointer errors are the scourge of our industry. If we were doing a
-    statically typed language, it would be worth trying to ban it. In a
-    dynamically typed one, though, eliminating it is often more annoying
-    than having it.
+    在语言中不使用空值有很好的论据，因为空指针错误是我们行业的祸害。如果我们做的是静态类型的语言，那就值得尝试禁止它。但在动态类型的语言中，消除它往往比拥有它更令人讨厌。
 
-## Expressions
+## 表达式
 
-If built-in data types and their literals are atoms, then **expressions** must
-be the molecules. Most of these will be familiar.
+如果内置数据类型及其文字是原子，那么 **expressions** 必须是分子。其中大多数都很面熟。
 
-### Arithmetic
+### 算术运算符
 
-Lox features the basic arithmetic operators you know and love from C and other
-languages:
+Lox具有你在C语言和其他语言中熟悉和喜爱的基本算术运算符：
 
 ```lox
 add + me;
@@ -250,43 +160,31 @@ multiply * me;
 divide / me;
 ```
 
-The subexpressions on either side of the operator are **operands**. Because
-there are *two* of them, these are called **binary** operators. (It has nothing
-to do with the ones-and-zeroes use of "binary".) Because the operator is <span
-name="fixity">fixed</span> *in* the middle of the operands, these are also
-called **infix** operators (as opposed to **prefix** operators where the
-operator comes before the operands, and **postfix** where it comes after).
+操作符两边的子表达式是操作数。因为它们有两个，所以被称为二元运算符（ **binary** operators）。(这与 "**binary** "的1和0的用法无关。)因为运算符<span name="fixity">固定</span>在操作数的中间，所以这些运算符也称为 **中缀** 运算符(与运算符位于操作数之前的 **前缀** 运算符和运算符位于操作数之后的 **后缀** 运算符相反)。
 
 <aside name="fixity">
 
-There are some operators that have more than two operands and the operators are
-interleaved between them. The only one in wide usage is the "conditional" or
-"ternary" operator of C and friends:
+有一些运算符有两个以上的操作数，运算符之间是交错的。唯一被广泛使用的是C的 "条件 "或 "三元 "运算符。
 
 ```c
 condition ? thenArm : elseArm;
 ```
 
-Some call these **mixfix** operators. A few languages let you define your own
-operators and control how they are positioned -- their "fixity".
+有些人称这些为混合运算符。有一些语言允许你定义自己的运算符，并控制它们的位置--它们的 "固定性"。
 
 </aside>
 
-One arithmetic operator is actually *both* an infix and a prefix one. The `-`
-operator can also be used to negate a number.
+一个算术运算符实际上既是中缀又是前缀。运算符也可用于对数字求反。
 
 ```lox
 -negateMe;
 ```
 
-All of these operators work on numbers, and it's an error to pass any other
-types to them. The exception is the `+` operator -- you can also pass it two
-strings to concatenate them.
+所有这些操作符都处理数字，向它们传递任何其他类型都是错误的。例外是 `+` 运算符，您也可以向它传递两个字符串来连接它们。
 
-### Comparison and equality
+### 比较运算符
 
-Moving along, we have a few more operators that always return a Boolean result.
-We can compare numbers (and only numbers), using Ye Olde Comparison Operators.
+继续前进，我们还有一些总是返回布尔结果的运算符。我们可以使用古老的比较运算符来比较数字（而且只是数字）。
 
 ```lox
 less < than;
@@ -295,49 +193,44 @@ greater > than;
 greaterThan >= orEqual;
 ```
 
-We can test two values of any kind for equality or inequality.
+我们可以测试两个任何类型的值是否相等或不相等。
 
 ```lox
 1 == 2;         // false.
 "cat" != "dog"; // true.
 ```
 
-Even different types.
+甚至不同类型。
 
 ```lox
 314 == "pi"; // false.
 ```
 
-Values of different types are *never* equivalent.
+不同类型的值 *永远* 不相等。
 
 ```lox
 123 == "123"; // false.
 ```
 
-I'm generally against implicit conversions.
+我通常反对隐式转换。
 
-### Logical operators
+### 逻辑运算符
 
-The not operator, a prefix `!`, returns `false` if its operand is true, and vice
-versa.
+not操作符是前缀操作符 `！`，如果其操作数为真，则返回假，反之亦然。
 
 ```lox
 !true;  // false.
 !false; // true.
 ```
 
-The other two logical operators really are control flow constructs in the guise
-of expressions. An <span name="and">`and`</span> expression determines if two
-values are *both* true. It returns the left operand if it's false, or the
-right operand otherwise.
+另外两个逻辑运算符实际上是以表达式为幌子的控制流结构。<span name="and">`and`</span> 表达式决定了两个值是否都是真的。如果是假的，它就返回左边的操作数，否则就返回右边的操作数。
 
 ```lox
 true and false; // false.
 true and true;  // true.
 ```
 
-And an `or` expression determines if *either* of two values (or both) are true.
-It returns the left operand if it is true and the right operand otherwise.
+ `or` 表达式决定两个值中的任何一个（或两个）是否为真。如果是真的，它返回左边的操作数，否则返回右边的操作数。
 
 ```lox
 false or false; // false.
@@ -346,62 +239,41 @@ true or false;  // true.
 
 <aside name="and">
 
-I used `and` and `or` for these instead of `&&` and `||` because Lox doesn't use
-`&` and `|` for bitwise operators. It felt weird to introduce the
-double-character forms without the single-character ones.
+我用 `and` 和 `or` 来代替 `&&` 和 `||` ，因为Lox不使用 `&` 和 `|` 来表示位操作符。在没有单字符的情况下介绍双字符形式感觉很奇怪。
 
-I also kind of like using words for these since they are really control flow
-structures and not simple operators.
+我也喜欢用字来表示这些，因为它们是真正的控制流结构，而不是简单的运算符。
 
 </aside>
 
-The reason `and` and `or` are like control flow structures is that they
-**short-circuit**. Not only does `and` return the left operand if it is false,
-it doesn't even *evaluate* the right one in that case. Conversely
-(contrapositively?), if the left operand of an `or` is true, the right is
-skipped.
+`and` 和 `or` 像控制流结构一样的原因是它们是 **短路** 的。如果左边的操作数是假的， `and` 不仅会返回，而且在这种情况下它甚至不会运算右边的操作数。类似的，如果 `or` 的左边操作数为真，右边操作数就会被跳过。
 
-### Precedence and grouping
+### 优先级和分组
 
-All of these operators have the same precedence and associativity that you'd
-expect coming from C. (When we get to parsing, we'll get *way* more precise
-about that.) In cases where the precedence isn't what you want, you can use `()`
-to group stuff.
+所有这些操作符都有相同的优先级和结合律，你可以从c语言中得到。(当我们开始解析时，我们会得到更精确的结果。)如果优先级不是您想要的，您可以使用 `()` 对内容进行分组。
 
 ```lox
 var average = (min + max) / 2;
 ```
 
-Since they aren't very technically interesting, I've cut the remainder of the
-typical operator menagerie out of our little language. No bitwise, shift,
-modulo, or conditional operators. I'm not grading you, but you will get bonus
-points in my heart if you augment your own implementation of Lox with them.
+由于它们在技术上不是很有趣，我已经从我们的小语言中删掉了剩下的典型操作符。没有按位、移位、模或条件运算符。我不是在给你打分，但如果你用它们来增强自己的Lox实现，你会在我心中得到加分。
 
-Those are the expression forms (except for a couple related to specific features
-that we'll get to later), so let's move up a level.
+这些是表达形式（除了与我们稍后将讨论的特定功能相关的一些），所以让我们向上移动一个级别。
 
 ## Statements
 
-Now we're at statements. Where an expression's main job is to produce a *value*,
-a statement's job is to produce an *effect*. Since, by definition, statements
-don't evaluate to a value, to be useful they have to otherwise change the world
-in some way -- usually modifying some state, reading input, or producing output.
+现在我们来看看语句。表达式的主要工作是产生一个值，而语句的工作是产生一个效果。因为根据定义，语句的计算结果不是一个值，为了有用，它们必须以某种方式改变世界--通常是修改一些状态，读取输入，或产生输出。
 
-You've seen a couple of kinds of statements already. The first one was:
+你已经看到了几种类型的语句。第一种是:
 
 ```lox
 print "Hello, world!";
 ```
 
-A <span name="print">`print` statement</span> evaluates a single expression
-and displays the result to the user. You've also seen some statements like:
+ <span name="print">`print` statement</span> 语句计算单个表达式，并向用户显示结果。您还看到了一些语句，如:
 
 <aside name="print">
 
-Baking `print` into the language instead of just making it a core library
-function is a hack. But it's a *useful* hack for us: it means our in-progress
-interpreter can start producing output before we've implemented all of the
-machinery required to define functions, look them up by name, and call them.
+在语言中加入 `print` ，而不是将其作为核心库函数，是一种黑客行为。但它对我们来说是一个 *有用* 的技巧：它意味着我们正在进行的解释器可以在我们实现所有定义函数、按名称查找和调用它们所需的机器之前就开始产生输出。
 
 </aside>
 
@@ -409,12 +281,9 @@ machinery required to define functions, look them up by name, and call them.
 "some expression";
 ```
 
-An expression followed by a semicolon (`;`) promotes the expression to
-statement-hood. This is called (imaginatively enough), an **expression
-statement**.
+后跟分号(`;`) 将表达式提升为语句。这被称为(足够想象)，一个 **表达声明** 。
 
-If you want to pack a series of statements where a single one is expected, you
-can wrap them up in a **block**.
+如果你想把一系列的语句打包在一个单独的语句中，你可以把它们打包在一个 **块** 中。
 
 ```lox
 {
@@ -423,18 +292,15 @@ can wrap them up in a **block**.
 }
 ```
 
-Blocks also affect scoping, which leads us to the next section...
+块也会影响作用域，这将引导我们进入下一节...
 
-## Variables
+## 变量
 
-You declare variables using `var` statements. If you <span
-name="omit">omit</span> the initializer, the variable's value defaults to `nil`.
+使用 `var` 语句声明变量。如果 <span name="omit">省略</span> 初始化器，变量值默认为 `nil` 。
 
 <aside name="omit">
 
-This is one of those cases where not having `nil` and forcing every variable to
-be initialized to some value would be more annoying than dealing with `nil`
-itself.
+在这种情况下，不使用“nil”并强制将每个变量初始化为某个值将比使用“nill”本身更令人讨厌。
 
 </aside>
 
@@ -443,7 +309,7 @@ var imAVariable = "here is my value";
 var iAmNil;
 ```
 
-Once declared, you can, naturally, access and assign a variable using its name.
+一旦声明了，你就可以很自然地使用它的名字来访问和赋值一个变量。
 
 <span name="breakfast"></span>
 
@@ -456,35 +322,25 @@ print breakfast; // "beignets".
 
 <aside name="breakfast">
 
-Can you tell that I tend to work on this book in the morning before I've had
-anything to eat?
+你能看出我倾向于在早上吃东西之前就开始写这本书吗？
 
 </aside>
 
-I won't get into the rules for variable scope here, because we're going to spend
-a surprising amount of time in later chapters mapping every square inch of the
-rules. In most cases, it works like you would expect coming from C or Java.
+我不会在这里讨论变量作用域的规则，因为在后面的章节中，我们将会花费大量的时间来描述每一个规则。在大多数情况下，它的工作方式就像你从C或Java中所期望的那样。
 
-## Control Flow
+## 控制流
 
-It's hard to write <span name="flow">useful</span> programs if you can't skip
-some code or execute some more than once. That means control flow. In addition
-to the logical operators we already covered, Lox lifts three statements straight
-from C.
+如果不能跳过一些代码或者多次执行一些代码，就很难写出<span name="flow">有用的</span>程序。这意味着控制流程。除了我们已经讨论过的逻辑操作符，Lox直接从c语言中提取了三个语句。
 
 <aside name="flow">
 
-We already have `and` and `or` for branching, and we *could* use recursion to
-repeat code, so that's theoretically sufficient. It would be pretty awkward to
-program that way in an imperative-styled language, though.
+我们已经有了用于分支的 `and` 和 `or` ，而且我们可以使用递归来重复代码，所以理论上这就足够了。不过，在一种命令式语言中这样编程会很尴尬的。
 
-Scheme, on the other hand, has no built-in looping constructs. It *does* rely on
-recursion for repetition. Smalltalk has no built-in branching constructs, and
-relies on dynamic dispatch for selectively executing code.
+另一方面，Scheme没有内置的循环结构。它确实依靠递归来实现重复。Smalltalk没有内置的分支结构，而是依靠动态调度来选择性地执行代码。
 
 </aside>
 
-An `if` statement executes one of two statements based on some condition.
+ `if` 语句根据某种条件执行两条语句中的一条。
 
 ```lox
 if (condition) {
@@ -494,8 +350,7 @@ if (condition) {
 }
 ```
 
-A `while` <span name="do">loop</span> executes the body repeatedly as long as
-the condition expression evaluates to true.
+只要条件表达式的计算结果为true，`while` <span name="do">循环</span> 就会重复执行主体。
 
 ```lox
 var a = 1;
@@ -507,13 +362,11 @@ while (a < 10) {
 
 <aside name="do">
 
-I left `do while` loops out of Lox because they aren't that common and wouldn't
-teach you anything that you won't already learn from `while`. Go ahead and add
-it to your implementation if it makes you happy. It's your party.
+我没有在Lox中实现 `do while` 循环，因为它们并不常见，而且不会教你任何你从  `while` 中学不到的东西。如果你高兴的话，可以把它添加到你的实现中去。这是你的party。
 
 </aside>
 
-Finally, we have `for` loops.
+最后，我们有 `for` 循环。
 
 ```lox
 for (var a = 1; a < 10; a = a + 1) {
@@ -521,46 +374,38 @@ for (var a = 1; a < 10; a = a + 1) {
 }
 ```
 
-This loop does the same thing as the previous `while` loop. Most modern
-languages also have some sort of <span name="foreach">`for-in`</span> or
-`foreach` loop for explicitly iterating over various sequence types. In a real
-language, that's nicer than the crude C-style `for` loop we got here. Lox keeps
-it basic.
+这个循环与前一个 `while` 循环做相同的事情。大多数现代语言还具有某种<span name="foreach">`for-in`</span> 或 `foreach` 循环，用于显式迭代各种序列类型。在真实的语言中，这比我们在这里得到的粗糙的 C 风格 `for` 循环要好。Lox只保留最基础的实现。
 
 <aside name="foreach">
 
-This is a concession I made because of how the implementation is split across
-chapters. A `for-in` loop needs some sort of dynamic dispatch in the iterator
-protocol to handle different kinds of sequences, but we don't get that until
-after we're done with control flow. We could circle back and add `for-in` loops
-later, but I didn't think doing so would teach you anything super interesting.
+这是我做出的一个让步，因为实现方式是跨章节的。一个 `for-in` 循环需要迭代器协议中的某种动态调度来处理不同种类的序列，但我们在完成控制流之后才会得到这个。我们可以回过头来，在后面添加 `for-in` 循环，但我认为这样做不会让你学到什么超级有趣的东西。
 
 </aside>
 
-## Functions
+## 函数
 
-A function call expression looks the same as it does in C.
+函数调用表达式看起来和c语言中的一样。
 
 ```lox
 makeBreakfast(bacon, eggs, toast);
 ```
 
-You can also call a function without passing anything to it.
+你也可以调用一个函数而不传递任何东西给它。
 
 ```lox
 makeBreakfast();
 ```
 
-Unlike in, say, Ruby, the parentheses are mandatory in this case. If you leave them
-off, the name doesn't *call* the function, it just refers to it.
+与Ruby不同，在这种情况下，括号是必需的。如果不使用它们，名称不会 *调用* 函数，它只是引用它。
+
+如果你不能定义你自己的函数，那么一种语言就算不上有趣。在Lox中，你可以用 <span name="fun">`fun`</span>关键字实现。
 
 A language isn't very fun if you can't define your own functions. In Lox, you do
 that with <span name="fun">`fun`</span>.
 
 <aside name="fun">
 
-I've seen languages that use `fn`, `fun`, `func`, and `function`. I'm still
-hoping to discover a `funct`, `functi`, or `functio` somewhere.
+我见过其他语言有使用 `fn`, `fun`, `func`, 和 `function` 做关键字的. 我还是希望能在某个地方找到 `funct`, `functi`, 或者 `functio` 做为函数的关键字. 
 
 </aside>
 
@@ -570,34 +415,21 @@ fun printSum(a, b) {
 }
 ```
 
-Now's a good time to clarify some <span name="define">terminology</span>. Some
-people throw around "parameter" and "argument" like they are interchangeable
-and, to many, they are. We're going to spend a lot of time splitting the finest
-of downy hairs around semantics, so let's sharpen our words. From here on out:
+现在是澄清一些<span name="define">术语</span>的好时机。有些人认为 `parameter` 和 `argument` 是可以互换的，对许多人来说，它们是可以互换的。我们将花很多时间来剖析语义，所以让我们用词更尖锐。从现在开始: 
 
-*   An **argument** is an actual value you pass to a function when you call it.
-    So a function *call* has an *argument* list. Sometimes you hear **actual
-    parameter** used for these.
+*   **argument** 是调用函数时传递给函数的实际值。所以函数调用有一个实参列表( `argument list` )。有时称之为实参 **actual parameter** 。
 
-*   A **parameter** is a variable that holds the value of the argument inside
-    the body of the function. Thus, a function *declaration* has a *parameter*
-    list. Others call these **formal parameters** or simply **formals**.
+*    `Parameter` 是一个变量，它在函数体中保存参数的值。因此，函数声明有一个形参列表( `parameter list` )。被称之为形参  **formal parameters** ,或者 **formals** 。
 
 <aside name="define">
 
-Speaking of terminology, some statically typed languages like C make a
-distinction between *declaring* a function and *defining* it. A declaration
-binds the function's type to its name so that calls can be type-checked but does
-not provide a body. A definition declares the function and also fills in the
-body so that the function can be compiled.
+说到术语，一些静态类型的语言，如C语言，对声明函数和定义函数进行了区分。声明将函数的类型与它的名字绑定在一起，这样可以对调用进行类型检查，但不提供主体。定义声明了函数，同时也填写了主体，这样函数就可以被编译了。
 
-Since Lox is dynamically typed, this distinction isn't meaningful. A function
-declaration fully specifies the function including its body.
+由于Lox是动态类型的，这种区别没有意义。一个函数声明完全指定了函数，包括它的主体。
 
 </aside>
 
-The body of a function is always a block. Inside it, you can return a value
-using a `return` statement.
+函数体总是一个块。在其中，您可以使用 `return` 语句返回值。
 
 ```lox
 fun returnSum(a, b) {
@@ -605,19 +437,17 @@ fun returnSum(a, b) {
 }
 ```
 
-If execution reaches the end of the block without hitting a `return`, it
-<span name="sneaky">implicitly</span> returns `nil`.
+如果执行到了块的末尾而没有 `return` ，则<span name="sneaky">隐式</span>返回nil。
 
 <aside name="sneaky">
 
-See, I told you `nil` would sneak in when we weren't looking.
+原注: 你看，我告诉过你 `nil` 会在我们不注意的时候潜入。
 
 </aside>
 
-### Closures
+### 闭包
 
-Functions are *first class* in Lox, which just means they are real values that
-you can get a reference to, store in variables, pass around, etc. This works:
+函数是Lox中的 *头等舱* ，这意味着它们是实值，你可以引用，存储在变量中，传递等等。这是可行的:
 
 ```lox
 fun addPair(a, b) {
@@ -631,8 +461,7 @@ fun identity(a) {
 print identity(addPair)(1, 2); // Prints "3".
 ```
 
-Since function declarations are statements, you can declare local functions
-inside another function.
+因为函数声明是语句，所以可以在另一个函数中声明局部函数。
 
 ```lox
 fun outerFunction() {
@@ -644,8 +473,7 @@ fun outerFunction() {
 }
 ```
 
-If you combine local functions, first-class functions, and block scope, you run
-into this interesting situation:
+如果将局部函数、一级函数和块范围结合起来，就会遇到这种有趣的情况:
 
 ```lox
 fun returnFunction() {
@@ -662,123 +490,68 @@ var fn = returnFunction();
 fn();
 ```
 
-Here, `inner()` accesses a local variable declared outside of its body in the
-surrounding function. Is this kosher? Now that lots of languages have borrowed
-this feature from Lisp, you probably know the answer is yes.
+这里，`inner()` 访问一个在它的主体之外的周围函数中声明的局部变量。这样做合适吗？既然许多语言都借鉴了Lisp的这一特性，您可能知道答案是肯定的。
 
-For that to work, `inner()` has to "hold on" to references to any surrounding
-variables that it uses so that they stay around even after the outer function
-has returned. We call functions that do this <span
-name="closure">**closures**</span>. These days, the term is often used for *any*
-first-class function, though it's sort of a misnomer if the function doesn't
-happen to close over any variables.
+要做到这一点，`inner()` 必须“保持”对它所使用的任何周围变量的引用，这样，即使在外部函数返回之后，它们也不会丢失。我们称这样做的函数为<span
+name="closure">**closures** 闭包</span>。这些天，这个术语经常被用于任何一级函数，尽管如果函数不发生在任何变量上，这有点用词不当。
 
 <aside name="closure">
 
-Peter J. Landin coined the term "closure". Yes, he invented damn near half the
-terms in programming languages. Most of them came out of one incredible paper,
-"[The Next 700 Programming Languages][svh]".
+Peter J. Landin 创造了 "闭合 "这个术语。是的，他发明了编程语言中几乎一半的术语。他们中的大多数都来自一篇令人难以置信的论文："[The Next 700 Programming Languages][svh]"
 
 [svh]: https://homepages.inf.ed.ac.uk/wadler/papers/papers-we-love/landin-next-700.pdf
 
-In order to implement these kind of functions, you need to create a data
-structure that bundles together the function's code and the surrounding
-variables it needs. He called this a "closure" because it *closes over* and
-holds on to the variables it needs.
+为了实现这类函数，你需要创建一个数据结构，将函数的代码和它所需要的周围变量捆绑在一起。他把这称为 "闭包"，因为它关闭了它所需要的变量，并保持着这些变量。
 
 </aside>
 
-As you can imagine, implementing these adds some complexity because we can no
-longer assume variable scope works strictly like a stack where local variables
-evaporate the moment the function returns. We're going to have a fun time
-learning how to make these work correctly and efficiently.
+可以想象，实现这些会增加一些复杂性，因为我们不能再假设变量作用域严格地像堆栈一样工作，在堆栈中，局部变量在函数返回时就消失了。我们将度过一段愉快的时光，学习如何正确有效地使用这些工具。
 
-## Classes
+## 类
 
-Since Lox has dynamic typing, lexical (roughly, "block") scope, and closures,
-it's about halfway to being a functional language. But as you'll see, it's
-*also* about halfway to being an object-oriented language. Both paradigms have a
-lot going for them, so I thought it was worth covering some of each.
+由于Lox具有动态类型、词法(粗略地说是“块”)范围和闭包，它离成为函数式语言还有一段距离。但是正如您将看到的，它也是面向对象语言的一半。这两种范式都有很多优点，所以我认为有必要分别介绍一下。 
 
-Since classes have come under fire for not living up to their hype, let me first
-explain why I put them into Lox and this book. There are really two questions:
+既然类因为没有达到他们的宣传而受到攻击，让我首先解释为什么我把它们放到Lox和这本书里。实际上有两个问题:
 
-### Why might any language want to be object oriented?
+### 为什么任何语言都想成为面向对象的？
 
-Now that object-oriented languages like Java have sold out and only play arena
-shows, it's not cool to like them anymore. Why would anyone make a *new*
-language with objects? Isn't that like releasing music on 8-track?
+现在像Java这样的面向对象语言已经售罄，只在舞台上表演，再喜欢它们也不酷了。为什么会有人用物体创造一种新的语言？这不就像在8轨上发布音乐吗？
 
-It is true that the "all inheritance all the time" binge of the '90s produced
-some monstrous class hierarchies, but **object-oriented programming** (**OOP**)
-is still pretty rad. Billions of lines of successful code have been written in
-OOP languages, shipping millions of apps to happy users. Likely a majority of
-working programmers today are using an object-oriented language. They can't all
-be *that* wrong.
+诚然，90年代的“始终继承”热潮产生了一些可怕的类层次结构，但 **面向对象编程** （ **OOP** ）仍然相当疯狂。已经用OOP语言编写了数十亿行成功的代码，为快乐的用户提供了数百万个应用程序。可能今天大多数在职程序员都在使用面向对象语言。他们不可能都错了。
 
-In particular, for a dynamically typed language, objects are pretty handy. We
-need *some* way of defining compound data types to bundle blobs of stuff
-together.
+特别是，对于动态类型语言，对象非常方便。我们需要一些定义复合数据类型的方法来将数据块捆绑在一起。
 
-If we can also hang methods off of those, then we avoid the need to prefix all
-of our functions with the name of the data type they operate on to avoid
-colliding with similar functions for different types. In, say, Racket, you end
-up having to name your functions like `hash-copy` (to copy a hash table) and
-`vector-copy` (to copy a vector) so that they don't step on each other. Methods
-are scoped to the object, so that problem goes away.
+如果我们还可以挂起这些方法，那么我们就不需要在所有函数前面加上它们所操作的数据类型的名称，以避免与不同类型的类似函数发生冲突。例如，在Racket中，您必须将函数命名为 `hash-copy` 用于复制哈希表）和 `vector-copy` （用来复制向量），这样它们就不会相互影响。方法的作用域是对象，这样问题就解决了。
 
-### Why is Lox object oriented?
+### Lox为什么是面向对象的？ 
 
-I could claim objects are groovy but still out of scope for the book. Most
-programming language books, especially ones that try to implement a whole
-language, leave objects out. To me, that means the topic isn't well covered.
-With such a widespread paradigm, that omission makes me sad.
+我可以说是因为对象很棒，但这仍然超出了本书的范围。大多数编程语言书籍，尤其是那些试图实现整个语言的书籍，都忽略了对象。对我来说，这意味着这个主题没有被很好地覆盖。对于这样一个广泛存在的范例，这种遗漏让我很难过。 
 
-Given how many of us spend all day *using* OOP languages, it seems like the
-world could use a little documentation on how to *make* one. As you'll see, it
-turns out to be pretty interesting. Not as hard as you might fear, but not as
-simple as you might presume, either.
+鉴于我们中有多少人整天都在使用OOP语言，看起来这个世界需要一些文档来说明如何制作一个。正如你将看到的，这是非常有趣的。没有你担心的那么难，但也没有你想象的那么简单。
 
-### Classes or prototypes
+### Classes 或 prototypes
 
-When it comes to objects, there are actually two approaches to them, [classes][]
-and [prototypes][]. Classes came first, and are more common thanks to C++, Java,
-C#, and friends. Prototypes were a virtually forgotten offshoot until JavaScript
-accidentally took over the world.
+谈到对象，实际上有两种方法，[classes][]和[prototypes][]。Classes最先出现，并且由于C++、Java、C#和朋友们的出现而变得更加普遍。Prototypes是一个几乎被遗忘的分支，直到JavaScript意外地占领了世界。
 
 [classes]: https://en.wikipedia.org/wiki/Class-based_programming
 [prototypes]: https://en.wikipedia.org/wiki/Prototype-based_programming
 
-In class-based languages, there are two core concepts: instances and classes.
-Instances store the state for each object and have a reference to the instance's
-class. Classes contain the methods and inheritance chain. To call a method on an
-instance, there is always a level of indirection. You <span
-name="dispatch">look</span> up the instance's class and then you find the method
-*there*:
+在基于类的语言中，有两个核心概念：实例(instances)和类(classes)。实例存储每个对象的状态，并有一个对实例的类的引用。类包含方法和继承链。要在一个实例上调用一个方法，总是有一个层次的间接性。你要<span
+name="dispatch">查找</span>实例的类，然后在那里找到该方法。
 
 <aside name="dispatch">
 
-In a statically typed language like C++, method lookup typically happens at
-compile time based on the *static* type of the instance, giving you **static
-dispatch**. In contrast, **dynamic dispatch** looks up the class of the actual
-instance object at runtime. This is how virtual methods in statically typed
-languages and all methods in a dynamically typed language like Lox work.
+在像 `C++` 这样的静态类型语言中，方法查找通常发生在编译时，基于实例的静态类型，为您提供静态调度。相反，**动态调度** 在运行时查找实际实例对象的类。这就是静态类型语言中的虚方法和动态类型语言(如Lox)中的所有方法的工作方式。
 
 </aside>
 
 <img src="image/the-lox-language/class-lookup.png" alt="How fields and methods are looked up on classes and instances" />
 
-Prototype-based languages <span name="blurry">merge</span> these two concepts.
-There are only objects -- no classes -- and each individual object may contain
-state and methods. Objects can directly inherit from each other (or "delegate
-to" in prototypal lingo):
+基于原型的语言<span name="blurry">融合</span>了这两个概念。只有对象，没有类，每个单独的对象可能包含状态和方法。对象可以直接相互继承(或者在原型行话中“委托给”):
 
 <aside name="blurry">
 
-In practice the line between class-based and prototype-based languages blurs.
-JavaScript's "constructor function" notion [pushes you pretty hard][js new]
-towards defining class-like objects. Meanwhile, class-based Ruby is perfectly
-happy to let you attach methods to individual instances.
+实际上，基于类的语言和基于原型的语言之间的界限很模糊。JavaScript的“构造函数”概念让你很难定义类对象 [很难定义类对象][js new]。同时，基于类的Ruby非常乐意让您将方法附加到单个实例上。
 
 [js new]: http://gameprogrammingpatterns.com/prototype.html#what-about-javascript
 
@@ -786,42 +559,27 @@ happy to let you attach methods to individual instances.
 
 <img src="image/the-lox-language/prototype-lookup.png" alt="How fields and methods are looked up in a prototypal system" />
 
-This means that in some ways prototypal languages are more fundamental than
-classes. They are really neat to implement because they're *so* simple. Also,
-they can express lots of unusual patterns that classes steer you away from.
+这意味着在某些方面，原型语言比类更基本。它们很容易实现，因为它们是如此简单。而且，它们可以表达很多不寻常的模式，而类会引导你远离这些模式。
 
-But I've looked at a *lot* of code written in prototypal languages -- including
-[some of my own devising][finch]. Do you know what people generally do with all
-of the power and flexibility of prototypes? ...They use them to reinvent
-classes.
+但是我看过很多用原型语言写的代码——包括一些我自己设计的 [some of my own devising][finch]。你知道人们通常会用原型语言的所有功能和灵活性来做什么吗？ . . 他们用它们来重新创造类。
 
 [finch]: http://finch.stuffwithstuff.com/
 
-I don't know *why* that is, but people naturally seem to prefer a class-based
-(Classic? Classy?) style. Prototypes *are* simpler in the language, but they
-seem to accomplish that only by <span name="waterbed">pushing</span> the
-complexity onto the user. So, for Lox, we'll save our users the trouble and bake
-classes right in.
+我不知道这是为什么，但人们似乎自然而然地喜欢基于类（Classic？ Classy？原型在语言上更简单，但它们似乎只是通过把复杂性<span name="waterbed">推给</span>用户来实现的。所以，对于Lox来说，我们要为用户省去麻烦，把类直接烘烤进去。
 
 <aside name="waterbed">
 
-Larry Wall, Perl's inventor/prophet calls this the "[waterbed theory][]". Some
-complexity is essential and cannot be eliminated. If you push it down in one
-place, it swells up in another.
+Larry Wall ，Perl的发明者/预言家，把这称为 "[waterbed theory][]"。一些复杂性是必不可少的，不能被消除。如果你把它压在一个地方，它就会在另一个地方膨胀起来。
 
 [waterbed theory]: http://wiki.c2.com/?WaterbedTheory
 
-Prototypal languages don't so much *eliminate* the complexity of classes as they
-do make the *user* take that complexity by building their own class-like
-metaprogramming libraries.
+原型语言与其说是 *消除* 了类的复杂性，不如说是让用户通过建立他们自己的类的元编程库来承担这种复杂性。
 
 </aside>
 
-### Classes in Lox
+### Lox中的类
 
-Enough rationale, let's see what we actually have. Classes encompass a
-constellation of features in most languages. For Lox, I've selected what I think
-are the brightest stars. You declare a class and its methods like so:
+现在有足够的理由，让我们看看我们实际拥有的东西。在大多数语言中，类包含了一系列的特征。对于Lox，我选择了我认为最亮的星。你可以像这样声明一个类和它的方法:
 
 ```lox
 class Breakfast {
@@ -835,15 +593,11 @@ class Breakfast {
 }
 ```
 
-The body of a class contains its methods. They look like function declarations
-but without the `fun` <span name="method">keyword</span>. When the class
-declaration is executed, Lox creates a class object and stores that in a
-variable named after the class. Just like functions, classes are first class in
-Lox.
+类的主体包含它的方法。它们看起来像函数声明，但是没有 `fun` <span name="method">关键字</span>。当执行类声明时，Lox创建一个类对象，并将其存储在一个以类命名的变量中。就像函数一样，类是Lox中的头等舱。
 
 <aside name="method">
 
-They are still just as fun, though.
+但是踏马还是跟fun类似。
 
 </aside>
 
@@ -855,32 +609,26 @@ var someVariable = Breakfast;
 someFunction(Breakfast);
 ```
 
-Next, we need a way to create instances. We could add some sort of `new`
-keyword, but to keep things simple, in Lox the class itself is a factory
-function for instances. Call a class like a function, and it produces a new
-instance of itself.
+接下来，我们需要一种创建实例的方法。我们可以添加一些 `new` 关键字，但是为了简单起见，在Lox中，类本身是一个工厂函数。像调用函数一样调用一个类，它会产生自己的一个新实例。
+
 
 ```lox
 var breakfast = Breakfast();
 print breakfast; // "Breakfast instance".
 ```
 
-### Instantiation and initialization
+### 实例化和初始化
 
-Classes that only have behavior aren't super useful. The idea behind
-object-oriented programming is encapsulating behavior *and state* together. To
-do that, you need fields. Lox, like other dynamically typed languages, lets you
-freely add properties onto objects.
+只有行为的类不是非常有用。面向对象编程背后的思想是将行为和状态封装在一起。为此，需要字段。Lox和其他动态类型语言一样，允许您在对象上自由添加属性。
 
 ```lox
 breakfast.meat = "sausage";
 breakfast.bread = "sourdough";
 ```
 
-Assigning to a field creates it if it doesn't already exist.
+如果某个字段尚不存在，则赋值时就会创建该字段。
 
-If you want to access a field or method on the current object from within a
-method, you use good old `this`.
+如果你想从一个方法中访问当前对象上的一个字段或方法，你可以使用古老的 `this`。
 
 ```lox
 class Breakfast {
@@ -893,11 +641,7 @@ class Breakfast {
 }
 ```
 
-Part of encapsulating data within an object is ensuring the object is in a valid
-state when it's created. To do that, you can define an initializer. If your
-class has a method named `init()`, it is called automatically when the object is
-constructed. Any parameters passed to the class are forwarded to its
-initializer.
+在对象中封装数据的一部分是确保对象在创建时处于有效状态。为此，你可以定义一个构造函数。如果您的类有一个名为 `init()` 的方法，则在构造对象时会自动调用该方法。传递给该类的任何参数都被转发给它的构造函数。
 
 ```lox
 class Breakfast {
@@ -914,12 +658,9 @@ baconAndToast.serve("Dear Reader");
 // "Enjoy your bacon and toast, Dear Reader."
 ```
 
-### Inheritance
+### 继承
 
-Every object-oriented language lets you not only define methods, but reuse them
-across multiple classes or objects. For that, Lox supports single inheritance.
-When you declare a class, you can specify a class that it inherits from using a less-than
-<span name="less">(`<`)</span> operator.
+每一种面向对象的语言不仅允许你定义方法，还允许你在多个类或对象中重用它们。为此，Lox支持单一继承。当声明一个类时，可以使用小于<span name="less">(`<`)</span>运算符指定它继承的类。
 
 ```lox
 class Brunch < Breakfast {
@@ -931,42 +672,30 @@ class Brunch < Breakfast {
 
 <aside name="less">
 
-Why the `<` operator? I didn't feel like introducing a new keyword like
-`extends`. Lox doesn't use `:` for anything else so I didn't want to reserve
-that either. Instead, I took a page from Ruby and used `<`.
+为什么是 `<` 运算符？我不想引入像 `extends` 这样的新关键字。Lox不使用 `:` ,所以我也不想保留它。相反，我借鉴了Ruby的做法，用 `<` 。
 
-If you know any type theory, you'll notice it's not a *totally* arbitrary
-choice. Every instance of a subclass is an instance of its superclass too, but
-there may be instances of the superclass that are not instances of the subclass.
-That means, in the universe of objects, the set of subclass objects is smaller
-than the superclass's set, though type nerds usually use `<:` for that relation.
+如果你了解任何类型理论，你会注意到这不是一个完全任意的选择。子类的每个实例也是其超类的实例，但是超类的实例可能不是子类的实例。这意味着，在对象的世界中，子类对象的集合小于超类对象的集合，尽管类型爱好者通常使用  `<:` 。
 
 </aside>
 
-Here, Brunch is the **derived class** or **subclass**, and Breakfast is the
-**base class** or **superclass**.
+在这里，早午餐是 **派生类** 或 **子类** ，早餐是 **基类** 或 **超类** 。
 
-Every method defined in the superclass is also available to its subclasses.
+超类中定义的每个方法也可用于它的子类。
 
 ```lox
 var benedict = Brunch("ham", "English muffin");
 benedict.serve("Noble Reader");
 ```
 
-Even the `init()` method gets <span name="init">inherited</span>. In practice,
-the subclass usually wants to define its own `init()` method too. But the
-original one also needs to be called so that the superclass can maintain its
-state. We need some way to call a method on our own *instance* without hitting
-our own *methods*.
+甚至 `init()` 方法也被继承了。在实践中，子类通常也想定义自己的 `init()` 方法。但是原来的那个方法也需要被调用，这样超类就可以保持它的状态。我们需要一些方法来调用我们自己实例上的方法，而又不影响我们自己的方法。
 
 <aside name="init">
 
-Lox is different from C++, Java, and C#, which do not inherit constructors, but
-similar to Smalltalk and Ruby, which do.
+Lox不同于C++、Java和C#，它们不继承构造函数，类似于Smalltalk和Ruby，它们继承构造函数。
 
 </aside>
 
-As in Java, you use `super` for that.
+就像在Java中一样，你可以用 `super` 来实现。
 
 ```lox
 class Brunch < Breakfast {
@@ -977,120 +706,68 @@ class Brunch < Breakfast {
 }
 ```
 
-That's about it for object orientation. I tried to keep the feature set minimal.
-The structure of the book did force one compromise. Lox is not a *pure*
-object-oriented language. In a true OOP language every object is an instance of
-a class, even primitive values like numbers and Booleans.
+这就是对象定位的情况。我试图保持最小的特征集。本书的结构确实迫使我们做出一个妥协。Lox不是一种纯粹的面向对象的语言。在真正的OOP语言中，每个对象都是一个类的实例，即使是数字和布尔这样的原始值。
 
-Because we don't implement classes until well after we start working with the
-built-in types, that would have been hard. So values of primitive types aren't
-real objects in the sense of being instances of classes. They don't have methods
-or properties. If I were trying to make Lox a real language for real users, I
-would fix that.
+因为我们在开始使用内置类型后才实现类，这将是很难的。所以原始类型的值并不是真正意义上的类的实例的对象。它们没有方法或属性。如果我想让Lox成为真正的用户的真正的语言，我就会解决这个问题。
 
-## The Standard Library
+## 标准库
 
-We're almost done. That's the whole language, so all that's left is the "core"
-or "standard" library -- the set of functionality that is implemented directly
-in the interpreter and that all user-defined behavior is built on top of.
+我们几乎已经完成了。这就是整个语言，所以剩下的就是 "核心 "或 "标准 "库--直接在解释器中实现的一组功能，所有用户定义的行为都建立在这个基础之上。
 
-This is the saddest part of Lox. Its standard library goes beyond minimalism and
-veers close to outright nihilism. For the sample code in the book, we only need
-to demonstrate that code is running and doing what it's supposed to do. For
-that, we already have the built-in `print` statement.
+这是Lox最悲哀的地方。它的标准库超越了极简主义，接近于彻底的虚无主义。对于书中的示例代码，我们只需要证明代码正在运行并做它应该做的事情。为此，我们已经有了内置的 `print` 语句。
 
-Later, when we start optimizing, we'll write some benchmarks and see how long it
-takes to execute code. That means we need to track time, so we'll define one
-built-in function, `clock()`, that returns the number of seconds since the
-program started.
+以后，当我们开始优化时，我们将写一些基准，看看执行代码需要多长时间。这意味着我们需要跟踪时间，所以我们将定义一个内置函数 `clock()` ，返回程序开始后的秒数。
 
-And... that's it. I know, right? It's embarrassing.
+然后......就是这样。我知道，对吗？这很令人尴尬。
 
-If you wanted to turn Lox into an actual useful language, the very first thing
-you should do is flesh this out. String manipulation, trigonometric functions,
-file I/O, networking, heck, even *reading input from the user* would help. But we
-don't need any of that for this book, and adding it wouldn't teach you anything
-interesting, so I've left it out.
+如果你想把Lox变成一种真正有用的语言，你应该做的第一件事就是充实这个。字符串操作、三角函数、文件输入/输出、网络，甚至是读取用户的输入都会有帮助。但是我们在这本书中不需要这些东西，而且添加这些东西也不会教你任何有趣的东西，所以我把它排除在外。
 
-Don't worry, we'll have plenty of exciting stuff in the language itself to keep
-us busy.
+别担心，在语言本身中，我们会有很多令人兴奋的东西让我们忙碌。
 
 <div class="challenges">
 
-## Challenges
+## 挑战
 
-1. Write some sample Lox programs and run them (you can use the implementations
-   of Lox in [my repository][repo]). Try to come up with edge case behavior I
-   didn't specify here. Does it do what you expect? Why or why not?
+1. 编写一些Lox程序样本并运行它们（你可以使用[my repository][repo]中的Lox的实现）。试着想出我在这里没有说明的边缘案例行为。它能做到你所期望的吗？为什么或为什么不呢？
 
-2. This informal introduction leaves a *lot* unspecified. List several open
-   questions you have about the language's syntax and semantics. What do you
-   think the answers should be?
+2. 这个非正式的介绍留下了 *很多* 未说明的东西。列出你对该语言的语法和语义的几个开放问题。你认为答案应该是什么？
 
-3. Lox is a pretty tiny language. What features do you think it is missing that
-   would make it annoying to use for real programs? (Aside from the standard
-   library, of course.)
+3. Lox是一种相当小的语言。你认为它缺少哪些功能，会使它在真正的程序中使用起来很烦人？(当然，除了标准库之外）。
 
 </div>
 
 <div class="design-note">
 
-## Design Note: Expressions and Statements
+## 设计须知:表达式和语句
 
-Lox has both expressions and statements. Some languages omit the latter.
-Instead, they treat declarations and control flow constructs as expressions too.
-These "everything is an expression" languages tend to have functional pedigrees
-and include most Lisps, SML, Haskell, Ruby, and CoffeeScript.
+Lox既有表达式也有语句。有些语言省略了后者。相反，它们也将声明和控制流构造视为表达式。这些“一切都是表达式”语言往往具有功能谱系，包括大多数Lisp、SML、Haskell、Ruby和CoffeeScript。
 
-To do that, for each "statement-like" construct in the language, you need to
-decide what value it evaluates to. Some of those are easy:
+为此，对于语言中的每个“类似语句”的构造，您需要确定其计算值。其中一些很简单
 
-*   An `if` expression evaluates to the result of whichever branch is chosen.
-    Likewise, a `switch` or other multi-way branch evaluates to whichever case
-    is picked.
+*   `if` 表达式的计算结果是所选分支的结果。同样，`switch` 或其他多路分支的计算结果取决于选择的任何一种情况。
 
-*   A variable declaration evaluates to the value of the variable.
+*   变量声明的计算结果为变量的值。
 
-*   A block evaluates to the result of the last expression in the sequence.
+*   块计算结果为序列中最后一个表达式的结果。
 
-Some get a little stranger. What should a loop evaluate to? A `while` loop in
-CoffeeScript evaluates to an array containing each element that the body
-evaluated to. That can be handy, or a waste of memory if you don't need the
-array.
+有些变得有点陌生。循环的计算结果应该是什么？CoffeeScript中的 `while` 循环计算包含主体计算的每个元素的数组。这可能很方便，或者如果不需要数组的话会浪费内存。
 
-You also have to decide how these statement-like expressions compose with other
-expressions -- you have to fit them into the grammar's precedence table. For
-example, Ruby allows:
+您还必须决定这些类似语句的表达式如何与其他表达式组合，您必须将它们放入语法的优先表中。例如，Ruby允许：
 
 ```ruby
 puts 1 + if true then 2 else 3 end + 4
 ```
 
-Is this what you'd expect? Is it what your *users* expect? How does this affect
-how you design the syntax for your "statements"? Note that Ruby has an explicit
-`end` to tell when the `if` expression is complete. Without it, the `+ 4` would
-likely be parsed as part of the `else` clause.
+这是你所期望的吗？这是你的用户所期望的吗？这对你设计 "语句 "的语法有什么影响？请注意，Ruby有一个明确的 `end` 来告诉 `if` 表达式何时完成。如果没有它， `+ 4` 可能会被解析为 `else` 子句的一部分。
 
-Turning every statement into an expression forces you to answer a few hairy
-questions like that. In return, you eliminate some redundancy. C has both blocks
-for sequencing statements, and the comma operator for sequencing expressions. It
-has both the `if` statement and the `?:` conditional operator. If everything was
-an expression in C, you could unify each of those.
+把每个语句变成一个表达式，迫使你回答一些像这样的毛糙的问题。作为回报，你消除了一些多余的东西。C语言既有用于排列语句顺序的块，也有用于排列表达式顺序的逗号运算符。它既有 `if` 语句，也有 `?:` 条件运算符。如果在C语言中所有的东西都是表达式，你就可以把这些东西都统一起来。
 
-Languages that do away with statements usually also feature **implicit returns**
--- a function automatically returns whatever value its body evaluates to without
-need for some explicit `return` syntax. For small functions and methods, this is
-really handy. In fact, many languages that do have statements have added syntax
-like `=>` to be able to define functions whose body is the result of evaluating
-a single expression.
+摒弃了语句的语言通常还具有 **隐式返回** 的特点--函数会自动返回其主体所评估的任何值，而不需要一些明确的 `return` 语法。对于小型函数和方法来说，这真的很方便。事实上，许多有语句的语言都增加了像 `=>` 这样的语法，以便能够定义函数体是对单个表达式求值的结果。
 
-But making *all* functions work that way can be a little strange. If you aren't
-careful, your function will leak a return value even if you only intend it to
-produce a side effect. In practice, though, users of these languages don't find
-it to be a problem.
+但是让 *所有* 的函数以这种方式工作可能有点奇怪。如果你不小心，你的函数会泄露一个返回值，即使你只是想让它产生点副作用。不过在实践中，这些语言的用户并没有发现这是个问题。
 
-For Lox, I gave it statements for prosaic reasons. I picked a C-like syntax for
-familiarity's sake, and trying to take the existing C statement syntax and
-interpret it like expressions gets weird pretty fast.
+对于Lox来说，我给它声明是出于普通的原因。我选择了一种类似于C语言的语法是为了熟悉，如果想把现有的C语言的语句语法解释成表达式，会变得很奇怪。
+
+对于Lox，我给出了一些平淡无奇的理由。为了熟悉起见，我选择了一种类似C的语法，如果想把现有的C语言的语句语法解释成表达式，很快就会变得很奇怪。
 
 </div>
