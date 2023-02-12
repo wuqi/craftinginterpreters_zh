@@ -510,7 +510,6 @@ that `<=` should be scanned as a single `<=` token and not `<` followed by `=`.
 
 1.  我们这里的扫描器和大多数扫描器一样，抛弃了注释和空白，因为分析器不需要这些东西。什么时候你会想写一个*不*丢弃这些东西的扫描器？它有什么用处？
 
-
 1.  为 Lox 的扫描器增加对 C 风格  `/* ... */`  块注释的支持。确保能处理其中的换行符。考虑允许它们嵌套。增加对嵌套的支持的工作量是否比你预期的要多？为什么？
 
 </div>
@@ -568,11 +567,7 @@ that `<=` should be scanned as a single `<=` token and not `<` followed by `=`.
 *   [Go][] 在扫描器中处理换行。如果换行出现在已知可能结束语句的少数标记类型之后，换行会被当作分号处理。否则，它将被忽略。Go团队提供了一个规范的代码格式化器，[gofmt][] ，而且生态系统热衷于使用它，这确保了成语风格的代码在这个简单的规则下运行良好。
 
 
-*   [Python][] treats all newlines as significant unless an explicit backslash
-    is used at the end of a line to continue it to the next line. However,
-    newlines anywhere inside a pair of brackets (`()`, `[]`, or `{}`) are
-    ignored. Idiomatic style strongly prefers the latter.
-    [Python][] 将所有的换行线都视为有效，除非在行末使用明确的反斜杠将其延续到下一行。然而，在一对大括号 (`()`, `[]`、或 `{}`) 内的任何地方的换行线都被忽略。惯用风格更倾向于后者。
+*   [Python][] 将所有的换行线都视为有效，除非在行末使用明确的反斜杠将其延续到下一行。然而，在一对大括号 (`()`, `[]`、或 `{}`) 内的任何地方的换行线都被忽略。惯用风格更倾向于后者。
 
     这个规则对 Python 很适用，因为它是一种高度面向语句的语言。特别是， Python 的语法确保语句不会出现在表达式中。 C 也是这样做的，但许多其他具有“lambda”或函数字面量语法的语言却没有。
 
