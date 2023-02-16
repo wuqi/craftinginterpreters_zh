@@ -1,50 +1,38 @@
-> To dwellers in a wood, almost every species of tree has its voice as well as
-> its feature.
+> 对于居住在树林里的人来说，几乎每一种树都有它的声音和特点。
 > <cite>Thomas Hardy, <em>Under the Greenwood Tree</em></cite>
 
-In the [last chapter][scanning], we took the raw source code as a string and
-transformed it into a slightly higher-level representation: a series of tokens.
-The parser we'll write in the [next chapter][parsing] takes those tokens and
-transforms them yet again, into an even richer, more complex representation.
+在[上一章][scanning]中，我们将原始的源代码作为字符串，并将其转换为一个稍高层次的表示：一系列的 token 。我们将在[下一章][parsing]中编写的解析器，将这些 token 再次转化为更丰富、更复杂的表达。
 
 [scanning]: scanning.html
 [parsing]: parsing-expressions.html
 
-Before we can produce that representation, we need to define it. That's the
-subject of this chapter. Along the way, we'll <span name="boring">cover</span>
-some theory around formal grammars, feel the difference between functional and
-object-oriented programming, go over a couple of design patterns, and do some
-metaprogramming.
+在我们能够产生这种表示法之前，我们需要定义它。这就是本章的主题。在这一过程中，我们将<span name="boring">介绍</span>一些围绕形式化语法的理论，感受函数式编程和面向对象编程之间的区别，讨论几个设计模式，并实现一些元编程。
+
 
 <aside name="boring">
 
-I was so worried about this being one of the most boring chapters in the book
-that I kept stuffing more fun ideas into it until I ran out of room.
+我非常担心这是本书中最无聊的一章，所以我不断地把更多有趣的想法塞进去，直到没有空间了。
 
 </aside>
 
-Before we do all that, let's focus on the main goal -- a representation for
-code. It should be simple for the parser to produce and easy for the
-interpreter to consume. If you haven't written a parser or interpreter yet,
-those requirements aren't exactly illuminating. Maybe your intuition can help.
-What is your brain doing when you play the part of a *human* interpreter? How do
-you mentally evaluate an arithmetic expression like this:
+在我们做所有这些之前，让我们关注一下主要目标——代码的表示。
+句法分析器应该便于生产，解释器也应该易于消费。如果你还没有编写一个句法分析器或解释器，那么这些需求并不明确。也许你的直觉能帮上忙。当你扮演*人工*翻译的角色时，你的大脑在做什么？你如何心算这样一个算术表达式:
 
 ```lox
 1 + 2 * 3 - 4
 ```
 
-Because you understand the order of operations -- the old "[Please Excuse My
-Dear Aunt Sally][sally]" stuff -- you know that the multiplication is evaluated
-before the addition or subtraction. One way to visualize that precedence is
-using a tree. Leaf nodes are numbers, and interior nodes are operators with
-branches for each of their operands.
+因为你了解运算顺序--  像[Please Excuse My Dear Aunt Sally][sally]的<span name="PEMDAS">口诀</span>中说的--你知道乘法要在加法或减法之前计算。有一种方法是用一棵树来说明这种优先顺序。叶子结点是数字，内部结点是运算符，每个运算符都有分支。
 
 [sally]: https://en.wikipedia.org/wiki/Order_of_operations#Mnemonics
 
-In order to evaluate an arithmetic node, you need to know the numeric values of
-its subtrees, so you have to evaluate those first. That means working your way
-from the leaves up to the root -- a *post-order* traversal:
+<aside name="PEMDAS">
+
+译注: 美国记运算的顺序的口诀：括号（Parenthesis）、指数(Exponent)、乘除（multiplication and division）、加减（addition and subtraction），编成了Please Excuse My Dear Aunt Sally （请原谅我亲爱的阿姨莎莉）。
+
+</aside>
+
+为了计算一个算术节点，你需要知道其子节点的数值，所以你必须先计算这些子节点。这意味着你要从叶节点向根部遍历--即*后序遍历*。
 
 <span name="tree-steps"></span>
 
@@ -52,102 +40,76 @@ from the leaves up to the root -- a *post-order* traversal:
 
 <aside name="tree-steps">
 
-A. Starting with the full tree, evaluate the bottom-most operation, `2 * 3`.
+A. 从整个树开始，首先计算最底部的操作, `2 * 3`.
 
-B. Now we can evaluate the `+`.
+B. 然后我们做加法 `+` .
 
-C. Next, the `-`.
+C. 继续, 做减法 `-`.
 
-D. The final answer.
+D. 得到最终结果！
 
 </aside>
 
-If I gave you an arithmetic expression, you could draw one of these trees pretty
-easily. Given a tree, you can evaluate it without breaking a sweat. So it
-intuitively seems like a workable representation of our code is a <span
-name="only">tree</span> that matches the grammatical structure -- the operator
-nesting -- of the language.
+如果我给你一个算术表达式，你可以很容易地画出这些树。给定一棵树，你可以毫不费力地计算它。因此，从直觉上看，我们代码的可以表示为一棵与语言的语法结构(运算符嵌套)相匹配的<span name="only">树</span>。
 
 <aside name="only">
 
-That's not to say a tree is the *only* possible representation of our code. In
-[Part III][], we'll generate bytecode, another representation that isn't as
-human friendly but is closer to the machine.
+这并不是说树是我们代码的*唯一*的表示方法。在[Part III][]中，我们将生成字节码，这是另一种不太友好但更接近机器的表示方法。
 
 [part iii]: a-bytecode-virtual-machine.html
 
 </aside>
 
-We need to get more precise about what that grammar is then. Like lexical
-grammars in the last chapter, there is a long ton of theory around syntactic
-grammars. We're going into that theory a little more than we did when scanning
-because it turns out to be a useful tool throughout much of the interpreter.
-We start by moving one level up the [Chomsky hierarchy][]...
+那么我们需要更精确地了解语法是什么。就像上一章中的词法语法一样，围绕着句法语法有大量的理论。我们对这个理论的研究比扫描时多一点，因为它在解释器中是一个有用的工具。我们从[Chomsky hierarchy][]层次结构的第一层开始...
 
 [chomsky hierarchy]: https://en.wikipedia.org/wiki/Chomsky_hierarchy
 
-## Context-Free Grammars
+## 上下文无关文法
 
-In the last chapter, the formalism we used for defining the lexical grammar --
-the rules for how characters get grouped into tokens -- was called a *regular
-language*. That was fine for our scanner, which emits a flat sequence of tokens.
-But regular languages aren't powerful enough to handle expressions which can
-nest arbitrarily deeply.
+在上一章中，我们用来定义词汇语法的样式——即字符如何组合成 token 的规则——被称为*正则语言*。这对我们的扫描器来说很完美，它发射出死板的 token 序列。但是正则语言没有强大到足以处理可以任意深度嵌套的表达式。
 
-We need a bigger hammer, and that hammer is a **context-free grammar**
-(**CFG**). It's the next heaviest tool in the toolbox of
-**[formal grammars][]**. A formal grammar takes a set of atomic pieces it calls
-its "alphabet". Then it defines a (usually infinite) set of "strings" that are
-"in" the grammar. Each string is a sequence of "letters" in the alphabet.
+我们需要一把更大的锤子，那把锤子就是 **上下文无关文法** (**CFG**)。它是 **[形式语法][]** (formal grammars)工具箱中第二重的工具。一种形式语法由一组原子片段组成，称之为“字母表”(alphabet)。然后，它定义一组(通常是无限的)语法"中"的“字符串”。每个字符串都是字母表中的“字母”序列。
 
-[formal grammars]: https://en.wikipedia.org/wiki/Formal_grammar
+[形式语法]: https://en.wikipedia.org/wiki/Formal_grammar
 
-I'm using all those quotes because the terms get a little confusing as you move
-from lexical to syntactic grammars. In our scanner's grammar, the alphabet
-consists of individual characters and the strings are the valid lexemes --
-roughly "words". In the syntactic grammar we're talking about now, we're at a
-different level of granularity. Now each "letter" in the alphabet is an entire
-token and a "string" is a sequence of *tokens* -- an entire expression.
+我之所以使用所有这些引号，是因为从词法到句法的语法时，这些术语会变得有点混乱。在我们的扫描器语法中，字母表由单个字符组成，字符串是有效的词组--大致是 "单词"。在我们现在讨论的句法语法中，我们处于不同的粒度水平。现在，字母表中的每个 "字母" 都是一个完整的 token ，而 "字符串 "是一个 *tokens* 的序列--一个完整的表达式。
 
-Oof. Maybe a table will help:
+哦，也许一张表格会有些帮助:
 
 <table>
 <thead>
 <tr>
-  <td>Terminology</td>
+  <td>术语</td>
   <td></td>
-  <td>Lexical grammar</td>
-  <td>Syntactic grammar</td>
+  <td>词法语法</td>
+  <td>句法语法</td>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td>The &ldquo;alphabet&rdquo; is<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.</span></td>
+  <td> &ldquo;字母表&rdquo; 是<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.</span></td>
   <td>&rarr;&ensp;</td>
-  <td>Characters</td>
+  <td>字符</td>
   <td>Tokens</td>
 </tr>
 <tr>
-  <td>A &ldquo;string&rdquo; is<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.</span></td>
+  <td> &ldquo;字符串&rdquo; 是<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.</span></td>
   <td>&rarr;&ensp;</td>
-  <td>Lexeme or token</td>
-  <td>Expression</td>
+  <td>Lexeme 或 token</td>
+  <td>表达式</td>
 </tr>
 <tr>
-  <td>It&rsquo;s implemented by the<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.</span></td>
+  <td>由什么实现<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.</span></td>
   <td>&rarr;&ensp;</td>
-  <td>Scanner</td>
-  <td>Parser</td>
+  <td>扫描器</td>
+  <td>句法分析器</td>
 </tr>
 </tbody>
 </table>
 
-A formal grammar's job is to specify which strings are valid and which aren't.
-If we were defining a grammar for English sentences, "eggs are tasty for
-breakfast" would be in the grammar, but "tasty breakfast for are eggs" would
-probably not.
+形式语法的工作是指定哪些字符串是有效的，哪些是无效的。如果我们为英语句子定义一个语法，"鸡蛋是美味的早餐 "是正确的语法，但 "美味的早餐是鸡蛋 "则不是。
 
-### Rules for grammars
+### 语法规则
 
 How do we write down a grammar that contains an infinite number of valid
 strings? We obviously can't list them all out. Instead, we create a finite set
