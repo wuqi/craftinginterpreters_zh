@@ -1,4 +1,4 @@
-> 大口去吃。任何值得做的事情都值得玩命去做。
+> 大口吃饭。任何值得做的事情都值得玩命去做。
 >
 > <cite>Robert A. Heinlein, <em>Time Enough for Love</em></cite>
 

@@ -111,79 +111,45 @@ D. 得到最终结果！
 
 ### 语法规则
 
-How do we write down a grammar that contains an infinite number of valid
-strings? We obviously can't list them all out. Instead, we create a finite set
-of rules. You can think of them as a game that you can "play" in one of two
-directions.
+我们如何描述一个包含无限个有效字符串的语法？显然，我们不能把他们全部列出来。我们创建了一个有限的规则集作为替代，你可以把它想象成一个二选一的游戏。
 
-If you start with the rules, you can use them to *generate* strings that are in
-the grammar. Strings created this way are called **derivations** because each is
-*derived* from the rules of the grammar. In each step of the game, you pick a
-rule and follow what it tells you to do. Most of the lingo around formal
-grammars comes from playing them in this direction. Rules are called
-**productions** because they *produce* strings in the grammar.
+如果你从规则开始，你可以用它们来 *生成* 语法中的字符串。以这种方式创建的字符串被称为 **派生** ，因为每个字符串都是从语法的规则中派生出来的。在游戏的每一步中，你选择一条规则，然后按照它告诉你的去做。形式语法的大部分行话都是从这里来的。规则被称为 **产生式** ，因为它们在 *语法* 中产生字符串。
 
-Each production in a context-free grammar has a **head** -- its <span
-name="name">name</span> -- and a **body**, which describes what it generates. In
-its pure form, the body is simply a list of symbols. Symbols come in two
-delectable flavors:
+上下文无关文法中的每个产生式都有一个 **头** -- 包含<span name="name">名称</span>--和 **主体**，用于描述它生成的内容。在其纯粹的形式中，主体只是一个符号的列表。符号有两种可选口味:
 
 <aside name="name">
 
-Restricting heads to a single symbol is a defining feature of context-free
-grammars. More powerful formalisms like **[unrestricted grammars][]** allow a
-sequence of symbols in the head as well as in the body.
+将头限制在一个符号上是上下文无关文法的一个决定性特征。更强大的形式主义，如 **[无限制文法][]** ，允许在头和主体中有一系列符号。
 
-[unrestricted grammars]: https://en.wikipedia.org/wiki/Unrestricted_grammar
+[无限制文法]: https://en.wikipedia.org/wiki/Unrestricted_grammar
 
 </aside>
 
-*   A **terminal** is a letter from the grammar's alphabet. You can think of it
-    like a literal value. In the syntactic grammar we're defining, the terminals
-    are individual lexemes -- tokens coming from the scanner like `if` or
-    `1234`.
+*   **终结符** 是语法字母表中的一个字符。你可以把它看成是一个字面值。在我们定义的句法语法中，终结符是来自扫描器的单个 lexemes--token ，如 `if` 或 `1234` 。
 
-    These are called "terminals", in the sense of an "end point" because they
-    don't lead to any further "moves" in the game. You simply produce that one
-    symbol.
+    这些被称为 "终结符"，取 "终点" 之意，因为它们不会导致游戏中的任何进一步 "行动"。你只是产生一个符号。
 
-*   A **nonterminal** is a named reference to another rule in the grammar. It
-    means "play that rule and insert whatever it produces here". In this way,
-    the grammar composes.
+*   **非终结符** 是对语法中另一条规则的命名引用。它意味着 "执行该规则并在这里插入它产生的任何内容"。这样一来，语法就构成了。
 
-There is one last refinement: you may have multiple rules with the same name.
-When you reach a nonterminal with that name, you are allowed to pick any of the
-rules for it, whichever floats your boat.
+还有最后一项改进：你可以有多个同名的规则。当你到达一个具有该名称的非终结符时，你可以为它选择任何一条规则，以你的想法为准。
 
-To make this concrete, we need a <span name="turtles">way</span> to write down
-these production rules. People have been trying to crystallize grammar all the
-way back to Pāṇini's *Ashtadhyayi*, which codified Sanskrit grammar a mere
-couple thousand years ago. Not much progress happened until John Backus and
-company needed a notation for specifying ALGOL 58 and came up with
-[**Backus-Naur form**][bnf] (**BNF**). Since then, nearly everyone uses some
-flavor of BNF, tweaked to their own tastes.
+为了使之具体化，我们需要一种<span name="turtles">方法</span>来写下这些产生式规则。人们一直在试图将语法具体化，这可以追溯到古印度语法学家波你尼撰写的《声明论》(亦称《八章书》) ，他在几千年前就将梵文语法编成了法典。直到John Backus和其公司需要一个用于指定ALGOL 58语言的记法，并提出了[**Backus-Naur form**][bnf]（ **BNF** 巴科斯范式），才有了很大的进展。从那时起，几乎每个人都使用某种形式的BNF，并根据自己的口味进行调整。
 
 [bnf]: https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form
 
-I tried to come up with something clean. Each rule is a name, followed by an
-arrow (`→`), followed by a sequence of symbols, and finally ending with a
-semicolon (`;`). Terminals are quoted strings, and nonterminals are lowercase
-words.
+我试图想出一些简洁的方法。每条规则都是一个名字，后面跟一个箭头（ `→` ），然后是一连串的符号，最后以分号（`;`）结束。终结符是带引号的字符串，非终结符是小写的单词。
 
 <aside name="turtles">
 
-Yes, we need to define a syntax to use for the rules that define our syntax.
-Should we specify that *metasyntax* too? What notation do we use for *it?* It's
-languages all the way down!
+是的，我们需要定义一种语法，用于定义我们的语法的规则。我们是否也应该指定这种 *元语法* ？我们用什么记法来表示 *它* ？一路下来都是语言!
 
 </aside>
 
-Using that, here's a grammar for <span name="breakfast">breakfast</span> menus:
+利用这种方式，下面是<span name="breakfast">早餐</span>菜单的语法。
 
 <aside name="breakfast">
 
-Yes, I really am going to be using breakfast examples throughout this entire
-book. Sorry.
+是的，我真的要在这整本书中使用早餐的例子。对不起。
 
 </aside>
 
@@ -208,95 +174,59 @@ bread      → "biscuits" ;
 bread      → "English muffin" ;
 ```
 
-We can use this grammar to generate random breakfasts. Let's play a round and
-see how it works. By age-old convention, the game starts with the first rule in
-the grammar, here `breakfast`. There are three productions for that, and we
-randomly pick the first one. Our resulting string looks like:
+我们可以使用这个语法来生成随机早餐。我们来玩一轮，看看效果如何。按照古老的惯例，游戏从语法中的第一条规则开始，在这里是 `breakfast`。有三个产生式，我们随机选择第一个。我们得到的字符串如下所示:
 
 ```text
 protein "with" breakfast "on the side"
 ```
 
-We need to expand that first nonterminal, `protein`, so we pick a production for
-that. Let's pick:
+我们需要扩展第一个非终结符，即 `protein` ，所以我们为它选择一个产生式。我们来选一个:
 
 ```ebnf
 protein → cooked "eggs" ;
 ```
 
-Next, we need a production for `cooked`, and so we pick `"poached"`. That's a
-terminal, so we add that. Now our string looks like:
+接下来，我们需要为 `cooked` 选一个产生式，所以我们选择  `"poached"`。那是一个终结符，所以我们把它加进去。现在我们的字符串看起来像:
 
 ```text
 "poached" "eggs" "with" breakfast "on the side"
 ```
 
-The next non-terminal is `breakfast` again. The first `breakfast` production we
-chose recursively refers back to the `breakfast` rule. Recursion in the grammar
-is a good sign that the language being defined is context-free instead of
-regular. In particular, recursion where the recursive nonterminal has
-productions on <span name="nest">both</span> sides implies that the language is
-not regular.
+下一个非终结符又是 `breakfast` 。我们选择的第一个 `breakfast` 产生式递归引用了 `breakfast` 规则。语法中的递归是一个很好的标志，说明被定义的语言是上下文无关的，而不是正则的。特别是，递归非终结符 <span name="nest">两边</span>都有产生式的递归，意味着这种语言不是正则的。
 
 <aside name="nest">
 
-Imagine that we've recursively expanded the `breakfast` rule here several times,
-like "bacon with bacon with bacon with..." In order to complete the string
-correctly, we need to add an *equal* number of "on the side" bits to the end.
-Tracking the number of required trailing parts is beyond the capabilities of a
-regular grammar. Regular grammars can express *repetition*, but they can't *keep
-count* of how many repetitions there are, which is necessary to ensure that the
-string has the same number of `with` and `on the side` parts.
+想象一下，我们在这里把 `breakfast` 规则递归扩展了好几次，比如"bacon with bacon with bacon with..." 。为了正确地完成这个字符串，我们需要在结尾处添加*同等* 数量的 "on the side" 。跟踪所需尾部的数量超出了正则语法的能力。正则语法可以表达重复，但它们不能统计有多少次重复，而这对于确保字符串有相同数量的 `with` 和 `on the side` 部分是必要的。
 
 </aside>
 
-We could keep picking the first production for `breakfast` over and over again
-yielding all manner of breakfasts like "bacon with sausage with scrambled eggs
-with bacon..." We won't though. This time we'll pick `bread`. There are three
-rules for that, each of which contains only a terminal. We'll pick "English
-muffin".
+我们可以一次又一次地挑选第一种产生式作为 `breakfast` ，产生各种形式的早餐，如 "bacon with sausage with scrambled eggs with bacon..."。但我们不会这样做。这一次，我们将选择 `bread`。`bread` 有三条规则，每条都只包含一个终结符。我们将选择 "English muffin"。
 
-With that, every nonterminal in the string has been expanded until it finally
-contains only terminals and we're left with:
+这样，字符串中的每个非终结符都被展开，直到最后只包含终结符，我们只剩下:
 
 <img src="image/representing-code/breakfast.png" alt='"Playing" the grammar to generate a string.' />
 
-Throw in some ham and Hollandaise, and you've got eggs Benedict.
+扔进去一些火腿和荷兰酱，你就有了班尼迪克蛋。
 
-Any time we hit a rule that had multiple productions, we just picked one
-arbitrarily. It is this flexibility that allows a short number of grammar rules
-to encode a combinatorially larger set of strings. The fact that a rule can
-refer to itself -- directly or indirectly -- kicks it up even more, letting us
-pack an infinite number of strings into a finite grammar.
+每当我们碰到一个包含多个产生式的规则时，我们都会任意选择一个。正是这种灵活性允许少量的语法规则编码组合上更大的字符串集。一个规则可以直接或间接地引用自身，这一事实使它更加灵活，让我们可以把无限多的字符串装进一个有限的语法中。
 
-### Enhancing our notation
+### 强化我们的记法
 
-Stuffing an infinite set of strings in a handful of rules is pretty fantastic,
-but let's take it further. Our notation works, but it's tedious. So, like any
-good language designer, we'll sprinkle a little syntactic sugar on top -- some
-extra convenience notation. In addition to terminals and nonterminals, we'll
-allow a few other kinds of expressions in the body of a rule:
+把无限的字符串集塞进少量的规则中非常神奇，但是我们还可以更进一步。我们的记法是有效的，但它很乏味。因此，像任何一个好的语言设计者一样，我们将在上面撒上一点语法糖--一些额外的便利记法。除了终结符和非终结符之外，我们还允许在规则的主体中出现一些其他类型的表达式：
 
-*   Instead of repeating the rule name each time we want to add another
-    production for it, we'll allow a series of productions separated by a pipe
-    (`|`).
+*   我们不需要每次都重复规则的名称，而是允许使用一系列用竖线（`|`）隔开产生式。
 
     ```ebnf
     bread → "toast" | "biscuits" | "English muffin" ;
     ```
 
-*   Further, we'll allow parentheses for grouping and then allow `|` within that
-    to select one from a series of options within the middle of a production.
+*   此外，我们将允许用圆括号进行分组，然后允许 `|` 在其中从一系列的选项中选择一个产生式。
 
     ```ebnf
     protein → ( "scrambled" | "poached" | "fried" ) "eggs" ;
     ```
 
-*   Using recursion to support repeated sequences of symbols has a certain
-    appealing <span name="purity">purity</span>, but it's kind of a chore to
-    make a separate named sub-rule each time we want to loop. So, we also use a
-    postfix `*` to allow the previous symbol or group to be repeated zero or
-    more times.
+*   使用递归来支持重复的符号序列有一定的<span name="purity">吸引力</span>，但每次我们想要循环时，都要创建一个单独的命名子规则，这有点麻烦。因此，我们还使用后缀 `*` 来允许前面的符号或组重复零次或多次。
 
     ```ebnf
     crispiness → "really" "really"* ;
@@ -304,27 +234,23 @@ allow a few other kinds of expressions in the body of a rule:
 
 <aside name="purity">
 
-This is how the Scheme programming language works. It has no built-in looping
-functionality at all. Instead, *all* repetition is expressed in terms of
-recursion.
+这就是Scheme编程语言的工作方式。它根本就没有内置的循环功能。反之，所有的重复都是用递归来表达的。
 
 </aside>
 
-*   A postfix `+` is similar, but requires the preceding production to appear
-    at least once.
+*   后缀 `+` 与此类似，但要求前面的产生式至少出现一次。
 
     ```ebnf
     crispiness → "really"+ ;
     ```
 
-*   A postfix `?` is for an optional production. The thing before it can appear
-    zero or one time, but not more.
+*   后缀"？"是指一个可选的产生式。它前面的东西可以出现零次或一次，但不能更多。
 
     ```ebnf
     breakfast → protein ( "with" breakfast "on the side" )? ;
     ```
 
-With all of those syntactic niceties, our breakfast grammar condenses down to:
+有了所有这些语法细节，我们的早餐语法概括为：
 
 ```ebnf
 breakfast → protein ( "with" breakfast "on the side" )?
@@ -337,55 +263,37 @@ protein   → "really"+ "crispy" "bacon"
 bread     → "toast" | "biscuits" | "English muffin" ;
 ```
 
-Not too bad, I hope. If you're used to grep or using [regular
-expressions][regex] in your text editor, most of the punctuation should be
-familiar. The main difference is that symbols here represent entire tokens, not
-single characters.
+我希望不是太糟糕。如果您习惯于在文本编辑器中使用grep或[正则表达式][regex]，那么大多数标点符号应该很熟悉。主要区别在于这里的符号表示整个 token ，而不是单个字符。
 
 [regex]: https://en.wikipedia.org/wiki/Regular_expression#Standards
 
-We'll use this notation throughout the rest of the book to precisely describe
-Lox's grammar. As you work on programming languages, you'll find that
-context-free grammars (using this or [EBNF][] or some other notation) help you
-crystallize your informal syntax design ideas. They are also a handy medium for
-communicating with other language hackers about syntax.
+在本书的其余部分，我们将使用这个记法来精确描述Lox的语法。当你研究编程语言时，你会发现上下文无关文法（使用这个或 [EBNF][] 或其他记法）可以帮助你将你的非正式语法设计想法具体化。它们也是与其他语言黑客交流语法的一个方便的媒介。
 
 [ebnf]: https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
 
-The rules and productions we define for Lox are also our guide to the tree data
-structure we're going to implement to represent code in memory. Before we can do
-that, we need an actual grammar for Lox, or at least enough of one for us to get
-started.
+我们为Lox定义的规则和产生式也是我们要实现的树状数据结构的指南，以表示内存中的代码。在做到这一点之前，我们需要一个实际的Lox语法，或者至少有足够的语法让我们开始工作。
 
-### A Grammar for Lox expressions
+### Lox表达式的语法
 
-In the previous chapter, we did Lox's entire lexical grammar in one fell swoop.
-Every keyword and bit of punctuation is there. The syntactic grammar is larger,
-and it would be a real bore to grind through the entire thing before we actually
-get our interpreter up and running.
+在上一章中，我们一举完成了Lox的整个词法语法。每个关键词和标点符号都在那里。句法语法更大，在我们真正启动和运行我们的解释器之前，从头到尾研究一遍实在是一件无聊的事情。
 
-Instead, we'll crank through a subset of the language in the next couple of
-chapters. Once we have that mini-language represented, parsed, and interpreted,
-then later chapters will progressively add new features to it, including the new
-syntax. For now, we are going to worry about only a handful of expressions:
+因此，我们将在接下来的几章中学习这门语言的子集。一旦我们有了这种小型语言的表示、解析和解释，那么后面的章节将逐步为它增加新的特性，包括新的语法。现在，我们只关注少数几个表达式:
 
-*   **Literals.** Numbers, strings, Booleans, and `nil`.
+*   **字面值.** 数字, 字符串, 布尔值, 以及 `nil`.
 
-*   **Unary expressions.** A prefix `!` to perform a logical not, and `-` to
-    negate a number.
+*   **一元表达式.** 前缀 `!` 用于执行逻辑非，而 `-` 用于对一个数求反。
 
-*   **Binary expressions.** The infix arithmetic (`+`, `-`, `*`, `/`) and logic
-    operators (`==`, `!=`, `<`, `<=`, `>`, `>=`) we know and love.
+*   **二元表达式.** 我们熟知并热爱的中缀算术运算符(`+`, `-`, `*`, `/`)和逻辑运算符(`==`, `!=`, `<`, `<=`, `>`, `>=`)。
 
-*   **Parentheses.** A pair of `(` and `)` wrapped around an expression.
+*   **圆括号.** 一对 `(` 和 `)` 包裹着一个表达式。
 
-That gives us enough syntax for expressions like:
+这为我们提供了足够的语法来表达如下表达式：
 
 ```lox
 1 - (2 * 3) < 4 == false
 ```
 
-Using our handy dandy new notation, here's a grammar for those:
+使用我们方便时髦的新记法，语法可以表示为:
 
 ```ebnf
 expression     → literal
@@ -401,30 +309,19 @@ operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
                | "+"  | "-"  | "*" | "/" ;
 ```
 
-There's one bit of extra <span name="play">metasyntax</span> here. In addition
-to quoted strings for terminals that match exact lexemes, we `CAPITALIZE`
-terminals that are a single lexeme whose text representation may vary. `NUMBER`
-is any number literal, and `STRING` is any string literal. Later, we'll do the
-same for `IDENTIFIER`.
+这里有一点额外的<span name="play">元语法</span>。除了对匹配精确 lexeme 的终结符使用加引号的字符串外，我们还对单一 lexeme 的终结符使用大写字母，这些 lexeme 的文本表示可能有所不同。 `NUMBER` 是任意数字直接量，`STRING` 是任意字符串直接量。稍后，我们将对 `IDENTIFIER` 做同样的处理。
 
-This grammar is actually ambiguous, which we'll see when we get to parsing it.
-But it's good enough for now.
+这个语法实际上是不明确的，我们在解析它的时候会看到这一点。但是现在已经足够好了。
 
 <aside name="play">
 
-If you're so inclined, try using this grammar to generate a few expressions like
-we did with the breakfast grammar before. Do the resulting expressions look
-right to you? Can you make it generate anything wrong like `1 + / 3`?
+如果你愿意，可以试着用这个语法生成一些表达式，就像我们之前用早餐语法做的那样。你觉得结果表达式看起来对吗？你能让它产生像 `1 + / 3` 这样的错误吗？
 
 </aside>
 
-## Implementing Syntax Trees
+## 实现语法树
 
-Finally, we get to write some code. That little expression grammar is our
-skeleton. Since the grammar is recursive -- note how `grouping`, `unary`, and
-`binary` all refer back to `expression` -- our data structure will form a tree.
-Since this structure represents the syntax of our language, it's called a <span
-name="ast">**syntax tree**</span>.
+最后，我们可以写一些代码了。那个小小的表达式语法就是我们的骨架。由于语法是递归的--注意`grouping`, `unary`和`binary`都是指 `expression` --我们的数据结构将形成一棵树。由于这个结构代表了我们语言的语法，所以它被称为<span name="ast">**语法树**</span>。
 
 <aside name="ast">
 
