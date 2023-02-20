@@ -325,36 +325,21 @@ operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
 
 <aside name="ast">
 
-In particular, we're defining an **abstract syntax tree** (**AST**). In a
-**parse tree**, every single grammar production becomes a node in the tree. An
-AST elides productions that aren't needed by later phases.
+特别地，我们定义了一个 **抽象语法树** ( **AST** )。在一个 **语法分析树** 中，每一个语法产生式都成为树中的一个节点。AST删除后面阶段不需要的产生式。
 
 </aside>
 
-Our scanner used a single Token class to represent all kinds of lexemes. To
-distinguish the different kinds -- think the number `123` versus the string
-`"123"` -- we included a simple TokenType enum. Syntax trees are not so <span
-name="token-data">homogeneous</span>. Unary expressions have a single operand,
-binary expressions have two, and literals have none.
+我们的扫描器使用单个Token类来表示所有的 lexeme。为了区分不同的种类- -想想数字 `123`  和字符串 `"123"` - -我们加了一个简单的 TokenType 枚举。句法树并不是那么<span name="token-data">同质化</span>。一元表达式只有一个操作数，二元表达式有两个操作数，字面表达式没有操作数。
 
-We *could* mush that all together into a single Expression class with an
-arbitrary list of children. Some compilers do. But I like getting the most out
-of Java's type system. So we'll define a base class for expressions. Then, for
-each kind of expression -- each production under `expression` -- we create a
-subclass that has fields for the nonterminals specific to that rule. This way,
-we get a compile error if we, say, try to access the second operand of a unary
-expression.
+我们 *可以* 把这些都混在一起，变成一个具有任意子级列表的单个Expression类。有些编译器就是这样做的。但是我喜欢充分利用Java的类型系统。因此我们将为表达式定义一个基类。然后，对于每一种表达式- -每个表达式( `expression` )下的产生式- -我们创建了一个子类，该子类具有该规则所特有的非终结符字段。这样，如果我们试图访问一元表达式的第二个操作数，我们就会得到一个编译错误。
 
 <aside name="token-data">
 
-Tokens aren't entirely homogeneous either. Tokens for literals store the value,
-but other kinds of lexemes don't need that state. I have seen scanners that use
-different classes for literals and other kinds of lexemes, but I figured I'd
-keep things simpler.
+Tokens 也不是完全同质的。字面值的 Token 保存了值，但其他类型的 lexeme 不需要这种状态。我见过一些扫描器对字面值和其他种类的 lexeme 使用不同的类，但我想我应该让事情更简单。
 
 </aside>
 
-Something like this:
+大概是这样的:
 
 ```java
 package com.craftinginterpreters.lox;
@@ -378,43 +363,23 @@ abstract class Expr { // [expr]
 
 <aside name="expr">
 
-I avoid abbreviations in my code because they trip up a reader who doesn't know
-what they stand for. But in compilers I've looked at, "Expr" and "Stmt" are so
-ubiquitous that I may as well start getting you used to them now.
+我在代码中避免使用缩写，因为它们会让不知道缩写代表什么的读者犯错误。但是在我所观察的编译器中，"Expr" 和 "Stmt" 是如此普遍，以至于我现在也可以开始让你习惯它们了。
 
 </aside>
 
-Expr is the base class that all expression classes inherit from. As you can see
-from `Binary`, the subclasses are nested inside of it. There's no technical need
-for this, but it lets us cram all of the classes into a single Java file.
+Expr 是所有表达式类都继承自的基类。正如你在 `Binary` 中所看到的，子类都嵌套在它里面。这在技术上没有必要，但它让我们把所有的类都压缩到一个 Java 文件中。
 
-### Disoriented objects
+### 无处安放的对象
 
-You'll note that, much like the Token class, there aren't any methods here. It's
-a dumb structure. Nicely typed, but merely a bag of data. This feels strange in
-an object-oriented language like Java. Shouldn't the class *do stuff*?
+您会注意到，与Token类非常相似，这里没有任何方法。这是一个愚蠢的结构。写得很好看，但只是一包数据。这在Java这样的面向对象语言中感觉很奇怪。类内不应该 *做一些事情* 吗？
 
-The problem is that these tree classes aren't owned by any single domain. Should
-they have methods for parsing since that's where the trees are created? Or
-interpreting since that's where they are consumed? Trees span the border between
-those territories, which means they are really owned by *neither*.
+问题是这些树相关类不属于任何一个领域。既然树是在语法分析时创建的，那么它们应该有语法分析方法吗？或者解释，因为这是他们被消费的地方？树横跨这些领土之间的边界，这意味着它们实际上都不属于 *任何一方*。
 
-In fact, these types exist to enable the parser and interpreter to
-*communicate*. That lends itself to types that are simply data with no
-associated behavior. This style is very natural in functional languages like
-Lisp and ML where *all* data is separate from behavior, but it feels odd in
-Java.
+事实上，这些类型的存在是为了使解析器和解释器能够进行通信。这使它适合于简单的没有关联行为的数据类型。这种风格在函数式语言中非常自然，比如Lisp和ML，在这些语言中，所有的数据都与行为分离，但是在Java中感觉很奇怪。
 
-Functional programming aficionados right now are jumping up to exclaim "See!
-Object-oriented languages are a bad fit for an interpreter!" I won't go that
-far. You'll recall that the scanner itself was admirably suited to
-object-orientation. It had all of the mutable state to keep track of where it
-was in the source code, a well-defined set of public methods, and a handful of
-private helpers.
+函数式编程的狂热爱好者现在都跳起来惊呼“看！面向对象语言不适合解释器！”我不会这么说。您会记得扫描仪本身非常适合面向对象。它有所有的可变状态来跟踪它在源代码中的位置，有一组定义良好的公共方法，还有一些私有帮助器。
 
-My feeling is that each phase or part of the interpreter works fine in an
-object-oriented style. It is the data structures that flow between them that are
-stripped of behavior.
+我的感觉是，解释器的每个阶段或部分在面向对象的风格中工作得很好。在它们之间流动的数据结构才是被剥离的行为。
 
 ### Metaprogramming the trees
 

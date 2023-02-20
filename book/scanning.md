@@ -504,7 +504,7 @@ that `<=` should be scanned as a single `<=` token and not `<` followed by `=`.
 
 ## 挑战
 
-1.  Python 和 Haskell 的词法是非 *常规* 的。这是什么意思，为什么它们不是呢？
+1.  Python 和 Haskell 的词法是非 *正则* 的。这是什么意思，为什么它们不是呢？
 
 1.  除了分隔 token 例如:--区分 `print foo` 和 `printfoo` -- 空格在大多数语言中没有什么用处。然而，在一些黑暗的角落里，空格 *确实* 影响了 CoffeeScript 、Ruby和C语言预处理器对代码的解析。在这些语言中，它在哪里以及有什么影响呢？
 
