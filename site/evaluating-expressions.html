@@ -37,8 +37,8 @@
 <h3><a href="#top">Evaluating Expressions<small>7</small></a></h3>
 
 <ul>
-    <li><a href="#representing-values"><small>7.1</small> Representing Values</a></li>
-    <li><a href="#evaluating-expressions"><small>7.2</small> Evaluating Expressions</a></li>
+    <li><a href="#描述值"><small>7.1</small> 描述值</a></li>
+    <li><a href="#表达式求值"><small>7.2</small> 表达式求值</a></li>
     <li><a href="#runtime-errors"><small>7.3</small> Runtime Errors</a></li>
     <li><a href="#hooking-up-the-interpreter"><small>7.4</small> Hooking Up the Interpreter</a></li>
     <li class="divider"></li>
@@ -68,8 +68,8 @@
 <h3><a href="#top">Evaluating Expressions<small>7</small></a></h3>
 
 <ul>
-    <li><a href="#representing-values"><small>7.1</small> Representing Values</a></li>
-    <li><a href="#evaluating-expressions"><small>7.2</small> Evaluating Expressions</a></li>
+    <li><a href="#描述值"><small>7.1</small> 描述值</a></li>
+    <li><a href="#表达式求值"><small>7.2</small> 表达式求值</a></li>
     <li><a href="#runtime-errors"><small>7.3</small> Runtime Errors</a></li>
     <li><a href="#hooking-up-the-interpreter"><small>7.4</small> Hooking Up the Interpreter</a></li>
     <li class="divider"></li>
@@ -93,60 +93,33 @@
   <h1>Evaluating Expressions</h1>
 
 <blockquote>
-<p>You are my creator, but I am your master; Obey!</p>
-<p><cite>Mary Shelley, <em>Frankenstein</em></cite></p>
+<p>你是我的创造者，但我是你的主人；服从我!</p>
+<p><cite>Mary Shelley, <em>弗兰肯斯坦</em></cite></p>
 </blockquote>
-<p>If you want to properly set the mood for this chapter, try to conjure up a
-thunderstorm, one of those swirling tempests that likes to yank open shutters at
-the climax of the story. Maybe toss in a few bolts of lightning. In this
-chapter, our interpreter will take breath, open its eyes, and execute some code.</p>
+<p>如果你想为这一章营造一个合适的氛围，试着想象一场雷雨，那种在故事高潮时喜欢猛然拉开百叶窗的漩涡式暴风雨。也许再加上几道闪电。在这一章中，我们的解释器将呼吸，睁开眼睛，并执行一些代码。</p>
 <p><span name="spooky"></span></p><img src="image/evaluating-expressions/lightning.png" alt="A bolt of lightning strikes a Victorian mansion. Spooky!" />
 <aside name="spooky">
-<p>A decrepit Victorian mansion is optional, but adds to the ambiance.</p>
+<p>一座破旧的维多利亚式豪宅是可选项，不过可以增加些氛围。</p>
 </aside>
-<p>There are all manner of ways that language implementations make a computer do
-what the user&rsquo;s source code commands. They can compile it to machine code,
-translate it to another high-level language, or reduce it to some bytecode
-format for a virtual machine to run. For our first interpreter, though, we are
-going to take the simplest, shortest path and execute the syntax tree itself.</p>
-<p>Right now, our parser only supports expressions. So, to &ldquo;execute&rdquo; code, we will
-evaluate an expression and produce a value. For each kind of expression syntax
-we can parse<span class="em">&mdash;</span>literal, operator, etc.<span class="em">&mdash;</span>we need a corresponding chunk of code
-that knows how to evaluate that tree and produce a result. That raises two
-questions:</p>
+<p>对于语言实现来说，有各种方式可以使计算机执行用户的源代码命令。它们可以将其编译为机器代码，将其翻译为另一种高级语言，或者将其还原为某种字节码格式，以便在虚拟机中执行。不过对于我们的第一个解释器，我们要选择最简单、最短的一条路，也就是执行语法树本身。</p>
+<p>现在，我们的解释器只支持表达式。因此，为了“执行”代码，我们要计算一个表达式时并生成一个值。对于我们可以解析的每一种表达式语法——字面量，操作符等——我们都需要相应的代码块，该代码块知道如何计算该语法树并产生结果。这也就引出了两个问题：</p>
 <ol>
 <li>
-<p>What kinds of values do we produce?</p>
+<p>我们要生成什么类型的值？</p>
 </li>
 <li>
-<p>How do we organize those chunks of code?</p>
+<p>我们如何组织这些代码块？</p>
 </li>
 </ol>
-<p>Taking them on one at a time<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.&nbsp;</span></p>
-<h2><a href="#representing-values" id="representing-values"><small>7&#8202;.&#8202;1</small>Representing Values</a></h2>
-<p>In Lox, <span name="value">values</span> are created by literals, computed by
-expressions, and stored in variables. The user sees these as <em>Lox</em> objects, but
-they are implemented in the underlying language our interpreter is written in.
-That means bridging the lands of Lox&rsquo;s dynamic typing and Java&rsquo;s static types. A
-variable in Lox can store a value of any (Lox) type, and can even store values
-of different types at different points in time. What Java type might we use to
-represent that?</p>
+<p>让我们来逐个击破<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.&nbsp;</span></p>
+<h2><a href="#描述值" id="描述值"><small>7&#8202;.&#8202;1</small>描述值</a></h2>
+<p>在Lox中，<span name="value">值</span>由字面量创建，由表达式计算，并存储在变量中。用户将其视作Lox对象，但它们是用编写解释器的底层语言实现的。这意味着要在Lox的动态类型和Java的静态类型之间架起桥梁。Lox中的变量可以存储任何（Lox）类型的值，甚至可以在不同时间存储不同类型的值。我们可以用什么Java类型来表示？</p>
 <aside name="value">
-<p>Here, I&rsquo;m using &ldquo;value&rdquo; and &ldquo;object&rdquo; pretty much interchangeably.</p>
-<p>Later in the C interpreter we&rsquo;ll make a slight distinction between them, but
-that&rsquo;s mostly to have unique terms for two different corners of the
-implementation<span class="em">&mdash;</span>in-place versus heap-allocated data. From the user&rsquo;s
-perspective, the terms are synonymous.</p>
+<p>在这里，我基本可以互换 &ldquo;值 &ldquo;和 &ldquo;对象&ldquo;。</p>
+<p>稍后在C解释器中，我们会对它们稍作区分，但这主要是针对实现的两个不同方面（本地数据和堆分配数据）使用不同的术语。从用户的角度来看，这些术语是同义的。</p>
 </aside>
-<p>Given a Java variable with that static type, we must also be able to determine
-which kind of value it holds at runtime. When the interpreter executes a <code>+</code>
-operator, it needs to tell if it is adding two numbers or concatenating two
-strings. Is there a Java type that can hold numbers, strings, Booleans, and
-more? Is there one that can tell us what its runtime type is? There is! Good old
-java.lang.Object.</p>
-<p>In places in the interpreter where we need to store a Lox value, we can use
-Object as the type. Java has boxed versions of its primitive types that all
-subclass Object, so we can use those for Lox&rsquo;s built-in types:</p><table>
+<p>给定一个具有该静态类型的Java变量，我们还必须能够在运行时确定它持有哪种类型的值。当解释器执行 <code>+</code> 运算符时，它需要知道它是在将两个数字相加还是在拼接两个字符串。有没有一种Java类型可以容纳数字、字符串、布尔值等等？有没有一种类型可以告诉我们它的运行时类型是什么？有的! 就是老牌的java.lang.Object。</p>
+<p>在解释器中需要存储Lox值的地方，我们可以使用Object作为类型。Java已经将其基本类型的所有子类对象装箱了，因此我们可以将它们用作Lox的内置类型：</p><table>
 <thead>
 <tr>
   <td>Lox type</td>
@@ -183,18 +156,18 @@ conveniently gives us everything we need to implement Lox&rsquo;s built-in types
 We&rsquo;ll have to do a little more work later when we add Lox&rsquo;s notions of
 functions, classes, and instances, but Object and the boxed primitive classes
 are sufficient for the types we need right now.</p>
+<p>给定一个静态类型为Object的值，我们可以使用Java内置的 <code>instanceof</code> 操作符来确定运行时的值是数字、字符串还是其他类型。换句话说，<span name="jvm">JVM</span>自己的对象表示方便地为我们提供了实现Lox内置类型所需的一切。当稍后添加 <code>Lox</code> 的函数、类和实例等概念时，我们还必须做更多的工作，但Object和基本类型的包装类足以满足我们现在的需要。</p>
 <aside name="jvm">
-<p>Another thing we need to do with values is manage their memory, and Java does
-that too. A handy object representation and a really nice garbage collector are
-the main reasons we&rsquo;re writing our first interpreter in Java.</p>
+<p>我们需要对值进行的另一项操作是管理它们的内存，而Java也可以做到这一点。方便的对象表示和优秀的垃圾回收器是我们选择用Java编写第一个解释器的主要原因。</p>
 </aside>
-<h2><a href="#evaluating-expressions" id="evaluating-expressions"><small>7&#8202;.&#8202;2</small>Evaluating Expressions</a></h2>
+<h2><a href="#表达式求值" id="表达式求值"><small>7&#8202;.&#8202;2</small>表达式求值</a></h2>
 <p>Next, we need blobs of code to implement the evaluation logic for each kind of
 expression we can parse. We could stuff that code into the syntax tree classes
 in something like an <code>interpret()</code> method. In effect, we could tell each syntax
 tree node, &ldquo;Interpret thyself&rdquo;. This is the Gang of Four&rsquo;s
 <a href="https://en.wikipedia.org/wiki/Interpreter_pattern">Interpreter design pattern</a>. It&rsquo;s a neat pattern, but like I mentioned
 earlier, it gets messy if we jam all sorts of logic into the tree classes.</p>
+<p>接下来，我们需要编写大量的代码来实现对每种可解析表达式的求值逻辑。我们可以将这些代码放入语法树类中，例如添加一个 <code>interpret()</code> 方法。然后，我们可以告诉每个语法树节点：“解释你自己”。这就是《设计模式》中的 <a href="https://en.wikipedia.org/wiki/Interpreter_pattern">解释器模式</a>。这是一个整洁的模式，但正如我之前提到的，如果我们将各种逻辑都塞进语法树类中，它会变得混乱不堪。</p>
 <p>Instead, we&rsquo;re going to reuse our groovy <a href="representing-code.html#the-visitor-pattern">Visitor pattern</a>. In the previous
 chapter, we created an AstPrinter class. It took in a syntax tree and
 recursively traversed it, building up a string which it ultimately returned.

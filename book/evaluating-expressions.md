@@ -1,11 +1,8 @@
-> You are my creator, but I am your master; Obey!
+> 你是我的创造者，但我是你的主人；服从我!
 >
-> <cite>Mary Shelley, <em>Frankenstein</em></cite>
+> <cite>Mary Shelley, <em>弗兰肯斯坦</em></cite>
 
-If you want to properly set the mood for this chapter, try to conjure up a
-thunderstorm, one of those swirling tempests that likes to yank open shutters at
-the climax of the story. Maybe toss in a few bolts of lightning. In this
-chapter, our interpreter will take breath, open its eyes, and execute some code.
+如果你想为这一章营造一个合适的氛围，试着想象一场雷雨，那种在故事高潮时喜欢猛然拉开百叶窗的漩涡式暴风雨。也许再加上几道闪电。在这一章中，我们的解释器将呼吸，睁开眼睛，并执行一些代码。
 
 <span name="spooky"></span>
 
@@ -13,59 +10,35 @@ chapter, our interpreter will take breath, open its eyes, and execute some code.
 
 <aside name="spooky">
 
-A decrepit Victorian mansion is optional, but adds to the ambiance.
+一座破旧的维多利亚式豪宅是可选项，不过可以增加些氛围。
 
 </aside>
 
-There are all manner of ways that language implementations make a computer do
-what the user's source code commands. They can compile it to machine code,
-translate it to another high-level language, or reduce it to some bytecode
-format for a virtual machine to run. For our first interpreter, though, we are
-going to take the simplest, shortest path and execute the syntax tree itself.
+对于语言实现来说，有各种方式可以使计算机执行用户的源代码命令。它们可以将其编译为机器代码，将其翻译为另一种高级语言，或者将其还原为某种字节码格式，以便在虚拟机中执行。不过对于我们的第一个解释器，我们要选择最简单、最短的一条路，也就是执行语法树本身。
 
-Right now, our parser only supports expressions. So, to "execute" code, we will
-evaluate an expression and produce a value. For each kind of expression syntax
-we can parse -- literal, operator, etc. -- we need a corresponding chunk of code
-that knows how to evaluate that tree and produce a result. That raises two
-questions:
+现在，我们的解释器只支持表达式。因此，为了“执行”代码，我们要计算一个表达式时并生成一个值。对于我们可以解析的每一种表达式语法——字面量，操作符等——我们都需要相应的代码块，该代码块知道如何计算该语法树并产生结果。这也就引出了两个问题：
 
-1. What kinds of values do we produce?
+1. 我们要生成什么类型的值？
 
-2. How do we organize those chunks of code?
+2. 我们如何组织这些代码块？
 
-Taking them on one at a time...
+让我们来逐个击破...
 
-## Representing Values
+## 描述值
 
-In Lox, <span name="value">values</span> are created by literals, computed by
-expressions, and stored in variables. The user sees these as *Lox* objects, but
-they are implemented in the underlying language our interpreter is written in.
-That means bridging the lands of Lox's dynamic typing and Java's static types. A
-variable in Lox can store a value of any (Lox) type, and can even store values
-of different types at different points in time. What Java type might we use to
-represent that?
+在Lox中，<span name="value">值</span>由字面量创建，由表达式计算，并存储在变量中。用户将其视作Lox对象，但它们是用编写解释器的底层语言实现的。这意味着要在Lox的动态类型和Java的静态类型之间架起桥梁。Lox中的变量可以存储任何（Lox）类型的值，甚至可以在不同时间存储不同类型的值。我们可以用什么Java类型来表示？
 
 <aside name="value">
 
-Here, I'm using "value" and "object" pretty much interchangeably.
+在这里，我基本可以互换 "值 "和 "对象"。
 
-Later in the C interpreter we'll make a slight distinction between them, but
-that's mostly to have unique terms for two different corners of the
-implementation -- in-place versus heap-allocated data. From the user's
-perspective, the terms are synonymous.
+稍后在C解释器中，我们会对它们稍作区分，但这主要是针对实现的两个不同方面（本地数据和堆分配数据）使用不同的术语。从用户的角度来看，这些术语是同义的。
 
 </aside>
 
-Given a Java variable with that static type, we must also be able to determine
-which kind of value it holds at runtime. When the interpreter executes a `+`
-operator, it needs to tell if it is adding two numbers or concatenating two
-strings. Is there a Java type that can hold numbers, strings, Booleans, and
-more? Is there one that can tell us what its runtime type is? There is! Good old
-java.lang.Object.
+给定一个具有该静态类型的Java变量，我们还必须能够在运行时确定它持有哪种类型的值。当解释器执行 `+` 运算符时，它需要知道它是在将两个数字相加还是在拼接两个字符串。有没有一种Java类型可以容纳数字、字符串、布尔值等等？有没有一种类型可以告诉我们它的运行时类型是什么？有的! 就是老牌的java.lang.Object。
 
-In places in the interpreter where we need to store a Lox value, we can use
-Object as the type. Java has boxed versions of its primitive types that all
-subclass Object, so we can use those for Lox's built-in types:
+在解释器中需要存储Lox值的地方，我们可以使用Object作为类型。Java已经将其基本类型的所有子类对象装箱了，因此我们可以将它们用作Lox的内置类型：
 
 <table>
 <thead>
@@ -98,84 +71,59 @@ subclass Object, so we can use those for Lox's built-in types:
 </tbody>
 </table>
 
-Given a value of static type Object, we can determine if the runtime value is a
-number or a string or whatever using Java's built-in `instanceof` operator. In
-other words, the <span name="jvm">JVM</span>'s own object representation
-conveniently gives us everything we need to implement Lox's built-in types.
-We'll have to do a little more work later when we add Lox's notions of
-functions, classes, and instances, but Object and the boxed primitive classes
-are sufficient for the types we need right now.
+给定一个静态类型为Object的值，我们可以使用Java内置的 `instanceof` 操作符来确定运行时的值是数字、字符串还是其他类型。换句话说，<span name="jvm">JVM</span>自己的对象表示方便地为我们提供了实现Lox内置类型所需的一切。当稍后添加 `Lox` 的函数、类和实例等概念时，我们还必须做更多的工作，但Object和基本类型的包装类足以满足我们现在的需要。
 
 <aside name="jvm">
 
-Another thing we need to do with values is manage their memory, and Java does
-that too. A handy object representation and a really nice garbage collector are
-the main reasons we're writing our first interpreter in Java.
+我们需要对值进行的另一项操作是管理它们的内存，而Java也可以做到这一点。方便的对象表示和优秀的垃圾回收器是我们选择用Java编写第一个解释器的主要原因。
 
 </aside>
 
-## Evaluating Expressions
+## 表达式求值
 
-Next, we need blobs of code to implement the evaluation logic for each kind of
-expression we can parse. We could stuff that code into the syntax tree classes
-in something like an `interpret()` method. In effect, we could tell each syntax
-tree node, "Interpret thyself". This is the Gang of Four's
-[Interpreter design pattern][]. It's a neat pattern, but like I mentioned
-earlier, it gets messy if we jam all sorts of logic into the tree classes.
+接下来，我们需要编写大量的代码来实现对每种可解析表达式的求值逻辑。我们可以将这些代码放入语法树类中，例如添加一个 `interpret()` 方法。然后，我们可以告诉每个语法树节点：“解释你自己”。这就是《设计模式》中的 [解释器模式][Interpreter design pattern]。这是一个整洁的模式，但正如我之前提到的，如果我们将各种逻辑都塞进语法树类中，它会变得混乱不堪。
 
 [interpreter design pattern]: https://en.wikipedia.org/wiki/Interpreter_pattern
 
-Instead, we're going to reuse our groovy [Visitor pattern][]. In the previous
-chapter, we created an AstPrinter class. It took in a syntax tree and
-recursively traversed it, building up a string which it ultimately returned.
-That's almost exactly what a real interpreter does, except instead of
-concatenating strings, it computes values.
+相反，我们将重用我们之前使用的[访问者][Visitor pattern]模式。在前一章中，我们创建了一个AstPrinter类。它接收一个语法树，并递归地遍历它，构建一个字符串，并最终返回它。这几乎就是一个真正的解释器所做的事情，只是解释器不是将字符串连接起来，而是计算值。
 
 [visitor pattern]: representing-code.html#the-visitor-pattern
 
-We start with a new class.
+我们先创建一个新类。
 
 ^code interpreter-class
 
-The class declares that it's a visitor. The return type of the visit methods
-will be Object, the root class that we use to refer to a Lox value in our Java
-code. To satisfy the Visitor interface, we need to define visit methods for each
-of the four expression tree classes our parser produces. We'll start with the
-simplest...
+这个类声明自己是一个访问者。visit方法的返回类型将是Object，这是我们在Java代码中用来表示Lox值的根类。为了实现Visitor接口，我们需要为解析器生成的四个表达式树类中分别定义访问方法。我们将从最简单的开始...
 
-### Evaluating literals
+### 字面量求值
 
-The leaves of an expression tree -- the atomic bits of syntax that all other
-expressions are composed of -- are <span name="leaf">literals</span>. Literals
-are almost values already, but the distinction is important. A literal is a *bit
-of syntax* that produces a value. A literal always appears somewhere in the
-user's source code. Lots of values are produced by computation and don't exist
-anywhere in the code itself. Those aren't literals. A literal comes from the
-parser's domain. Values are an interpreter concept, part of the runtime's world.
+表达式树的叶子节点是构成其他表达式的基本语法单元，它们被称为<span name="leaf">字面量</span>。字面量几乎已经是值了，但两者的区别很重要。字面量是一种产生值的语法单元。字面量总是出现在用户的源代码中的某个位置。而许多值是通过计算产生的，并不在代码本身的任何地方存在。它们不是字面量。字面量来自于解析器的领域。而值是一个解释器的概念，属于运行时的世界的一部分。
 
 <aside name="leaf">
 
-In the [next chapter][vars], when we implement variables, we'll add identifier
-expressions, which are also leaf nodes.
+在[下一章节][vars]中，当我们实现变量时，我们将添加标识符表达式，它也是叶子节点。
 
 [vars]: statements-and-state.html
 
 </aside>
 
-So, much like we converted a literal *token* into a literal *syntax tree node*
-in the parser, now we convert the literal tree node into a runtime value. That
-turns out to be trivial.
+所以，就像我们在解析器中将字面量*标记*转换为字面量*语法树节点*一样，现在我们将字面量树节点转换为运行时值。这其实非常简单。
 
 ^code visit-literal
 
-We eagerly produced the runtime value way back during scanning and stuffed it in
-the token. The parser took that value and stuck it in the literal tree node,
-so to evaluate a literal, we simply pull it back out.
+我们早在扫描过程中就即时生成了运行时的值，并把它放进了语法标记中。解析器获取该值并将其插入字面量语法树节点中，所以要对字面量求值，我们只需把它存的值取出来。
 
-### Evaluating parentheses
+
+
+### 括号求值
 
 The next simplest node to evaluate is grouping -- the node you get as a result
 of using explicit parentheses in an expression.
+
+下一个最简单的节点是分组节点——当你在表达式中使用显式括号时得到的节点。
+下一个需要求值的节点是分组节点——当你在表达式中显式使用括号时产生的语法树节点。
+
+
 
 ^code visit-grouping
 
