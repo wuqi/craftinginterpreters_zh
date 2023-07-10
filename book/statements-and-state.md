@@ -1,84 +1,44 @@
-> All my life, my heart has yearned for a thing I cannot name.
-> <cite>Andr&eacute; Breton, <em>Mad Love</em></cite>
+> 我一生都在渴求一种无法名状的东西。
+>
+> ——安德烈·布勒东，《疯狂的爱》
 
-The interpreter we have so far feels less like programming a real language and
-more like punching buttons on a calculator. "Programming" to me means building
-up a system out of smaller pieces. We can't do that yet because we have no way
-to bind a name to some data or function. We can't compose software without a way
-to refer to the pieces.
+我们目前使用的解释器感觉更像是在计算器上按按钮，而不是编写真正的语言。对我来说，“编程”意味着从小的部分构建一个系统。但我们现在无法完成这个过程，因为没有办法将名称绑定到一些数据或函数上。如果没有办法引用这些片段，我们就无法组合成软件系统。
 
-To support bindings, our interpreter needs internal state. When you define a
-variable at the beginning of the program and use it at the end, the interpreter
-has to hold on to the value of that variable in the meantime. So in this
-chapter, we will give our interpreter a brain that can not just process, but
-*remember*.
+为了支持绑定，我们的解释器需要内部状态。当你在程序的开头定义一个变量并在结尾处使用它时，解释器必须在此期间保持该变量的值。因此，在本章中，我们将为我们的解释器赋予一个可以处理和记忆的大脑。
 
 <img src="image/statements-and-state/brain.png" alt="A brain, presumably remembering stuff." />
 
-State and <span name="expr">statements</span> go hand in hand. Since statements,
-by definition, don't evaluate to a value, they need to do something else to be
-useful. That something is called a **side effect**. It could mean producing
-user-visible output or modifying some state in the interpreter that can be
-detected later. The latter makes them a great fit for defining variables or
-other named entities.
+状态和 <span name="expr">语句</span> 是相辅相成的。由于语句按定义不会计算出一个具体值，所以它们需要做一些其他的事情来发挥作用。这些事情被称为副作用。它可能意味着产生用户可见的输出或修改解释器中的某些状态，以便稍后可以检测到。后者使它们非常适合定义变量或其他命名实体。
 
 <aside name="expr">
 
-You could make a language that treats variable declarations as expressions that
-both create a binding and produce a value. The only language I know that does
-that is Tcl. Scheme seems like a contender, but note that after a `let`
-expression is evaluated, the variable it bound is forgotten. The `define` syntax
-is not an expression.
+你可以创建一种语言，将变量声明视为既创建绑定又产生值的表达式。Tcl是其中唯一我知道的一个这样做的语言。虽然Scheme也有类似的语法，但需要注意的是，在  `let` 表达式被求值之后，它所绑定的变量就被遗忘了。而 `define` 语法则不是一个表达式。
 
 </aside>
 
-In this chapter, we'll do all of that. We'll define statements that produce
-output (`print`) and create state (`var`). We'll add expressions to access and
-assign to variables. Finally, we'll add blocks and local scope. That's a lot to
-stuff into one chapter, but we'll chew through it all one bite at a time.
+在本章中，我们将完成这些任务。我们将定义产生输出（`print`）和创建状态（`var`）的语句，并添加表达式来访问和赋值变量。最后，我们会引入代码块和局部作用域。虽然内容很多，但我们会逐步学习，一步一步地消化它们。
 
-## Statements
+## 语句
 
-We start by extending Lox's grammar with statements. They aren't very different
-from expressions. We start with the two simplest kinds:
-
-1.  An **expression statement** lets you place an expression where a statement
-    is expected. They exist to evaluate expressions that have side effects. You
-    may not notice them, but you use them all the time in <span
-    name="expr-stmt">C</span>, Java, and other languages. Any time you see a
-    function or method call followed by a `;`, you're looking at an expression
-    statement.
+我们首先扩展Lox的语法以支持语句。 语句与表达式并没有很大的不同，我们从两种最简单的类型开始：
+    
+1.   **表达式语句 ** 可以让您将表达式放在需要语句的位置。它们的存在是为了计算有副作用的表达式。您可能没有注意到它们，但其实你在<span   name="expr-stmt">C</span>、Java和其他语言中一直在使用表达式语句。如果你看到一个函数或方法调用后面跟着一个 `;`，您看到的其实就是一个表达式语句。
 
     <aside name="expr-stmt">
 
-    Pascal is an outlier. It distinguishes between *procedures* and *functions*.
-    Functions return values, but procedures cannot. There is a statement form
-    for calling a procedure, but functions can only be called where an
-    expression is expected. There are no expression statements in Pascal.
+    Pascal是一个例外。它区分*过程*和*函数*。函数返回值，但过程没有返回值。有一种调用过程的语句形式，但只能在需要表达式的地方调用函数。Pascal中没有表达式语句。
 
     </aside>
 
-2.  A **`print` statement** evaluates an expression and displays the result to
-    the user. I admit it's weird to bake printing right into the language
-    instead of making it a library function. Doing so is a concession to the
-    fact that we're building this interpreter one chapter at a time and want to
-    be able to play with it before it's all done. To make print a library
-    function, we'd have to wait until we had all of the machinery for defining
-    and calling functions <span name="print">before</span> we could witness any
-    side effects.
+2.  `print` 语句会计算表达式，并将结果展示给用户。我承认,将 `print` 直接嵌入语言中，而不是把它变成一个库函数的做法有些奇怪。这样做是基于本书的编排策略的让步，即我们会以章节为单位逐步构建这个解释器，并希望能够在完成解释器的所有功能<span name="print">之前</span>能够使用它。如果让print成为一个标准库函数，我们必须等到拥有了定义和调用函数的所有机制之后，才能看到它发挥作用。
 
     <aside name="print">
-
-    I will note with only a modicum of defensiveness that BASIC and Python
-    have dedicated `print` statements and they are real languages. Granted,
-    Python did remove their `print` statement in 3.0...
+    
+    这里提一下(原文中的防杠提示...)，BASIC和Python都有专门的 `print` 语句，并且它们都是真正的编程语言。当然，在Python 3.0中，他们删除了 `print` 语句……
 
     </aside>
 
-New syntax means new grammar rules. In this chapter, we finally gain the ability
-to parse an entire Lox script. Since Lox is an imperative, dynamically typed
-language, the "top level" of a script is simply a list of statements. The new
-rules are:
+新的语法意味着新的语法规则。在本章中，我们终于可以解析整个Lox脚本。由于Lox是一种命令式、动态类型的语言，脚本的“顶层”只是一个语句列表。新的规则如下：
 
 ```ebnf
 program        → statement* EOF ;
@@ -90,38 +50,21 @@ exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
 ```
 
-The first rule is now `program`, which is the starting point for the grammar and
-represents a complete Lox script or REPL entry. A program is a list of
-statements followed by the special "end of file" token. The mandatory end token
-ensures the parser consumes the entire input and doesn't silently ignore
-erroneous unconsumed tokens at the end of a script.
+第一条规则是 `program`，它是语法的起点，代表一个完整的Lox脚本或REPL输入。一个程序是一系列语句，后面跟着特殊的“文件结束”(EOF)标记。这个结束标记是必须的，它确保解析器消费整个输入，而不会在脚本末尾忽略错误的未消耗的标记。
 
-Right now, `statement` only has two cases for the two kinds of statements we've
-described. We'll fill in more later in this chapter and in the following ones.
-The next step is turning this grammar into something we can store in memory --
-syntax trees.
+目前，`statement` 只有两种情况，分别对应我们描述过的两种语句。在本章的后面和接下来的章节中，我们将填充更多的内容。下一步是将这个语法转换成我们可以存储在内存中的东西——语法树。
 
-### Statement syntax trees
+### Statement语法树
 
-There is no place in the grammar where both an expression and a statement are
-allowed. The operands of, say, `+` are always expressions, never statements. The
-body of a `while` loop is always a statement.
+在语法中，没有同时允许表达式和语句的地方。例如，操作符，例如 `+`  的操作数始终是表达式，而不是语句。`while` 循环的主体始终是一个语句。 
 
-Since the two syntaxes are disjoint, we don't need a single base class that they
-all inherit from. Splitting expressions and statements into separate class
-hierarchies enables the Java compiler to help us find dumb mistakes like passing
-a statement to a Java method that expects an expression.
+因为这两种语法是不相干的，所以我们不需要提供一个它们都继承的基类。将表达式和语句拆分为单独的类结构，可使Java编译器帮助我们发现一些愚蠢的错误，例如将语句传递给需要表达式的Java方法。 
 
-That means a new base class for statements. As our elders did before us, we will
-use the cryptic name "Stmt". With great <span name="foresight">foresight</span>,
-I have designed our little AST metaprogramming script in anticipation of this.
-That's why we passed in "Expr" as a parameter to `defineAst()`. Now we add
-another call to define Stmt and its <span name="stmt-ast">subclasses</span>.
+这意味着要为语句创建一个新的基类。我们将像我们的前辈一样使用神秘的名称“Stmt”。我很有<span name="foresight">远见</span>，在设计我们的AST元编程脚本时就已经预见到了这一点。这就是我们将“Expr”作为参数传给了 `defineAst()` 的原因。现在我们添加另一个方法调用来定义Stmt和它的<span name="stmt-ast">子类</span>。
 
 <aside name="foresight">
 
-Not really foresight: I wrote all the code for the book before I sliced it into
-chapters.
+不完全是因为远见：我在将代码分割成章节之前就已经编写了整本书的所有代码。
 
 </aside>
 
@@ -129,7 +72,7 @@ chapters.
 
 <aside name="stmt-ast">
 
-The generated code for the new nodes is in [Appendix II][appendix-ii]: [Expression statement][], [Print statement][].
+新节点的生成代码在 [附录 II][appendix-ii]中： [Expression语句][Expression statement], [Print 语句][Print statement]。
 
 [appendix-ii]: appendix-ii.html
 [expression statement]: appendix-ii.html#expression-statement
@@ -137,137 +80,98 @@ The generated code for the new nodes is in [Appendix II][appendix-ii]: [Expressi
 
 </aside>
 
-Run the AST generator script and behold the resulting "Stmt.java" file with the
-syntax tree classes we need for expression and `print` statements. Don't forget
-to add the file to your IDE project or makefile or whatever.
+运行AST生成器脚本，然后查看生成的 `Stmt.java` 文件，其中包含我们需要的表达式和 `print` 语句的语法树类。不要忘记将该文件添加到您的IDE项目或makefile或其他相关文件中。
 
-### Parsing statements
+###  解析语句
 
-The parser's `parse()` method that parses and returns a single expression was a
-temporary hack to get the last chapter up and running. Now that our grammar has
-the correct starting rule, `program`, we can turn `parse()` into the real deal.
+解析器的parse()方法会解析并返回一个表达式，这只是一个临时的hack，用于让上一章的代码能启动并运行起来。现在，我们的语法已经有了正确的起始规则，`program`，我们可以正式编写 `parse()` 方法了。
 
 ^code parse
 
 <aside name="parse-error-handling">
 
-What about the code we had in here for catching `ParseError` exceptions? We'll
-put better parse error handling in place soon when we add support for additional
-statement types.
+我们之前在这里添加的捕获 `ParseError` 异常的代码怎么办？当我们添加对其他语句类型的支持时，我们很快就会放置更好的解析错误处理代码。
 
 </aside>
 
-This parses a series of statements, as many as it can find until it hits the end
-of the input. This is a pretty direct translation of the `program` rule into
-recursive descent style. We must also chant a minor prayer to the Java verbosity
-gods since we are using ArrayList now.
+该方法会尽可能多地解析一系列语句，直到命中输入内容的结尾为止。这是一种非常直接的将program规则转换为递归下降风格的方式。由于我们现在使用ArrayList，所以我们还必须向Java的冗长之神祈祷一番。
 
 ^code parser-imports (2 before, 1 after)
 
-A program is a list of statements, and we parse one of those statements using
-this method:
+一个程序就是一系列的语句，而我们可以通过下面的方法解析每一条语句：
 
 ^code parse-statement
 
-A little bare bones, but we'll fill it in with more statement types later. We
-determine which specific statement rule is matched by looking at the current
-token. A `print` token means it's obviously a `print` statement.
+看起来有些简陋，不过我们稍后会填充更多的语句类型。我们通过查看当前标记来确定匹配的具体语句规则。例如 `print`标记，显然对应 `print` 语句。
 
-If the next token doesn't look like any known kind of statement, we assume it
-must be an expression statement. That's the typical final fallthrough case when
-parsing a statement, since it's hard to proactively recognize an expression from
-its first token.
+如果下一个标记看起来不像任何已知类型的语句，我们就假设它一定是一个表达式语句。这是解析语句时典型的最终失败分支，因为很难从第一个标记主动识别出一个表达式。
 
-Each statement kind gets its own method. First `print`:
+每种语句类型都有自己的方法。首先是 `print`：
 
 ^code parse-print-statement
 
-Since we already matched and consumed the `print` token itself, we don't need to
-do that here. We parse the subsequent expression, consume the terminating
-semicolon, and emit the syntax tree.
+由于我们已经匹配和消耗了 `print` 标记本身，所以这里不需要再次进行匹配。我们解析后续的表达式，消耗结束的分号，并生成语法树。
 
-If we didn't match a `print` statement, we must have one of these:
+如果我们没有匹配到print语句，那一定是一条表达式语句：
 
 ^code parse-expression-statement
 
-Similar to the previous method, we parse an expression followed by a semicolon.
-We wrap that Expr in a Stmt of the right type and return it.
+与前面的方法类似，我们解析一个后面带分号的表达式。我们将该表达式 Expr 包装在正确类型的 Stmt 语句中并返回。
 
-### Executing statements
+### 执行语句
 
-We're running through the previous couple of chapters in microcosm, working our
-way through the front end. Our parser can now produce statement syntax trees, so
-the next and final step is to interpret them. As in expressions, we use the
-Visitor pattern, but we have a new visitor interface, Stmt.Visitor, to
-implement since statements have their own base class.
+我们正在以微观的方式回顾前面的几章，逐步完成解释器的前端工作。我们的解析器现在可以生成语句的语法树，所以下一步也是最后一步就是解释它们。与表达式一样，我们使用访问者模式，但是我们需要实现一个新的访问者接口 Stmt.Visitor 需要实现，因为语句有自己的基类。
 
-We add that to the list of interfaces Interpreter implements.
+我们将其添加到 Interpreter 实现的接口列表中。
 
 ^code interpreter (1 after)
 
 <aside name="void">
 
-Java doesn't let you use lowercase "void" as a generic type argument for obscure
-reasons having to do with type erasure and the stack. Instead, there is a
-separate "Void" type specifically for this use. Sort of a "boxed void", like
-"Integer" is for "int".
+出于与类型擦除和堆栈有关的晦涩原因，Java不允许使用小写的 "void" 作为泛型类型参数。相反，有一个专门用于此用途的单独的 "Void" 类型。可以将其视为 "void" 的 "包装类"，类似于 "Integer" 是 "int" 的包装类。
 
 </aside>
 
-Unlike expressions, statements produce no values, so the return type of the
-visit methods is Void, not Object. We have two statement types, and we need a
-visit method for each. The easiest is expression statements.
+与表达式不同，语句不产生任何值，因此 visit 方法的返回类型是 Void，而不是 Object。我们有两种语句类型，每种类型都需要一个 visit 方法。最简单的是表达式语句。
 
 ^code visit-expression-stmt
 
-We evaluate the inner expression using our existing `evaluate()` method and
-<span name="discard">discard</span> the value. Then we return `null`. Java
-requires that to satisfy the special capitalized Void return type. Weird, but
-what can you do?
+我们使用现有的 `evaluate()` 方法计算内部表达式，并<span name="discard">丢弃</span>其结果值。然后我们返回`null`，因为Java要求为特殊的大写Void返回类型返回该值。虽然有点奇怪，但你能做什么呢？
+
 
 <aside name="discard">
 
-Appropriately enough, we discard the value returned by `evaluate()` by placing
-that call inside a *Java* expression statement.
+刚巧，我们通过将 `evaluate()` 的调用放在一个 Java 表达式语句中来丢弃返回的值。
 
 </aside>
 
-The `print` statement's visit method isn't much different.
+`print` 语句的visit方法没有太大的区别。
 
 ^code visit-print
 
-Before discarding the expression's value, we convert it to a string using the
-`stringify()` method we introduced in the last chapter and then dump it to
-stdout.
+在丢弃表达式的值之前，我们使用上一章介绍的 `stringify()` 方法将其转换为字符串，然后将其输出到 stdout。
 
-Our interpreter is able to visit statements now, but we have some work to do to
-feed them to it. First, modify the old `interpret()` method in the Interpreter
-class to accept a list of statements -- in other words, a program.
+我们的解释器现在能够处理语句了，但是我们还需要做一些工作来将它们传递给解释器。首先，修改 Interpreter 类中的旧 `interpret()` 方法，以接受语句列表，即一段程序。
 
 ^code interpret
 
-This replaces the old code which took a single expression. The new code relies
-on this tiny helper method:
+这将替换掉原来处理单个表达式的旧代码。新代码依赖于下面的辅助小方法：
 
 ^code execute
 
-That's the statement analogue to the `evaluate()` method we have for
-expressions. Since we're working with lists now, we need to let Java know.
+这里处理语句的方法类似处理表达式的 `evaluate()` 方法。因为要使用列表，所以我们需要在Java中引入一下。
 
 ^code import-list (2 before, 2 after)
 
-The main Lox class is still trying to parse a single expression and pass it to
-the interpreter. We fix the parsing line like so:
+Lox主类中仍然是只解析单个表达式并将其传给解释器。我们将其修正如下：
 
 ^code parse-statements (1 before, 2 after)
 
-And then replace the call to the interpreter with this:
+然后将对解释器的调用替换为以下内容：
 
 ^code interpret-statements (2 before, 1 after)
 
-Basically just plumbing the new syntax through. OK, fire up the interpreter and
-give it a try. At this point, it's worth sketching out a little Lox program in a
-text file to run as a script. Something like:
+基本就是对新语法的遍历。好了，启动解释器并尝试一下。此时，有必要在文本文件中草拟一个小的Lox程序作为脚本运行。类似于：
 
 ```lox
 print "one";
@@ -275,95 +179,66 @@ print true;
 print 2 + 1;
 ```
 
-It almost looks like a real program! Note that the REPL, too, now requires you
-to enter a full statement instead of a simple expression. Don't forget your
-semicolons.
+它几乎看起来像一个真正的程序！请注意，REPL现在也要求您输入完整的语句，而不仅仅是简单的表达式。不要忘记分号。
 
-## Global Variables
+## 全局变量
 
-Now that we have statements, we can start working on state. Before we get into
-all of the complexity of lexical scoping, we'll start off with the easiest kind
-of variables -- <span name="globals">globals</span>. We need two new constructs.
+现在我们有了语句，我们可以开始处理状态。在我们深入研究词法作用域的所有复杂性之前，我们将从最简单的变量--<span name="globals">全局变量</span>开始。我们需要两个新的结构。
 
-1.  A **variable declaration** statement brings a new variable into the world.
+1.  **变量声明** 语句用于创建一个新变量。
+
 
     ```lox
     var beverage = "espresso";
     ```
 
-    This creates a new binding that associates a name (here "beverage") with a
-    value (here, the string `"espresso"`).
+    该语句将创建一个新的绑定，将一个名称（这里是 "beverage"）和一个值（这里是字符串 `"espresso"`）关联起来。
 
-2.  Once that's done, a **variable expression** accesses that binding. When the
-    identifier "beverage" is used as an expression, it looks up the value bound
-    to that name and returns it.
+2.  一旦声明完成，**变量表达式** 就可以访问该绑定。当标识符“beverage”被用作一个表达式时，程序会查找与该名称绑定的值并返回。
+
 
     ```lox
     print beverage; // "espresso".
     ```
 
-Later, we'll add assignment and block scope, but that's enough to get moving.
+稍后，我们将添加赋值和块作用域，但现在这已经足够让我们继续前进了。
 
 <aside name="globals">
 
-Global state gets a bad rap. Sure, lots of global state -- especially *mutable*
-state -- makes it hard to maintain large programs. It's good software
-engineering to minimize how much you use.
+全局状态的名声不好。确实，大量的全局状态，特别是可变状态，使得大型程序难以维护。在软件工程中，应该尽量减少使用全局状态。
 
-But when you're slapping together a simple programming language or, heck, even
-learning your first language, the flat simplicity of global variables helps. My
-first language was BASIC and, though I outgrew it eventually, it was nice that I
-didn't have to wrap my head around scoping rules before I could make a computer
-do fun stuff.
+但是，当你在拼凑一个简单的编程语言，甚至是学习你的第一门语言时，全局变量的简单性是有帮助的。我的第一门语言是BASIC，尽管我最终不再使用它了，但是在我能让计算机做有趣的事情之前，不必理解作用域规则，挺好。
 
 </aside>
 
-### Variable syntax
+### 变量语法
 
-As before, we'll work through the implementation from front to back, starting
-with the syntax. Variable declarations are statements, but they are different
-from other statements, and we're going to split the statement grammar in two to
-handle them. That's because the grammar restricts where some kinds of statements
-are allowed.
+与前面一样，我们将从语法开始，从前到后依次完成实现。变量声明是一种语句，但它们不同于其他语句，我们把statement语法一分为二来处理该情况。这是因为语法限制了某些类型的语句可以出现的位置。
 
-The clauses in control flow statements -- think the then and else branches of
-an `if` statement or the body of a `while` -- are each a single statement. But
-that statement is not allowed to be one that declares a name. This is OK:
+控制流语句中的子句（比如if语句的then和else分支或while循环的循环体）都是单个语句。但是，这个语句不能是一个声明变量的语句。下面的代码是OK的：
+
 
 ```lox
 if (monday) print "Ugh, already?";
 ```
 
-But this is not:
+但是这个不行：
 
 ```lox
 if (monday) var beverage = "espresso";
 ```
 
-We *could* allow the latter, but it's confusing. What is the scope of that
-`beverage` variable? Does it persist after the `if` statement? If so, what is
-its value on days other than Monday? Does the variable exist at all on those
-days?
+我们也*可以*允许后者，但这会令人困惑。那个 `beverage` 变量的作用域是什么？在 `if` 语句之后是否仍然存在？如果是的话，在除了星期一以外的其他日子，它的值是什么？在那些日子里，变量是否存在？
 
-Code like this is weird, so C, Java, and friends all disallow it. It's as if
-there are two levels of <span name="brace">"precedence"</span> for statements.
-Some places where a statement is allowed -- like inside a block or at the top
-level -- allow any kind of statement, including declarations. Others allow only
-the "higher" precedence statements that don't declare names.
+像这样的代码很奇怪，所以C、Java等语言都不允许这种写法。就像存在两个级别的<span name="brace">“优先级”</span>一样，语句的一些位置（比如在块内或顶层）允许任何类型的语句，包括声明语句。而其他位置只允许“更高级别”的语句，不允许声明语句。
 
 <aside name="brace">
 
-In this analogy, block statements work sort of like parentheses do for
-expressions. A block is itself in the "higher" precedence level and can be used
-anywhere, like in the clauses of an `if` statement. But the statements it
-*contains* can be lower precedence. You're allowed to declare variables and
-other names inside the block. The curlies let you escape back into the full
-statement grammar from a place where only some statements are allowed.
+代码块语句的工作方式类似于表达式中的括号。“块”本身处于“较高”的优先级，并且可以在任何地方使用，如if语句的子语句中。而其中*包含*的可以是优先级较低的语句。你可以在块中声明变量或其它名称。通过大括号，你可以在只允许某些语句的位置书写完整的语句语法。
 
 </aside>
 
-To accommodate the distinction, we add another rule for kinds of statements that
-declare names.
+为了适应这种区别，我们为声明语句添加了另一条规则。
 
 ```ebnf
 program        → declaration* EOF ;
@@ -375,24 +250,17 @@ statement      → exprStmt
                | printStmt ;
 ```
 
-Declaration statements go under the new `declaration` rule. Right now, it's only
-variables, but later it will include functions and classes. Any place where a
-declaration is allowed also allows non-declaring statements, so the
-`declaration` rule falls through to `statement`. Obviously, you can declare
-stuff at the top level of a script, so `program` routes to the new rule.
+声明语句属于新的 `declaration` 规则。目前，它只包括变量，但以后还会包括函数和类。任何允许声明的地方也允许非声明语句，所以 `declaration` 规则会转到 `statement` 规则。显然，你可以在脚本的顶层声明变量，所以 `program` 会遵循新的规则。
 
-The rule for declaring a variable looks like:
+声明一个变量的规则如下：
 
 ```ebnf
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 ```
 
-Like most statements, it starts with a leading keyword. In this case, `var`.
-Then an identifier token for the name of the variable being declared, followed
-by an optional initializer expression. Finally, we put a bow on it with the
-semicolon.
+和大多数语句一样，声明语句以一个关键字开头。这里是`var`关键字。然后是一个标识符令牌，表示正在声明的变量的名称，后面是可选的初始化表达式。最后，我们用分号结束它。
 
-To access a variable, we define a new kind of primary expression.
+为了访问一个变量，我们定义了一种新的基本表达式类型：
 
 ```ebnf
 primary        → "true" | "false" | "nil"
@@ -401,72 +269,58 @@ primary        → "true" | "false" | "nil"
                | IDENTIFIER ;
 ```
 
-That `IDENTIFIER` clause matches a single identifier token, which is understood
-to be the name of the variable being accessed.
+`IDENTIFIER` 子句匹配一个单独的标识符令牌，该令牌被理解为要访问的变量的名称。
 
 These new grammar rules get their corresponding syntax trees. Over in the AST
 generator, we add a <span name="var-stmt-ast">new statement</span> node for a
 variable declaration.
+这些新的语法规则需要其相应的语法树。在AST生成器中，我们为变量声明添加一个<span name="var-stmt-ast">新的</span>语句树。
 
 ^code var-stmt-ast (1 before, 1 after)
 
 <aside name="var-stmt-ast">
 
-The generated code for the new node is in [Appendix II][appendix-var-stmt].
+生成的新节点的代码位于[Appendix II][appendix-var-stmt]中。
 
 [appendix-var-stmt]: appendix-ii.html#variable-statement
 
 </aside>
 
-It stores the name token so we know what it's declaring, along with the
-initializer expression. (If there isn't an initializer, that field is `null`.)
+这里存储了名称标记，以便我们知道该语句声明了什么，此外还有初始化表达式（如果没有，字段就是null）。
 
-Then we add an expression node for accessing a variable.
+然后我们添加一个表达式节点用于访问变量。
 
 ^code var-expr (1 before, 1 after)
 
-<span name="var-expr-ast">It's</span> simply a wrapper around the token for the
-variable name. That's it. As always, don't forget to run the AST generator
-script so that you get updated "Expr.java" and "Stmt.java" files.
+<span name="var-expr-ast">这</span>只是对变量名称标记的简单包装，就是这样。一如既往，别忘了运行AST生成器脚本，以便获取更新的 "Expr.java "和 "Stmt.java "文件。
 
 <aside name="var-expr-ast">
 
-The generated code for the new node is in [Appendix II][appendix-var-expr].
+生成的新节点的代码位于[Appendix II][appendix-var-expr]中。
 
 [appendix-var-expr]: appendix-ii.html#variable-expression
 
 </aside>
 
-### Parsing variables
+### 解析变量
 
-Before we parse variable statements, we need to shift around some code to make
-room for the new `declaration` rule in the grammar. The top level of a program
-is now a list of declarations, so the entrypoint method to the parser changes.
+
+在解析变量语句之前，我们需要修改一些代码，为语法中的新规则`declaration`腾出一些空间。现在，程序的最顶层是声明语句的列表，所以解析器方法的入口需要更改
 
 ^code parse-declaration (3 before, 4 after)
 
-That calls this new method:
+这里会调用下面的新方法：
 
 ^code declaration
 
-Hey, do you remember way back in that [earlier chapter][parsing] when we put the
-infrastructure in place to do error recovery? We are finally ready to hook that
-up.
+嘿，你还记得在 [前面的章节][parsing] 中我们建立了[错误恢复][error recovery]的手脚架吗？现在我们终于准备好跟它串起来了。
 
 [parsing]: parsing-expressions.html
 [error recovery]: parsing-expressions.html#panic-mode-error-recovery
 
-This `declaration()` method is the method we call repeatedly when parsing a
-series of statements in a block or a script, so it's the right place to
-synchronize when the parser goes into panic mode. The whole body of this method
-is wrapped in a try block to catch the exception thrown when the parser begins
-error recovery. This gets it back to trying to parse the beginning of the next
-statement or declaration.
+`declaration()`  方法在解析块或脚本中的一系列语句时会被重复调用，因此当解析器进入恐慌模式时，它就是进行同步的正确位置。该方法的整个体被包裹在一个try块中，以捕获解析器开始错误恢复时抛出的异常。这使得解析器可以尝试解析下一条语句或声明的开头。
 
-The real parsing happens inside the try block. First, it looks to see if we're
-at a variable declaration by looking for the leading `var` keyword. If not, it
-falls through to the existing `statement()` method that parses `print` and
-expression statements.
+真正的解析发生在try块内部。首先，它通过查找前导的`var` 关键字来判断是否为变量声明。如果不是，它将继续执行现有的`statement()`方法，该方法解析`print`和语句表达式。
 
 Remember how `statement()` tries to parse an expression statement if no other
 statement matches? And `expression()` reports a syntax error if it can't parse
@@ -1333,10 +1187,10 @@ something resembling a full-featured programming language.
     // No initializers.
     var a;
     var b;
-
+    
     a = "assigned";
     print a; // OK, was assigned first.
-
+    
     print b; // Error!
     ```
 
