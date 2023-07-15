@@ -322,81 +322,54 @@ variable declaration.
 
 真正的解析发生在try块内部。首先，它通过查找前导的`var` 关键字来判断是否为变量声明。如果不是，它将继续执行现有的`statement()`方法，该方法解析`print`和语句表达式。
 
-Remember how `statement()` tries to parse an expression statement if no other
-statement matches? And `expression()` reports a syntax error if it can't parse
-an expression at the current token? That chain of calls ensures we report an
-error if a valid declaration or statement isn't parsed.
+还记得 `statement()` 会在没有其它语句匹配时会尝试解析一个表达式语句吗？而 `expression()` 如果无法在当前语法标记处解析表达式，则会抛出一个语法错误？这一系列调用链可以保证在解析无效的声明或语句时能报告错误。
 
-When the parser matches a `var` token, it branches to:
+当解析器匹配到一个 `var` 标记时，它会进入相应的处理分支：
 
 ^code parse-var-declaration
 
-As always, the recursive descent code follows the grammar rule. The parser has
-already matched the `var` token, so next it requires and consumes an identifier
-token for the variable name.
+一如既往，递归下降代码遵循语法规则。解析器已经匹配了 `var` 标记，因此接下来需要并消耗一个标识符标记作为变量名。
 
-Then, if it sees an `=` token, it knows there is an initializer expression and
-parses it. Otherwise, it leaves the initializer `null`. Finally, it consumes the
-required semicolon at the end of the statement. All this gets wrapped in a
-Stmt.Var syntax tree node and we're groovy.
+然后，如果遇到 `=` 标记，解析器就知道后面有一个初始化表达式，并对其进行解析。否则，它将初始化为 `null`。最后，解析器会消耗语句末尾必需的分号。所有这些都被包装在一个Stmt.Var语法树节点中，然后我们就完成解析了。
 
-Parsing a variable expression is even easier. In `primary()`, we look for an
-identifier token.
+解析变量表达式更加简单。在 `primary()` 函数中，我们需要查找一个标识符标记。
 
 ^code parse-identifier (2 before, 2 after)
 
-That gives us a working front end for declaring and using variables. All that's
-left is to feed it into the interpreter. Before we get to that, we need to talk
-about where variables live in memory.
+这样我们就有了一个可以声明和使用变量的工作前端。剩下的就是将其接入解释器。在此之前，我们需要讨论变量在内存中的位置。
 
-## Environments
+## 环境
 
-The bindings that associate variables to values need to be stored somewhere.
-Ever since the Lisp folks invented parentheses, this data structure has been
-called an <span name="env">**environment**</span>.
+将变量与值关联的绑定需要存储在某个地方。自从Lisp发明了圆括号以来，这个数据结构就被称为<span name="env">**环境**</span>。
+
 
 <img src="image/statements-and-state/environment.png" alt="An environment containing two bindings." />
 
 <aside name="env">
 
-I like to imagine the environment literally, as a sylvan wonderland where
-variables and values frolic.
+我喜欢将环境想象成一个真实的仙境，变量和值在其中嬉戏玩耍。
 
 </aside>
 
-You can think of it like a <span name="map">map</span> where the keys are
-variable names and the values are the variable's, uh, values. In fact, that's
-how we'll implement it in Java. We could stuff that map and the code to manage
-it right into Interpreter, but since it forms a nicely delineated concept, we'll
-pull it out into its own class.
+你可以将其想象成一个<span name="map">映射</span>，其中键是变量名，值是变量的值。实际上，这就是我们在Java中实现的方式。我们可以将这个映射和管理它的代码直接放入解释器中，但由于它形成了一个清晰的概念，我们可以将其提取到一个独立的类中。
 
-Start a new file and add:
+创建一个新文件并添加以下内容：
 
 <aside name="map">
 
-Java calls them **maps** or **hashmaps**. Other languages call them **hash
-tables**, **dictionaries** (Python and C#), **hashes** (Ruby and Perl),
-**tables** (Lua), or **associative arrays** (PHP). Way back when, they were
-known as **scatter tables**.
+Java称之为**maps**或**hashmaps**。其他语言称之为**hash tables**、**dictionaries**（Python和C#）、**hashes**（Ruby和Perl）、**tables**（Lua）或**associative arrays**（PHP）。在很久以前，它们被称为**scatter tables**。
 
 </aside>
 
 ^code environment-class
 
-There's a Java Map in there to store the bindings. It uses bare strings for the
-keys, not tokens. A token represents a unit of code at a specific place in the
-source text, but when it comes to looking up variables, all identifier tokens
-with the same name should refer to the same variable (ignoring scope for now).
-Using the raw string ensures all of those tokens refer to the same map key.
+在其中有一个Java Map用于存储绑定。它使用裸字符串作为键，而不是标记（tokens）。标记表示源文本中特定位置的代码单元，但在查找变量时，所有具有相同名称的标识符标记应该引用同一个变量（暂时忽略作用域）。使用裸字符串可以确保所有这些标记都指向同一个映射键。
 
-There are two operations we need to support. First, a variable definition binds
-a new name to a value.
+我们需要支持两个操作。首先，是变量定义，将一个新的名称与一个值绑定在一起。
 
 ^code environment-define
 
-Not exactly brain surgery, but we have made one interesting semantic choice.
-When we add the key to the map, we don't check to see if it's already present.
-That means that this program works:
+虽然不是特别复杂，但是我们这里也做出了一个有趣的语义抉择。当我们向映射中添加键时，没有检查该键是否已存在。这意味着下面的程序可以正常工作：
 
 ```lox
 var a = "before";
@@ -405,59 +378,35 @@ var a = "after";
 print a; // "after".
 ```
 
-A variable statement doesn't just define a *new* variable, it can also be used
-to *re*define an existing variable. We could <span name="scheme">choose</span>
-to make this an error instead. The user may not intend to redefine an existing
-variable. (If they did mean to, they probably would have used assignment, not
-`var`.) Making redefinition an error would help them find that bug.
+一个变量声明不仅仅定义一个*新*变量，还可以用来*重新*定义一个已有变量。我们可以<span name="scheme">选择</span>将这视为错误来处理。用户可能并不打算重新定义一个已有变量（如果他们确实想这样做，他们可能会使用赋值语句而不是 `var` ）。将重新定义视为错误可以帮助用户找到这个bug。
 
-However, doing so interacts poorly with the REPL. In the middle of a REPL
-session, it's nice to not have to mentally track which variables you've already
-defined. We could allow redefinition in the REPL but not in scripts, but then
-users would have to learn two sets of rules, and code copied and pasted from one
-form to the other might not work.
+但是，这样做会对REPL的使用造成不良影响。在REPL会话中，我们不需要费心去记住已经定义的变量。我们可以在REPL中允许重新定义变量，但在脚本中不允许。但这样一来，用户就需要学习两套规则，而且从一个地方复制粘贴到另一个地方的代码可能无法正常工作。
 
 <aside name="scheme">
 
-My rule about variables and scoping is, "When in doubt, do what Scheme does".
-The Scheme folks have probably spent more time thinking about variable scope
-than we ever will -- one of the main goals of Scheme was to introduce lexical
-scoping to the world -- so it's hard to go wrong if you follow in their
-footsteps.
+我关于变量和作用域的原则是：“当你不确定的时候，就按照Scheme的做法来”。Scheme的开发者花了很多时间思考变量的作用范围，他们的目标就是让变量的使用更清晰明了。所以，如果你遵循他们的方式，就不容易出错。
 
-Scheme allows redefining variables at the top level.
+在Scheme中，你可以在顶层重新定义变量。（这就像是在一个程序的最外层给变量起了一个新的名字。这样做的好处是，你可以在不同的地方使用相同的变量名，而不会造成混淆。）
 
 </aside>
 
-So, to keep the two modes consistent, we'll allow it -- at least for global
-variables. Once a variable exists, we need a way to look it up.
+所以，为了保持这两种模式的一致性，我们将允许重定义——至少对于全局变量来说是如此。一旦一个变量存在，我们就需要可以查找该变量的方法。
 
 ^code environment-get (2 before, 1 after)
 
-This is a little more semantically interesting. If the variable is found, it
-simply returns the value bound to it. But what if it's not? Again, we have a
-choice:
+这个情况在语义上有点意思。如果找到了这个变量，它就会直接返回与之绑定的值。但是如果没有找到呢？这时候我们又有几种选择：
 
-* Make it a syntax error.
+* 抛出语法错误
 
-* Make it a runtime error.
+* 抛出运行时错误.
 
-* Allow it and return some default value like `nil`.
+* 允许该操作并返回默认值，比如 `nil`.
 
-Lox is pretty lax, but the last option is a little *too* permissive to me.
-Making it a syntax error -- a compile-time error -- seems like a smart choice.
-Using an undefined variable is a bug, and the sooner you detect the mistake, the
-better.
+Lox是相当宽松的，但是最后一个选项对我来说有点太宽松了。把它作为一个语法错误，也就是编译时的错误，听起来是个聪明的选择。使用未定义的变量是一个bug，而且你越早发现这个错误，越好。
 
-The problem is that *using* a variable isn't the same as *referring* to it. You
-can refer to a variable in a chunk of code without immediately evaluating it if
-that chunk of code is wrapped inside a function. If we make it a static error to
-*mention* a variable before it's been declared, it becomes much harder to define
-recursive functions.
+问题在于*使用*变量并不等同于*引用*变量。如果一段代码块被包裹在一个函数内部，你可以在这段代码中引用一个变量，而不需要立即对其进行求值。如果我们把*引用*未声明的变量定义为静态错误，那么定义递归函数将变得更加困难。
 
-We could accommodate single recursion -- a function that calls itself -- by
-declaring the function's own name before we examine its body. But that doesn't
-help with mutually recursive procedures that call each other. Consider:
+我们可以通过在检查函数体之前先声明函数自己的名字来处理单一递归——一个调用自身的函数。但是这对于互相递归调用的函数无效。考虑以下情况：
 
 <span name="contrived"></span>
 
@@ -475,89 +424,56 @@ fun isEven(n) {
 
 <aside name="contrived">
 
-Granted, this is probably not the most efficient way to tell if a number is even
-or odd (not to mention the bad things that happen if you pass a non-integer or
-negative number to them). Bear with me.
+确实，这可能不是判断一个数字是偶数还是奇数的最好方法（更不用说如果传入一个非整数或负数会发生一些不可控的事情）。不过请忍耐一下。
 
 </aside>
 
-The `isEven()` function isn't defined by the <span name="declare">time</span> we
-are looking at the body of `isOdd()` where it's called. If we swap the order of
-the two functions, then `isOdd()` isn't defined when we're looking at
-`isEven()`'s body.
+在我们查看`isOdd()`函数体的<span name="declare">时候</span>，`isEven()`函数还没有被定义。如果我们交换这两个函数的顺序，那么当我们查看`isEven()`函数体的时候，`isOdd()`函数也还没有被定义。
 
 <aside name="declare">
 
-Some statically typed languages like Java and C# solve this by specifying that
-the top level of a program isn't a sequence of imperative statements. Instead, a
-program is a set of declarations which all come into being simultaneously. The
-implementation declares *all* of the names before looking at the bodies of *any*
-of the functions.
+有些静态类型的编程语言，比如Java和C#，为了解决这个问题，规定程序的顶层不是一连串的命令式语句。相反，它们规定一个程序是一组同时存在的声明。在实际执行时，会先声明*所有*的名字，然后再去看函数的具体内容。
 
-Older languages like C and Pascal don't work like this. Instead, they force you
-to add explicit *forward declarations* to declare a name before it's fully
-defined. That was a concession to the limited computing power at the time. They
-wanted to be able to compile a source file in one single pass through the text,
-so those compilers couldn't gather up all of the declarations first before
-processing function bodies.
-
+而像C和Pascal这样的老式编程语言不是这样工作的。它们要求在一个名称完全定义之前，必须先添加明确的*前向声明*。这是为了适应当时计算机性能有限的情况而做出的妥协。它们希望能够通过一次遍历源代码的方式，在处理函数具体内容之前就能够编译整个源文件。
 </aside>
 
-Since making it a *static* error makes recursive declarations too difficult,
-we'll defer the error to runtime. It's OK to refer to a variable before it's
-defined as long as you don't *evaluate* the reference. That lets the program
-for even and odd numbers work, but you'd get a runtime error in:
+因为把它作为*静态*错误会让递归声明变得太难，所以我们将错误推迟到运行时。只要不对变量引用进行*求值*，就可以在变量定义之前引用它。这样程序就可以正常工作，但是在以下情况下会出现运行时错误：
 
 ```lox
 print a;
 var a = "too late!";
 ```
 
-As with type errors in the expression evaluation code, we report a runtime error
-by throwing an exception. The exception contains the variable's token so we can
-tell the user where in their code they messed up.
+就像表达式求值代码中的类型错误一样，我们通过抛出异常来报告运行时错误。异常中包含变量的标记，这样我们就可以告诉用户在他们的代码在哪里搞砸了。
 
-### Interpreting global variables
+### 解释全局变量
 
-The Interpreter class gets an instance of the new Environment class.
+Interpreter类会获得一个新的Environment类的实例。
 
 ^code environment-field (2 before, 1 after)
 
-We store it as a field directly in Interpreter so that the variables stay in
-memory as long as the interpreter is still running.
+我们将其直接存储为Interpreter中的字段，这样只要解释器还在运行，变量就会一直保留在内存中。
 
-We have two new syntax trees, so that's two new visit methods. The first is for
-declaration statements.
+我们有两个新的语法树，因此需要两个新的visit方法。第一个是用于声明语句的。
 
 ^code visit-var
 
-If the variable has an initializer, we evaluate it. If not, we have another
-choice to make. We could have made this a syntax error in the parser by
-*requiring* an initializer. Most languages don't, though, so it feels a little
-harsh to do so in Lox.
+如果变量有初始化式，我们就对其求值。如果没有，我们就需要做一个选择。我们可以通过在解析器中*要求*必须有初始化式来将其视为语法错误。但是，大多数语言并不这么做，所以在Lox中这样做可能有点太过苛刻。
 
-We could make it a runtime error. We'd let you define an uninitialized variable,
-but if you accessed it before assigning to it, a runtime error would occur. It's
-not a bad idea, but most dynamically typed languages don't do that. Instead,
-we'll keep it simple and say that Lox sets a variable to `nil` if it isn't
-explicitly initialized.
+我们可以把它当作运行时错误。我们允许你定义一个未初始化的变量，但是如果在给它赋值之前访问它，就会发生一个运行时错误。这个想法不错，但是大多数动态类型的语言并不这么做。相反，我们将保持简单，规定在Lox中，如果变量没有被显式初始化，它就会被设置为`nil`。
 
 ```lox
 var a;
 print a; // "nil".
 ```
 
-Thus, if there isn't an initializer, we set the value to `null`, which is the
-Java representation of Lox's `nil` value. Then we tell the environment to bind
-the variable to that value.
+因此，如果没有初始化式，我们将值设为`null`，这也是Lox中的`nil`值的Java表示形式。然后，我们告诉环境上下文将变量与该值进行绑定。
 
-Next, we evaluate a variable expression.
+接下来，我们要对变量表达式求值。
 
 ^code visit-variable
 
-This simply forwards to the environment which does the heavy lifting to make
-sure the variable is defined. With that, we've got rudimentary variables
-working. Try this out:
+这里只是简单地将操作转发到环境上下文中，环境做了一些繁重的工作保证变量已被定义。这样，我们就可以支持基本的变量操作了。试试这个：
 
 ```lox
 var a = 1;
@@ -565,47 +481,30 @@ var b = 2;
 print a + b;
 ```
 
-We can't reuse *code* yet, but we can start to build up programs that reuse
-*data*.
+我们目前还不能重用*代码*，但我们可以开始构建重用*数据*的程序。
 
-## Assignment
+## 赋值
 
-It's possible to create a language that has variables but does not let you
-reassign -- or **mutate** -- them. Haskell is one example. SML supports only
-mutable references and arrays -- variables cannot be reassigned. Rust steers you
-away from mutation by requiring a `mut` modifier to enable assignment.
+有些语言可以使用变量，但不允许你重新赋值或**修改**它们。比如Haskell就是这样的一种语言。SML只支持可变引用和数组，变量不能重新赋值。而Rust则通过要求使用`mut`修饰符来启用赋值，以避免变量的修改。
 
-Mutating a variable is a side effect and, as the name suggests, some language
-folks think side effects are <span name="pure">dirty</span> or inelegant. Code
-should be pure math that produces values -- crystalline, unchanging ones -- like
-an act of divine creation. Not some grubby automaton that beats blobs of data
-into shape, one imperative grunt at a time.
+修改变量给它添加了副作用，有些语言专家认为这样的副作用<span name="pure">不够优雅</span>或者不够干净。他们认为代码应该像纯粹的数学一样，创造出一系列值，就像是神圣的创世一样，这些值是晶莹剔透、永恒不变的。而不是像一个肮脏的机器人，一次又一次地将数据进行改造，发出命令式的咕哝声。
 
 <aside name="pure">
 
-I find it delightful that the same group of people who pride themselves on
-dispassionate logic are also the ones who can't resist emotionally loaded terms
-for their work: "pure", "side effect", "lazy", "persistent", "first-class",
-"higher-order".
+我发现有趣的是，那些以冷静逻辑为傲的人群，却无法抵挡对自己工作使用情感负荷的术语的诱惑：“纯净”，“副作用”，“惰性”，“持久”，“一流”，“高阶”（"pure", "side effect", "lazy", "persistent", "first-class",
+"higher-order"）。
 
 </aside>
 
-Lox is not so austere. Lox is an imperative language, and mutation comes with
-the territory. Adding support for assignment doesn't require much work. Global
-variables already support redefinition, so most of the machinery is there now.
-Mainly, we're missing an explicit assignment notation.
+Lox并不那么严肃。Lox是一种命令式语言，变量的修改是其中的一部分。添加对赋值的支持并不需要太多的工作。全局变量已经支持重新定义，所以大部分机制已经存在了。主要的问题是缺少显式的赋值表示法。
 
 ### Assignment syntax
 
-That little `=` syntax is more complex than it might seem. Like most C-derived
-languages, assignment is an <span name="assign">expression</span> and not a
-statement. As in C, it is the lowest precedence expression form. That means the
-rule slots between `expression` and `equality` (the next lowest precedence
-expression).
+这个小小的 `=` 语法比它看起来要复杂。和大多数C衍生语言一样，赋值是一个<span name="assign">表达式</span>而不是一个语句。就像在C语言中一样，它是最低优先级的表达式形式。这意味着这个规则位于表达式 `expression` 和等式  `equality` 之间（下一个最低优先级的表达式）。
 
 <aside name="assign">
 
-In some other languages, like Pascal, Python, and Go, assignment is a statement.
+在其他一些语言中，比如Pascal、Python和Go，赋值是一个语句。
 
 </aside>
 
@@ -615,62 +514,44 @@ assignment     → IDENTIFIER "=" assignment
                | equality ;
 ```
 
-This says an `assignment` is either an identifier followed by an `=` and an
-expression for the value, or an `equality` (and thus any other) expression.
-Later, `assignment` will get more complex when we add property setters on
-objects, like:
+这就是说，一个赋值操作要么是一个标识符后面跟着一个等号和一个表达式来表示赋给该标识符的值，要么是一个等式（或其他）表达式。稍后，当我们在对象上添加属性设置器时，赋值操作将变得更加复杂，比如：
 
 ```lox
 instance.field = "value";
 ```
 
-The easy part is adding the <span name="assign-ast">new syntax tree node</span>.
+最简单的部分就是添加<span name="assign-ast">新的语法树节点</span>。
 
 ^code assign-expr (1 before, 1 after)
 
 <aside name="assign-ast">
 
-The generated code for the new node is in [Appendix II][appendix-assign].
+新节点的生成代码在以下位置： [Appendix II][appendix-assign].
 
 [appendix-assign]: appendix-ii.html#assign-expression
 
 </aside>
 
-It has a token for the variable being assigned to, and an expression for the new
-value. After you run the AstGenerator to get the new Expr.Assign class, swap out
-the body of the parser's existing `expression()` method to match the updated
-rule.
+它包含了用于赋值的变量的标记，以及表示新值的表达式。当你运行AstGenerator生成新的Expr.Assign类后，需要将解析器现有的 `expression()` 方法的代码替换为与更新规则相匹配的代码。
 
 ^code expression (1 before, 1 after)
 
-Here is where it gets tricky. A single token lookahead recursive descent parser
-can't see far enough to tell that it's parsing an assignment until *after* it
-has gone through the left-hand side and stumbled onto the `=`. You might wonder
-why it even needs to. After all, we don't know we're parsing a `+` expression
-until after we've finished parsing the left operand.
+这里开始变得棘手。在单个标记的前瞻递归下降解析器中，直到解析完左侧并遇到 `=` *之后*，它才能确定是否正在解析一个赋值语句。你可能会好奇为什么需要这样做。毕竟，我们在解析左操作数之后才能确定是否解析的是一个 `+` 加法表达式。
 
-The difference is that the left-hand side of an assignment isn't an expression
-that evaluates to a value. It's a sort of pseudo-expression that evaluates to a
-"thing" you can assign to. Consider:
+左侧赋值语句与普通表达式的区别在于，它不是一个可以求值的表达式，而是一种伪表达式，它的求值结果是一个可以赋值的"对象"。让我们来看一个例子：
 
 ```lox
 var a = "before";
 a = "value";
 ```
 
-On the second line, we don't *evaluate* `a` (which would return the string
-"before"). We figure out what variable `a` refers to so we know where to store
-the right-hand side expression's value. The [classic terms][l-value] for these
-two <span name="l-value">constructs</span> are **l-value** and **r-value**. All
-of the expressions that we've seen so far that produce values are r-values. An
-l-value "evaluates" to a storage location that you can assign into.
+在第二行，我们不对变量`a`进行*求值*（这将返回字符串"before"）。我们通过确定变量`a`引用的内容，来确定在哪里存储右侧表达式的值。对这两个<span name="l-value">概念</span>的[经典术语][l-value]是**左值**和**右值**。到目前为止，我们所见到的所有产生值的表达式都是右值。而左值则"求值"为一个可以进行赋值的存储位置。
 
 [l-value]: https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue
 
 <aside name="l-value">
 
-In fact, the names come from assignment expressions: *l*-values appear on the
-*left* side of the `=` in an assignment, and *r*-values on the *right*.
+实际上，这些术语来源于赋值表达式：左值*l*-value出现在赋值语句中的*左侧*，而右值*r*-value出现在*右侧*。
 
 </aside>
 
@@ -680,76 +561,60 @@ side, not an Expr. The problem is that the parser doesn't know it's parsing an
 l-value until it hits the `=`. In a complex l-value, that may occur <span
 name="many">many</span> tokens later.
 
+我们希望语法树能够准确反映出左值与普通表达式的求值方式不同。这就是为什么Expr.Assign节点的左侧使用了一个*Token*，而不是一个Expr。然而，问题在于解析器在遇到等号（=）之前并不知道它正在解析一个左值。在复杂的左值中，可能在出现<span
+name="many">很多</span>标记之后才能识别到。
+
 ```lox
 makeList().head.next = node;
 ```
 
 <aside name="many">
 
-Since the receiver of a field assignment can be any expression, and expressions
-can be as long as you want to make them, it may take an *unbounded* number of
-tokens of lookahead to find the `=`.
+由于字段赋值的接收者可以是任何表达式，并且表达式可以任意长，因此可能需要*无限*数量的前瞻标记才能找到等号（`=`）。
 
 </aside>
 
-We have only a single token of lookahead, so what do we do? We use a little
-trick, and it looks like this:
+我们只会前瞻一个标记，那么我们应该如何处理呢？我们可以使用一个小技巧，具体如下：
 
 ^code parse-assignment
 
-Most of the code for parsing an assignment expression looks similar to that of
-the other binary operators like `+`. We parse the left-hand side, which can be
-any expression of higher precedence. If we find an `=`, we parse the right-hand
-side and then wrap it all up in an assignment expression tree node.
+大部分解析赋值表达式的代码与其他二元操作符（如`+`）的代码非常相似。我们首先解析左侧表达式，该表达式可以是任何优先级较高的表达式。如果我们找到一个等号（`=`），则解析右侧表达式，并将其封装在一个赋值表达式的语法树节点中。
 
 <aside name="no-throw">
 
-We *report* an error if the left-hand side isn't a valid assignment target, but
-we don't *throw* it because the parser isn't in a confused state where we need
-to go into panic mode and synchronize.
+如果左侧不是一个有效的赋值目标，我们会*报告*一个错误，但我们不会*抛出*异常。因为解析器没有陷入混乱状态，所以我们不需要进入紧急模式并进行同步。
 
 </aside>
 
-One slight difference from binary operators is that we don't loop to build up a
-sequence of the same operator. Since assignment is right-associative, we instead
-recursively call `assignment()` to parse the right-hand side.
+与二元操作符稍有不同的是，我们不会循环构建相同操作符的序列。由于赋值是右结合的，我们会通过递归调用 `assignment()` 来解析右侧表达式。
 
-The trick is that right before we create the assignment expression node, we look
-at the left-hand side expression and figure out what kind of assignment target
-it is. We convert the r-value expression node into an l-value representation.
+关键是在创建赋值表达式节点之前，我们会查看左侧表达式，并确定它是何种类型的赋值目标。我们将右侧表达式节点转换为左侧值的表示形式。
+
 
 This conversion works because it turns out that every valid assignment target
 happens to also be <span name="converse">valid syntax</span> as a normal
 expression. Consider a complex field assignment like:
+这种转换有效的原因是，每个有效的赋值目标正好也是符合普通表达式的<span name="converse">有效语法</span>。考虑一个复杂的字段赋值，例如：
 
 <aside name="converse">
 
-You can still use this trick even if there are assignment targets that are not
-valid expressions. Define a **cover grammar**, a looser grammar that accepts
-all of the valid expression *and* assignment target syntaxes. When you hit
-an `=`, report an error if the left-hand side isn't within the valid assignment
-target grammar. Conversely, if you *don't* hit an `=`, report an error if the
-left-hand side isn't a valid *expression*.
-
+即使存在一些不是有效表达式的赋值目标，您仍然可以使用这个技巧。定义一个*包容性的语法*，它可以接受所有有效的表达式和赋值目标的语法。当遇到一个等号（=）时，如果左侧*不符合*有效的赋值目标的语法，则报告错误。反之，如果*没有*遇到等号（=），则如果左侧不是一个有效的*表达式*，也报告错误。
 </aside>
 
 ```lox
 newPoint(x + 2, 0).y = 3;
 ```
 
-The left-hand side of that assignment could also work as a valid expression.
+该赋值表达式的左侧也是一个有效的表达式。
+
 
 ```lox
 newPoint(x + 2, 0).y;
 ```
 
-The first example sets the field, the second gets it.
+第一个示例是设置字段的值，第二个示例是获取字段的值。
 
-This means we can parse the left-hand side *as if it were* an expression and
-then after the fact produce a syntax tree that turns it into an assignment
-target. If the left-hand side expression isn't a <span name="paren">valid</span>
-assignment target, we fail with a syntax error. That ensures we report an error
-on code like this:
+这意味着我们可以将左侧*视为*一个表达式进行解析，然后在解析完成后生成一个语法树，将其转换为赋值目标。如果左侧的表达式不是一个<span name="paren">有效</span>的赋值目标，我们将报告语法错误。这样可以确保在遇到类似下面的代码时会报告错误：
 
 ```lox
 a + b = c;
@@ -757,9 +622,7 @@ a + b = c;
 
 <aside name="paren">
 
-Way back in the parsing chapter, I said we represent parenthesized expressions
-in the syntax tree because we'll need them later. This is why. We need to be
-able to distinguish these cases:
+早在解析那章，我就说过我们要在语法树中表示圆括号表达式，因为我们将在后续使用它们。这就是原因。我们需要能够区分以下情况：
 
 ```lox
 a = 3;   // OK.
