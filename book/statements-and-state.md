@@ -555,12 +555,6 @@ a = "value";
 
 </aside>
 
-We want the syntax tree to reflect that an l-value isn't evaluated like a normal
-expression. That's why the Expr.Assign node has a *Token* for the left-hand
-side, not an Expr. The problem is that the parser doesn't know it's parsing an
-l-value until it hits the `=`. In a complex l-value, that may occur <span
-name="many">many</span> tokens later.
-
 我们希望语法树能够准确反映出左值与普通表达式的求值方式不同。这就是为什么Expr.Assign节点的左侧使用了一个*Token*，而不是一个Expr。然而，问题在于解析器在遇到等号（=）之前并不知道它正在解析一个左值。在复杂的左值中，可能在出现<span
 name="many">很多</span>标记之后才能识别到。
 
@@ -590,10 +584,6 @@ makeList().head.next = node;
 
 关键是在创建赋值表达式节点之前，我们会查看左侧表达式，并确定它是何种类型的赋值目标。我们将右侧表达式节点转换为左侧值的表示形式。
 
-
-This conversion works because it turns out that every valid assignment target
-happens to also be <span name="converse">valid syntax</span> as a normal
-expression. Consider a complex field assignment like:
 这种转换有效的原因是，每个有效的赋值目标正好也是符合普通表达式的<span name="converse">有效语法</span>。考虑一个复杂的字段赋值，例如：
 
 <aside name="converse">
@@ -631,94 +621,64 @@ a = 3;   // OK.
 
 </aside>
 
-Right now, the only valid target is a simple variable expression, but we'll add
-fields later. The end result of this trick is an assignment expression tree node
-that knows what it is assigning to and has an expression subtree for the value
-being assigned. All with only a single token of lookahead and no backtracking.
+现在，唯一有效的赋值目标就是一个简单的变量表达式，但是我们后面会添加属性字段。这个技巧的最终结果是一个赋值表达式树节点，该节点知道要向什么赋值，并且有一个表达式子树用于计算要使用的值。所有这些都只用了一个前瞻标记，并且没有回溯。
 
-### Assignment semantics
+### 赋值语义
 
-We have a new syntax tree node, so our interpreter gets a new visit method.
+我们有了一个新的语法树节点，所以我们的解释器也需要一个新的访问方法。
 
 ^code visit-assign
 
-For obvious reasons, it's similar to variable declaration. It evaluates the
-right-hand side to get the value, then stores it in the named variable. Instead
-of using `define()` on Environment, it calls this new method:
+很明显，这与变量声明很类似。首先，对右侧表达式运算以获取值，然后将其保存到命名变量中。这里不使用Environment中的 `define()` ，而是调用下面的新方法：
 
 ^code environment-assign
 
-The key difference between assignment and definition is that assignment is not
-<span name="new">allowed</span> to create a *new* variable. In terms of our
-implementation, that means it's a runtime error if the key doesn't already exist
-in the environment's variable map.
+赋值和定义的主要区别就是赋值不<span name="new">允许</span>创建新的变量。在我们的实现中，这意味着如果在环境的变量映射中找不到变量的键，那就会发生运行时错误。
 
 <aside name="new">
 
-Unlike Python and Ruby, Lox doesn't do [implicit variable declaration][].
+与Python和Ruby不同，Lox不做[隐式变量声明][implicit variable declaration]。
 
 [implicit variable declaration]: #design-note
 
 </aside>
 
-The last thing the `visit()` method does is return the assigned value. That's
-because assignment is an expression that can be nested inside other expressions,
-like so:
+`visit()` 方法的最后一步就是返回赋值的结果。这是因为赋值是一种表达式，可以嵌套在其他表达式中使用。就像这样:
 
 ```lox
 var a = 1;
 print a = 2; // "2".
 ```
 
-Our interpreter can now create, read, and modify variables. It's about as
-sophisticated as early <span name="basic">BASICs</span>. Global variables are
-simple, but writing a large program when any two chunks of code can accidentally
-step on each other's state is no fun. We want *local* variables, which means
-it's time for *scope*.
+我们的解释器现在可以创建、读取和修改变量了，就像早期的<span name="basic">BASICs</span>语言一样厉害。全局变量很简单，但是如果在写一个大程序的时候，任何两个代码块都可能不小心互相干扰，那就不好玩了。所以我们需要*局部*变量，也就是说现在是引入*作用域*的时候了。
 
 <aside name="basic">
 
-Maybe a little better than that. Unlike some old BASICs, Lox can handle variable
-names longer than two characters.
+也许比那更好一些。与一些旧版的BASIC语言不同的是，Lox可以处理超过两个字符的变量名。
 
 </aside>
 
-## Scope
+## 作用域
 
-A **scope** defines a region where a name maps to a certain entity. Multiple
-scopes enable the same name to refer to different things in different contexts.
-In my house, "Bob" usually refers to me. But maybe in your town you know a
-different Bob. Same name, but different dudes based on where you say it.
+**作用域**定义了一个区域，其中一个名称映射到一个特定的实体。多个作用域使得相同的名称在不同的上下文中可以引用不同的事物。在我的家里，“Bob”通常指的是我。但是在你的城镇里，也许你认识另一个不同的Bob。相同的名字，但是根据你说的地方，指的是不同的人。
 
-<span name="lexical">**Lexical scope**</span> (or the less commonly heard
-**static scope**) is a specific style of scoping where the text of the program
-itself shows where a scope begins and ends. In Lox, as in most modern languages,
-variables are lexically scoped. When you see an expression that uses some
-variable, you can figure out which variable declaration it refers to just by
-statically reading the code.
+<span name="lexical">**词法作用域**</span>（或者较少听到的**静态作用域**）是一种特定的作用域定义方式，程序的文本本身显示了作用域的开始和结束位置。在Lox中，就像大多数现代语言一样，变量在词法作用域内有效。当你看到一个表达式使用某个变量时，你可以通过静态地阅读代码来确定它所引用的变量声明。
+
 
 <aside name="lexical">
 
-"Lexical" comes from the Greek "lexikos" which means "related to words". When we
-use it in programming languages, it usually means a thing you can figure out
-from source code itself without having to execute anything.
+“词法”一词来自希腊语的“lexikos”，意为“与词语相关”。当我们在编程语言中使用它时，通常指的是通过源代码本身就可以推断出来，而无需执行任何操作。
 
-Lexical scope came onto the scene with ALGOL. Earlier languages were often
-dynamically scoped. Computer scientists back then believed dynamic scope was
-faster to execute. Today, thanks to early Scheme hackers, we know that isn't
-true. If anything, it's the opposite.
+词法作用域首次出现在ALGOL中。早期的编程语言通常采用动态作用域。当时的计算机科学家认为动态作用域执行速度更快。如今，多亏了早期的Scheme黑客，我们知道这并不正确。事实上，相反，动态作用域的执行速度更慢。
 
-Dynamic scope for variables lives on in some corners. Emacs Lisp defaults to
-dynamic scope for variables. The [`binding`][binding] macro in Clojure provides
-it. The widely disliked [`with` statement][with] in JavaScript turns properties
-on an object into dynamically scoped variables.
+变量的动态作用域在某些领域仍然存在。Emacs Lisp默认采用动态作用域来处理变量。Clojure中的[`binding`][binding]宏也提供了动态作用域。而JavaScript中广受诟病的[`with` 语句][with] 将对象的属性转换为动态作用域变量。
 
 [binding]: http://clojuredocs.org/clojure.core/binding
 [with]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/with
 
 </aside>
 
-For example:
+举例来说:
 
 ```lox
 {
@@ -732,16 +692,12 @@ For example:
 }
 ```
 
-Here, we have two blocks with a variable `a` declared in each of them. You and
-I can tell just from looking at the code that the use of `a` in the first
-`print` statement refers to the first `a`, and the second one refers to the
-second.
+在这里，我们有两个代码块，每个代码块里都声明了一个变量a。只需看一眼代码就能知道，第一个`print`语句中的a指的是第一个块里的`a`变量，而第二个`print`语句中的a指的是第二个块里的`a`变量。
 
 <img src="image/statements-and-state/blocks.png" alt="An environment for each 'a'." />
 
-This is in contrast to **dynamic scope** where you don't know what a name refers
-to until you execute the code. Lox doesn't have dynamically scoped *variables*,
-but methods and fields on objects are dynamically scoped.
+这与**动态作用域**不同，动态作用域需要在执行代码时才能确定名称指向的内容。Lox中没有动态作用域的*变量*，但对象上的方法和字段是动态作用域的。
+
 
 ```lox
 class Saxophone {
@@ -761,15 +717,9 @@ fun playIt(thing) {
 }
 ```
 
-When `playIt()` calls `thing.play()`, we don't know if we're about to hear
-"Careless Whisper" or "Fore!" It depends on whether you pass a Saxophone or a
-GolfClub to the function, and we don't know that until runtime.
+当`playIt()`调用`thing.play()`函数时，我们不知道会播放的是 "Careless Whisper" 还是 "Fore!"。这取决于你在调用函数时传递的是Saxophone还是GolfClub，而我们只有在真正运行代码时才能知道这一点。
 
-Scope and environments are close cousins. The former is the theoretical concept,
-and the latter is the machinery that implements it. As our interpreter works its
-way through code, syntax tree nodes that affect scope will change the
-environment. In a C-ish syntax like Lox's, scope is controlled by curly-braced
-blocks. (That's why we call it **block scope**.)
+作用域和环境是近亲。前者是一个理论概念，而后者是实现它的机制。当解释器遍历代码时，影响作用域的语法树节点将改变环境上下文。在类似C语言的Lox语法中，作用域由花括号块控制（这就是我们称之为**块作用域**的原因）。
 
 ```lox
 {
@@ -778,23 +728,17 @@ blocks. (That's why we call it **block scope**.)
 print a; // Error! No more "a".
 ```
 
-The beginning of a block introduces a new local scope, and that scope ends when
-execution passes the closing `}`. Any variables declared inside the block
-disappear.
+一个块的开始引入了一个新的局部作用域，当执行到闭合的 `}` 符号时，该作用域就结束了。在块内部声明的任何变量都会消失。
 
-### Nesting and shadowing
+### 嵌套和遮罩
 
-A first cut at implementing block scope might work like this:
+首次尝试实现块作用域可能会像这样：
 
-1.  As we visit each statement inside the block, keep track of any variables
-    declared.
+1.  当我们遍历块内的每个语句时，要记住所有声明的变量。
 
-2.  After the last statement is executed, tell the environment to delete all of
-    those variables.
+2.  执行完最后一条语句后，告诉环境将这些变量全部删除。
 
-That would work for the previous example. But remember, one motivation for
-local scope is encapsulation -- a block of code in one corner of the program
-shouldn't interfere with some other block. Check this out:
+这对于之前的例子是可行的。但是要记住，局部作用域的一个动机是为了封装 - 程序中的代码块不应该影响其他代码块。看看这个例子：
 
 ```lox
 // How loud?
@@ -810,24 +754,13 @@ volume = 0;
 }
 ```
 
-Look at the block where we calculate the volume of the cuboid using a local
-declaration of `volume`. After the block exits, the interpreter will delete the
-*global* `volume` variable. That ain't right. When we exit the block, we should
-remove any variables declared inside the block, but if there is a variable with
-the same name declared outside of the block, *that's a different variable*. It
-shouldn't get touched.
+看看我们用来计算长方体体积的那一段代码，里面使用了一个局部声明的变量`volume`。在代码块结束后，解释器会删除*全局变量* `volume`。这样做是不对的。当我们退出代码块时，应该删除在代码块内部声明的变量，但是如果在代码块外面有一个同名的变量声明，那就是一个*不同的变量*，它不应该被删除。
 
-When a local variable has the same name as a variable in an enclosing scope, it
-**shadows** the outer one. Code inside the block can't see it any more -- it is
-hidden in the "shadow" cast by the inner one -- but it's still there.
+当一个局部变量和外面的变量同名时，它会把外面的变量给**遮住**。代码块里面的代码看不到这个变量了 - 它被内部的变量遮住了，但是它还是存在的。
 
-When we enter a new block scope, we need to preserve variables defined in outer
-scopes so they are still around when we exit the inner block. We do that by
-defining a fresh environment for each block containing only the variables
-defined in that scope. When we exit the block, we discard its environment and
-restore the previous one.
+当我们进入一个新的代码块时，我们需要保留在外部作用域中定义的变量，这样当我们退出内部代码块时它们仍然存在。我们通过为每个代码块定义一个新的环境来实现这一点，该环境只包含在该代码块中定义的变量。当我们退出代码块时，我们丢弃它的环境并恢复之前的环境。
 
-We also need to handle enclosing variables that are *not* shadowed.
+我们还需要处理*未*被遮蔽的封闭变量。
 
 ```lox
 var global = "outside";
@@ -837,29 +770,17 @@ var global = "outside";
 }
 ```
 
-Here, `global` lives in the outer global environment and `local` is defined
-inside the block's environment. In that `print` statement, both of those
-variables are in scope. In order to find them, the interpreter must search not
-only the current innermost environment, but also any enclosing ones.
+这段代码中，`global`在外部全局环境中，`local`则在块环境中定义。在执行`print`语句时，这两个变量都在作用域内。为了找到它们，解释器不仅要搜索当前最内层的环境，还必须搜索所有外围的环境。
 
-We implement this by <span name="cactus">chaining</span> the environments
-together. Each environment has a reference to the environment of the immediately
-enclosing scope. When we look up a variable, we walk that chain from innermost
-out until we find the variable. Starting at the inner scope is how we make local
-variables shadow outer ones.
+我们通过将环境<span name="cactus">链接</span>在一起来实现这个功能。每个环境都有一个指向外部环境的引用，就像是一个环环相扣的链条。当我们查找一个变量时，我们从最里面的环境开始往外找，直到找到这个变量为止。我们从内部环境开始查找变量，这样就可以让局部变量覆盖外部变量。
 
 <img src="image/statements-and-state/chaining.png" alt="Environments for each scope, linked together." />
 
 <aside name="cactus">
 
-While the interpreter is running, the environments form a linear list of
-objects, but consider the full set of environments created during the entire
-execution. An outer scope may have multiple blocks nested within it, and each
-will point to the outer one, giving a tree-like structure, though only one path
-through the tree exists at a time.
+在解释器运行时，环境对象会形成一个线性列表。但是，在整个执行过程中，我们需要考虑所有创建的环境。一个外部作用域可以包含多个嵌套的代码块，每个代码块都会指向外部作用域，形成一个类似树状结构。尽管在任何时刻只有一条路径可以通过这个树。
 
-The boring name for this is a [**parent-pointer tree**][parent pointer], but I
-much prefer the evocative **cactus stack**.
+这个概念有个很无聊的名称 [**父指针树**][parent pointer], 但是我更喜欢生动形象的“仙人掌堆栈”。
 
 [parent pointer]: https://en.wikipedia.org/wiki/Parent_pointer_tree
 
@@ -867,51 +788,38 @@ much prefer the evocative **cactus stack**.
 
 </aside>
 
-Before we add block syntax to the grammar, we'll beef up our Environment class
-with support for this nesting. First, we give each environment a reference to
-its enclosing one.
+在我们添加块语法之前，我们要强化Environment类对这种嵌套的支持。首先，我们在每个环境中添加一个对其外围环境的引用。
+
 
 ^code enclosing-field (1 before, 1 after)
 
-This field needs to be initialized, so we add a couple of constructors.
+这个字段需要初始化，所以我们添加两个构造函数。
 
 ^code environment-constructors
 
-The no-argument constructor is for the global scope's environment, which ends
-the chain. The other constructor creates a new local scope nested inside the
-given outer one.
+无参构造函数用于全局作用域环境，它是环境链的结束点。另一个构造函数创建一个新的局部作用域，嵌套在给定的外部作用域中。
 
-We don't have to touch the `define()` method -- a new variable is always
-declared in the current innermost scope. But variable lookup and assignment work
-with existing variables and they need to walk the chain to find them. First,
-lookup:
+我们不需要修改`define()`方法 - 新变量总是在当前最内层的作用域中声明。但是变量的查找和赋值需要使用现有的变量，并且它们需要遍历链条来找到它们。。首先是查找操作：
 
 ^code environment-get-enclosing (2 before, 3 after)
 
-If the variable isn't found in this environment, we simply try the enclosing
-one. That in turn does the same thing <span name="recurse">recursively</span>,
-so this will ultimately walk the entire chain. If we reach an environment with
-no enclosing one and still don't find the variable, then we give up and report
-an error as before.
+如果在当前这个地方找不到变量，我们就会去上一层找。然后上一层再去上一层，一直这样<span name="recurse">递归</span>下去，直到找遍整个链条。如果到了最后一层还是找不到变量，那么我们就放弃，报告一个错误，就像之前一样。
 
-Assignment works the same way.
+赋值操作也是一样的处理方式。
 
 <aside name="recurse">
 
-It's likely faster to iteratively walk the chain, but I think the recursive
-solution is prettier. We'll do something *much* faster in clox.
+迭代地遍历环境链可能更快，但我认为递归的解决方案更加优雅。在 clox 中，我们将采用*更*快的解决方案。
 
 </aside>
 
 ^code environment-assign-enclosing (4 before, 1 after)
 
-Again, if the variable isn't in this environment, it checks the outer one,
-recursively.
+同样，如果变量不在当前环境中，它会递归地检查外部环境。
 
-### Block syntax and semantics
+### 块语法和语义
 
-Now that Environments nest, we're ready to add blocks to the language. Behold
-the grammar:
+现在环境可以嵌套，我们可以开始在语言中添加块。请看语法规则：
 
 ```ebnf
 statement      → exprStmt
@@ -921,90 +829,61 @@ statement      → exprStmt
 block          → "{" declaration* "}" ;
 ```
 
-A block is a (possibly empty) series of statements or declarations surrounded by
-curly braces. A block is itself a statement and can appear anywhere a statement
-is allowed. The <span name="block-ast">syntax tree</span> node looks like this:
+块是由花括号包围的一系列语句或声明（可能为空）。块本身是一个语句，并且可以出现在任何允许语句的位置。<span name="block-ast">语法树</span>节点如下所示：
 
 ^code block-ast (1 before, 1 after)
 
 <aside name="block-ast">
 
-The generated code for the new node is in [Appendix II][appendix-block].
+新节点的生成代码在以下位置： [Appendix II][appendix-block].
 
 [appendix-block]: appendix-ii.html#block-statement
 
 </aside>
 
-<span name="generate">It</span> contains the list of statements that are inside
-the block. Parsing is straightforward. Like other statements, we detect the
-beginning of a block by its leading token -- in this case the `{`. In the
-`statement()` method, we add:
+<span name="generate">它</span>包含了块内部的语句列表。解析过程很简单。与其他语句一样，我们通过其前导标记（在本例中为 `{`）来检测块的开始。在 `statement()` 方法中，我们添加：
 
 <aside name="generate">
 
-As always, don't forget to run "GenerateAst.java".
+一如既往，请不要忘记运行 "GenerateAst.java"。
 
 </aside>
 
 ^code parse-block (1 before, 2 after)
 
-All the real work happens here:
+真正的工作都在这里进行:
 
 ^code block
 
-We <span name="list">create</span> an empty list and then parse statements and
-add them to the list until we reach the end of the block, marked by the closing
-`}`. Note that the loop also has an explicit check for `isAtEnd()`. We have to
-be careful to avoid infinite loops, even when parsing invalid code. If the user
-forgets a closing `}`, the parser needs to not get stuck.
+在这里，我们<span name="list">创建</span>一个空列表，然后解析语句并将它们添加到列表中，直到我们遇到由闭合的 `}` 标记的块的末尾。请注意，循环中还有一个明确的检查 `isAtEnd()` 的条件。我们必须小心处理，以避免陷入无限循环，即使在解析无效的代码时也是如此。如果用户忘记了闭合的  `}`，解析器也不能陷入困境。
 
 <aside name="list">
 
-Having `block()` return the raw list of statements and leaving it to
-`statement()` to wrap the list in a Stmt.Block looks a little odd. I did it that
-way because we'll reuse `block()` later for parsing function bodies and we don't
-want that body wrapped in a Stmt.Block.
+让 `block()` 返回原始的语句列表，然后由 `statement()` 来将列表包装在 Stmt.Block 中，看起来有点奇怪。我之所以这样做，是因为我们稍后会重用 `block()` 来解析函数体，而我们不希望该函数体被包装在 Stmt.Block 中。
 
 </aside>
 
-That's it for syntax. For semantics, we add another visit method to Interpreter.
+至此，语法部分就完成了。对于语义部分，我们需要为解释器添加另一个 visit 方法。
 
 ^code visit-block
 
-To execute a block, we create a new environment for the block's scope and pass
-it off to this other method:
+要执行一个块，我们先为该块作用域创建一个新的环境，然后将其传入下面这个方法：
 
 ^code execute-block
 
-This new method executes a list of statements in the context of a given <span
-name="param">environment</span>. Up until now, the `environment` field in
-Interpreter always pointed to the same environment -- the global one. Now, that
-field represents the *current* environment. That's the environment that
-corresponds to the innermost scope containing the code to be executed.
+这个新方法在给定的 <span name="param">环境</span>下执行一系列语句。在此之前，解释器中的`environment` 环境字段始终指向同一个环境，即全局环境。现在，该字段表示*当前*的环境，也就是包含要执行的代码的最内层作用域对应的环境。
 
-To execute code within a given scope, this method updates the interpreter's
-`environment` field, visits all of the statements, and then restores the
-previous value. As is always good practice in Java, it restores the previous
-environment using a finally clause. That way it gets restored even if an
-exception is thrown.
+为了在给定作用域内执行代码，该方法会先更新解释器的 `environment` 字段，执行所有的语句，然后恢复之前的环境。基于Java中一贯的优良传统，它使用finally子句来恢复先前的环境。这样一来，即使抛出异常，也能恢复先前的环境。
 
 <aside name="param">
 
-Manually changing and restoring a mutable `environment` field feels inelegant.
-Another classic approach is to explicitly pass the environment as a parameter to
-each visit method. To "change" the environment, you pass a different one as you
-recurse down the tree. You don't have to restore the old one, since the new one
-lives on the Java stack and is implicitly discarded when the interpreter returns
-from the block's visit method.
+手动修改和恢复可变的 `environment` 字段感觉不够优雅。 另一种经典的方法是将环境作为参数明确地传递给每个访问方法。为了“修改”环境，在递归遍历树时传递一个不同的环境。你不需要恢复旧的环境，因为新的环境存在于Java堆栈中，并且当解释器从块的访问方法返回时会被自动丢弃。
 
-I considered that for jlox, but it's kind of tedious and verbose adding an
-environment parameter to every single visit method. To keep the book a little
-simpler, I went with the mutable field.
+我考虑过在jlox中这样做，但是为每个访问方法添加一个环境参数会显得有点繁琐和冗长。为了让本书更简单一些，我选择了可变的字段的方式。
 
 </aside>
 
-Surprisingly, that's all we need to do in order to fully support local
-variables, nesting, and shadowing. Go ahead and try this out:
+出人意料的是，这就是我们需要做的一切，以完全支持局部变量、嵌套和遮蔽。继续尝试一下吧！
 
 ```lox
 var a = "global a";
@@ -1028,23 +907,15 @@ print b;
 print c;
 ```
 
-Our little interpreter can remember things now. We are inching closer to
-something resembling a full-featured programming language.
+我们的小解释器现在可以记住东西了，我们距离全功能编程语言又近了一步。
 
 <div class="challenges">
 
-## Challenges
+## 挑战
 
-1.  The REPL no longer supports entering a single expression and automatically
-    printing its result value. That's a drag. Add support to the REPL to let
-    users type in both statements and expressions. If they enter a statement,
-    execute it. If they enter an expression, evaluate it and display the result
-    value.
+1.  REPL（交互式解释器）不再支持输入单个表达式并自动打印其结果值。这有点麻烦。在REPL中添加支持，让用户可以输入语句和表达式。如果他们输入了一个语句，执行它。如果他们输入了一个表达式，计算它并显示结果值。
 
-2.  Maybe you want Lox to be a little more explicit about variable
-    initialization. Instead of implicitly initializing variables to `nil`, make
-    it a runtime error to access a variable that has not been initialized or
-    assigned to, as in:
+2.  也许你希望Lox在变量初始化方面更加明确。不再隐式地将变量初始化为`nil`，而是在访问未初始化或未赋值的变量时引发运行时错误，例如：
 
     ```lox
     // No initializers.
@@ -1057,7 +928,7 @@ something resembling a full-featured programming language.
     print b; // Error!
     ```
 
-3.  What does the following program do?
+3.  以下程序做了什么？
 
     ```lox
     var a = 1;
@@ -1067,109 +938,52 @@ something resembling a full-featured programming language.
     }
     ```
 
-    What did you *expect* it to do? Is it what you think it should do? What
-    does analogous code in other languages you are familiar with do? What do
-    you think users will expect this to do?
+    你*希望*它做什么？它是否符合你的预期？在你熟悉的其他编程语言中，类似的代码会做什么？你认为用户会对此有什么期望？
 
 </div>
 
 <div class="design-note">
 
-## Design Note: Implicit Variable Declaration
+## 设计须知: 隐式变量声明
 
-Lox has distinct syntax for declaring a new variable and assigning to an
-existing one. Some languages collapse those to only assignment syntax. Assigning
-to a non-existent variable automatically brings it into being. This is called
-**implicit variable declaration** and exists in Python, Ruby, and CoffeeScript,
-among others. JavaScript has an explicit syntax to declare variables, but can
-also create new variables on assignment. Visual Basic has [an option to enable
-or disable implicit variables][vb].
+在Lox中，声明新变量和给已存在的变量赋值有不同的语法。有些编程语言只使用赋值语法来完成这两个操作。如果给一个不存在的变量赋值，它会自动被创建出来。这就是所谓的**隐式变量声明**，在Python、Ruby和CoffeeScript等编程语言中都有这个特性。JavaScript在声明变量时有明确的语法，但也可以在赋值时创建新变量。而Visual Basic则提供了一个[选项][vb]来控制是否允许隐式变量声明。
 
 [vb]: https://msdn.microsoft.com/en-us/library/xe53dz5w(v=vs.100).aspx
 
-When the same syntax can assign or create a variable, each language must decide
-what happens when it isn't clear about which behavior the user intends. In
-particular, each language must choose how implicit declaration interacts with
-shadowing, and which scope an implicitly declared variable goes into.
+当同样的语法既可以赋值也可以创建变量时，每种编程语言都必须决定当无法确定用户意图时会发生什么。特别是，每种语言必须选择隐式声明如何与变量遮蔽（shadowing）交互，以及隐式声明的变量进入哪个作用域。
 
-*   In Python, assignment always creates a variable in the current function's
-    scope, even if there is a variable with the same name declared outside of
-    the function.
+*   在Python中，赋值操作总是在当前函数的作用域内创建一个变量，即使在函数外部已经声明了同名的变量。
 
-*   Ruby avoids some ambiguity by having different naming rules for local and
-    global variables. However, blocks in Ruby (which are more like closures than
-    like "blocks" in C) have their own scope, so it still has the problem.
-    Assignment in Ruby assigns to an existing variable outside of the current
-    block if there is one with the same name. Otherwise, it creates a new
-    variable in the current block's scope.
+*   Ruby通过为局部变量和全局变量设置不同的命名规则来避免一些歧义。然而，在Ruby中，块（block）（更像是闭包而不是C语言中的“块”）有自己的作用域，因此它仍然存在这个问题。在Ruby中，如果存在与当前块中同名的变量，则赋值操作会将值赋给当前块外部已存在的变量。否则，它会在当前块的作用域中创建一个新的变量。
 
-*   CoffeeScript, which takes after Ruby in many ways, is similar. It explicitly
-    disallows shadowing by saying that assignment always assigns to a variable
-    in an outer scope if there is one, all the way up to the outermost global
-    scope. Otherwise, it creates the variable in the current function scope.
+*   CoffeeScript在许多方面都借鉴了Ruby的特点，因此它也是类似的。它明确禁止变量屏蔽（shadowing），即赋值操作总是会将值赋给外部作用域中的变量，一直到最外层的全局作用域。如果没有外部作用域中同名的变量，则在当前函数作用域中创建该变量。
 
-*   In JavaScript, assignment modifies an existing variable in any enclosing
-    scope, if found. If not, it implicitly creates a new variable in the
-    *global* scope.
+*   在JavaScript中，赋值操作会修改任何包含它的作用域中已存在的变量。如果找不到已存在的变量，则会隐式地在*全局*作用域中创建一个新的变量。
 
-The main advantage to implicit declaration is simplicity. There's less syntax
-and no "declaration" concept to learn. Users can just start assigning stuff and
-the language figures it out.
+隐式声明的主要优点是简单。语法较少，无需学习“声明”概念。你可以直接开始赋值，语言会自动帮你处理其它问题。
 
-Older, statically typed languages like C benefit from explicit declaration
-because they give the user a place to tell the compiler what type each variable
-has and how much storage to allocate for it. In a dynamically typed,
-garbage-collected language, that isn't really necessary, so you can get away
-with making declarations implicit. It feels a little more "scripty", more "you
-know what I mean".
+像C这样较早的静态类型语言受益于显式声明，因为它可以告诉编译器每个变量的类型和需要分配多少存储空间。但在有动态类型、垃圾回收的语言中，这些并不是必需的，所以可以将声明隐式化。这让代码感觉更 "脚本化"，更像是 "你懂我的意思吧"。
 
-But is that a good idea? Implicit declaration has some problems.
+但这是就个好主意吗？隐式声明还存在一些问题。
 
-*   A user may intend to assign to an existing variable, but may have misspelled
-    it. The interpreter doesn't know that, so it goes ahead and silently creates
-    some new variable and the variable the user wanted to assign to still has
-    its old value. This is particularly heinous in JavaScript where a typo will
-    create a *global* variable, which may in turn interfere with other code.
+*   用户可能打算为现有变量赋值，但可能拼写错了。解释器不知道这一点，所以它会默默地创建一个新的变量，而用户想要赋值的变量仍然保持着它的旧值。这在JavaScript中尤为严重，因为拼写错误会创建一个*全局*变量，这可能会干扰其他代码。
 
-*   JS, Ruby, and CoffeeScript use the presence of an existing variable with the
-    same name -- even in an outer scope -- to determine whether or not an
-    assignment creates a new variable or assigns to an existing one. That means
-    adding a new variable in a surrounding scope can change the meaning of
-    existing code. What was once a local variable may silently turn into an
-    assignment to that new outer variable.
+*   JS、Ruby和CoffeeScript使用同名的已存在变量（即使在外部作用域中）来确定赋值操作是创建一个新变量还是给已存在的变量赋值。这意味着在外围作用域中添加一个新变量可能会改变现有代码的含义。曾经是局部变量的东西可能会悄悄地变成对新的外部变量的赋值。
 
-*   In Python, you may *want* to assign to some variable outside of the current
-    function instead of creating a new variable in the current one, but you
-    can't.
+*   在Python中，你可能*想*要赋值给当前函数之外的某个变量，而不是在当前函数中创建一个新变量，但是你做不到。
 
-Over time, the languages I know with implicit variable declaration ended up
-adding more features and complexity to deal with these problems.
+随着时间的推移，我所了解的具有隐式变量声明的语言逐渐增加了更多的功能和复杂性来处理这些问题。
 
-*   Implicit declaration of global variables in JavaScript is universally
-    considered a mistake today. "Strict mode" disables it and makes it a compile
-    error.
+*   在JavaScript中，隐式声明全局变量现在被普遍认为是一个错误。"Strict mode"可以禁用它，并将其作为一个编译错误。
 
-*   Python added a `global` statement to let you explicitly assign to a global
-    variable from within a function. Later, as functional programming and nested
-    functions became more popular, they added a similar `nonlocal` statement to
-    assign to variables in enclosing functions.
+*   Python添加了一个`global`语句，允许你在函数内部显式地给全局变量赋值。后来，随着函数式编程和嵌套函数变得更加流行，他们添加了一个类似的`nonlocal`语句，用于给封闭函数中的变量赋值。
 
-*   Ruby extended its block syntax to allow declaring certain variables to be
-    explicitly local to the block even if the same name exists in an outer
-    scope.
+*   Ruby扩展了其块语法，允许在块中显式地声明某些变量为局部变量，即使在外部作用域中存在同名的变量。
 
-Given those, I think the simplicity argument is mostly lost. There is an
-argument that implicit declaration is the right *default* but I personally find
-that less compelling.
+考虑到这些，我认为简单性的论点已经失去了意义。有一种观点认为隐式声明是正确的默认选项，但我个人认为这种说法不太有说服力。
 
-My opinion is that implicit declaration made sense in years past when most
-scripting languages were heavily imperative and code was pretty flat. As
-programmers have gotten more comfortable with deep nesting, functional
-programming, and closures, it's become much more common to want access to
-variables in outer scopes. That makes it more likely that users will run into
-the tricky cases where it's not clear whether they intend their assignment to
-create a new variable or reuse a surrounding one.
+我的观点是，在过去的几年中，大多数脚本语言都是以命令式为主，代码相对简单。随着程序员对深层嵌套、函数式编程和闭包的熟悉程度越来越高，更多的人希望能够访问外部作用域中的变量。这使得用户更有可能遇到棘手的情况，即不清楚他们的赋值是要创建一个新变量还是重用外围的已有变量。
 
-So I prefer explicitly declaring variables, which is why Lox requires it.
+因此，我更喜欢显式声明变量，这也是为什么Lox要这样做的原因。
 
 </div>
