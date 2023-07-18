@@ -41,9 +41,6 @@
 
 给定一个具有静态类型的Java变量，我们还必须能够在运行时确定它所持有的值的类型。当解释器执行 `+` 运算符时，它需要确定它是将两个数字相加还是将两个字符串连接起来。是否有一种Java类型可以容纳数字、字符串、布尔值等等？是否有一种类型可以告诉我们它的运行时类型是什么？有的！那就是老朋友： `java.lang.Object`  。
 
-In places in the interpreter where we need to store a Lox value, we can use
-Object as the type. Java has boxed versions of its primitive types that all
-subclass Object, so we can use those for Lox's built-in types:
 在解释器中需要存储Lox值的地方，我们可以使用Object作为类型。Java有其原始类型的封装版本，这些版本都是Object的子类，因此我们可以将它们用于Lox的内置类型：
 
 <table>

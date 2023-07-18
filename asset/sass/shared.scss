@@ -1,7 +1,7 @@
 // Font stacks.
 $serif:   "LXGWBrightGB", Georgia, serif;
 $mono:    "Source Code Pro", Menlo, Consolas, Monaco, monospace;
-$nav:     "Source Sans Pro", sans-serif;
+$nav:     "MiSans", sans-serif;
 
 // The main intense primary accent color.
 $primary:       hsl(200, 80%, 40%);
@@ -32,6 +32,11 @@ $warm-5:     hsl(40, 20%, 95%);
 // They are asymmetric because the left column has a dark background, which
 // requires a double margin.
 $col: 48px;
+
+@font-face {
+  font-family: 'MiSans';
+  src: url('font/MiSans-Regular.woff') format('woff');
+}
 
 @font-face {
   font-family: 'LXGWBrightGB';

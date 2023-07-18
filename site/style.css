@@ -1,5 +1,9 @@
 @charset "UTF-8";
 @font-face {
+  font-family: "MiSans";
+  src: url("font/MiSans-Regular.woff") format("woff");
+}
+@font-face {
   font-family: "LXGWBrightGB";
   src: url("font/LXGWBrightGB-Regular.woff") format("woff");
 }
@@ -96,13 +100,13 @@ article.chapter .challenges, article.chapter .design-note {
   border-radius: 3px;
   padding: 12px;
   margin: -2px -12px 26px -12px;
-  font: normal 16px/24px "Source Sans Pro", sans-serif;
+  font: normal 16px/24px "MiSans", sans-serif;
   color: #444;
 }
 article.chapter .challenges h2, article.chapter .design-note h2 {
   margin: 0 0 -12px 0;
   padding: 0;
-  font: 600 16px/24px "Source Sans Pro", sans-serif;
+  font: 600 16px/24px "MiSans", sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -127,7 +131,7 @@ article.chapter .challenges pre, article.chapter .design-note pre {
 }
 article.chapter .challenges > blockquote p, article.chapter .design-note > blockquote p {
   margin: 0 24px;
-  font: italic 16px/24px "Source Sans Pro", sans-serif;
+  font: italic 16px/24px "MiSans", sans-serif;
   color: #444;
 }
 article.chapter .challenges > blockquote::before, article.chapter .challenges > blockquote::after, article.chapter .design-note > blockquote::before, article.chapter .design-note > blockquote::after {
@@ -175,7 +179,7 @@ article.chapter table td + td {
 
 @media only screen and (max-width: 960px) {
   article.chapter .challenges aside, article.chapter .design-note aside {
-    font: normal 15px/24px "Source Sans Pro", sans-serif;
+    font: normal 15px/24px "MiSans", sans-serif;
     padding-bottom: 4px;
   }
   article.chapter .challenges aside code, article.chapter .challenges aside .codehilite {
@@ -223,7 +227,7 @@ article.chapter table td + td {
 }
 article.contents h2 {
   margin: 22px 0 6px 0;
-  font: 600 normal 18px/24px "Source Sans Pro", sans-serif;
+  font: 600 normal 18px/24px "MiSans", sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -237,7 +241,7 @@ article.contents ul {
 }
 article.contents li {
   padding: 12px 0 0 36px;
-  font: normal 16px/24px "Source Sans Pro", sans-serif;
+  font: normal 16px/24px "MiSans", sans-serif;
   color: #7aa0b8;
   list-style-type: none;
 }
@@ -247,13 +251,13 @@ article.contents li .num {
   width: 36px;
 }
 article.contents li a {
-  font: 600 17px/24px "Source Sans Pro", sans-serif;
+  font: 600 17px/24px "MiSans", sans-serif;
 }
 article.contents li.design-note {
   padding-top: 0;
 }
 article.contents li.design-note a {
-  font: 400 16px/23px "Source Sans Pro", sans-serif;
+  font: 400 16px/23px "MiSans", sans-serif;
 }
 article.contents .chapters {
   display: table;
@@ -332,7 +336,7 @@ article.contents footer {
 }
 .sign-up input {
   padding: 4px;
-  font: 16px "Source Sans Pro", sans-serif;
+  font: 16px "MiSans", sans-serif;
   outline: none;
   border-radius: 3px;
   border: solid 2px #ffd580;
@@ -347,7 +351,7 @@ article.contents footer {
 .sign-up input.button {
   margin-left: 8px;
   padding: 4px 8px;
-  font: 600 13px "Source Sans Pro", sans-serif;
+  font: 600 13px "MiSans", sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px;
   background: #ffbb33;
@@ -361,6 +365,10 @@ article.contents footer {
   border-color: #ffaa00;
 }
 
+@font-face {
+  font-family: "MiSans";
+  src: url("font/MiSans-Regular.woff") format("woff");
+}
 @font-face {
   font-family: "LXGWBrightGB";
   src: url("font/LXGWBrightGB-Regular.woff") format("woff");
@@ -484,7 +492,7 @@ a:hover {
 }
 
 nav {
-  font: 300 15px/24px "Source Sans Pro", sans-serif;
+  font: 300 15px/24px "MiSans", sans-serif;
   background: #29313d;
   color: #4b6781;
 }
@@ -504,13 +512,13 @@ nav img {
   padding: 55px 48px 23px 48px;
 }
 nav h2 {
-  font: 400 16px/24px "Source Sans Pro", sans-serif;
+  font: 400 16px/24px "MiSans", sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #7aa0b8;
 }
 nav h3 {
-  font: 400 18px/24px "Source Sans Pro", sans-serif;
+  font: 400 18px/24px "MiSans", sans-serif;
   color: #7aa0b8;
 }
 nav h2 small, nav h3 small {
@@ -556,7 +564,7 @@ nav li.end-part small {
 }
 nav .prev-next {
   padding-top: 7px;
-  font: 400 12px/18px "Source Sans Pro", sans-serif;
+  font: 400 12px/18px "MiSans", sans-serif;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -719,7 +727,7 @@ article h1 {
   z-index: 2;
 }
 article h1.part {
-  font: 600 36px/48px "Source Sans Pro", sans-serif;
+  font: 600 36px/48px "MiSans", sans-serif;
   padding: 108px 0 20px 0;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -729,7 +737,7 @@ article .number {
   top: 50px;
   left: 624px;
   z-index: 1;
-  font: 300 96px "Source Sans Pro", sans-serif;
+  font: 300 96px "MiSans", sans-serif;
   color: #dee9ed;
 }
 article p {
@@ -843,7 +851,7 @@ footer {
   position: relative;
   border-top: solid 1px #dee9ed;
   color: #7aa0b8;
-  font: 400 15px "Source Sans Pro", sans-serif;
+  font: 400 15px "MiSans", sans-serif;
   text-align: center;
   margin: 48px 0;
   padding-top: 48px;
@@ -857,7 +865,7 @@ footer .next {
   top: -13px;
   padding-left: 4px;
   background: #fff;
-  font: 400 17px/24px "Source Sans Pro", sans-serif;
+  font: 400 17px/24px "MiSans", sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px;
 }

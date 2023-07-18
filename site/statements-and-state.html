@@ -37,14 +37,13 @@
 <h3><a href="#top">Statements and State<small>8</small></a></h3>
 
 <ul>
-    <li><a href="#statements"><small>8.1</small> Statements</a></li>
-    <li><a href="#global-variables"><small>8.2</small> Global Variables</a></li>
-    <li><a href="#environments"><small>8.3</small> Environments</a></li>
-    <li><a href="#assignment"><small>8.4</small> Assignment</a></li>
-    <li><a href="#scope"><small>8.5</small> Scope</a></li>
-    <li class="divider"></li>
-    <li class="end-part"><a href="#challenges">Challenges</a></li>
-    <li class="end-part"><a href="#design-note"><small>note</small>Implicit Variable Declaration</a></li>
+    <li><a href="#语句"><small>8.1</small> 语句</a></li>
+    <li><a href="#全局变量"><small>8.2</small> 全局变量</a></li>
+    <li><a href="#环境"><small>8.3</small> 环境</a></li>
+    <li><a href="#赋值"><small>8.4</small> 赋值</a></li>
+    <li><a href="#作用域"><small>8.5</small> 作用域</a></li>
+    <li><a href="#挑战"><small>8.6</small> 挑战</a></li>
+    <li><a href="#设计须知-隐式变量声明"><small>8.7</small> 设计须知: 隐式变量声明</a></li>
 </ul>
 
 
@@ -69,14 +68,13 @@
 <h3><a href="#top">Statements and State<small>8</small></a></h3>
 
 <ul>
-    <li><a href="#statements"><small>8.1</small> Statements</a></li>
-    <li><a href="#global-variables"><small>8.2</small> Global Variables</a></li>
-    <li><a href="#environments"><small>8.3</small> Environments</a></li>
-    <li><a href="#assignment"><small>8.4</small> Assignment</a></li>
-    <li><a href="#scope"><small>8.5</small> Scope</a></li>
-    <li class="divider"></li>
-    <li class="end-part"><a href="#challenges">Challenges</a></li>
-    <li class="end-part"><a href="#design-note"><small>note</small>Implicit Variable Declaration</a></li>
+    <li><a href="#语句"><small>8.1</small> 语句</a></li>
+    <li><a href="#全局变量"><small>8.2</small> 全局变量</a></li>
+    <li><a href="#环境"><small>8.3</small> 环境</a></li>
+    <li><a href="#赋值"><small>8.4</small> 赋值</a></li>
+    <li><a href="#作用域"><small>8.5</small> 作用域</a></li>
+    <li><a href="#挑战"><small>8.6</small> 挑战</a></li>
+    <li><a href="#设计须知-隐式变量声明"><small>8.7</small> 设计须知: 隐式变量声明</a></li>
 </ul>
 
 
@@ -95,72 +93,32 @@
   <h1>Statements and State</h1>
 
 <blockquote>
-<p>All my life, my heart has yearned for a thing I cannot name.
-<cite>Andr&eacute; Breton, <em>Mad Love</em></cite></p>
+<p>我一生都在渴求一种无法名状的东西。</p>
+<p>——安德烈·布勒东，《疯狂的爱》</p>
 </blockquote>
-<p>The interpreter we have so far feels less like programming a real language and
-more like punching buttons on a calculator. &ldquo;Programming&rdquo; to me means building
-up a system out of smaller pieces. We can&rsquo;t do that yet because we have no way
-to bind a name to some data or function. We can&rsquo;t compose software without a way
-to refer to the pieces.</p>
-<p>To support bindings, our interpreter needs internal state. When you define a
-variable at the beginning of the program and use it at the end, the interpreter
-has to hold on to the value of that variable in the meantime. So in this
-chapter, we will give our interpreter a brain that can not just process, but
-<em>remember</em>.</p><img src="image/statements-and-state/brain.png" alt="A brain, presumably remembering stuff." />
-<p>State and <span name="expr">statements</span> go hand in hand. Since statements,
-by definition, don&rsquo;t evaluate to a value, they need to do something else to be
-useful. That something is called a <strong>side effect</strong>. It could mean producing
-user-visible output or modifying some state in the interpreter that can be
-detected later. The latter makes them a great fit for defining variables or
-other named entities.</p>
+<p>我们目前使用的解释器感觉更像是在计算器上按按钮，而不是编写真正的语言。对我来说，“编程”意味着从小的部分构建一个系统。但我们现在无法完成这个过程，因为没有办法将名称绑定到一些数据或函数上。如果没有办法引用这些片段，我们就无法组合成软件系统。</p>
+<p>为了支持绑定，我们的解释器需要内部状态。当你在程序的开头定义一个变量并在结尾处使用它时，解释器必须在此期间保持该变量的值。因此，在本章中，我们将为我们的解释器赋予一个可以处理和记忆的大脑。</p><img src="image/statements-and-state/brain.png" alt="A brain, presumably remembering stuff." />
+<p>状态和 <span name="expr">语句</span> 是相辅相成的。由于语句按定义不会计算出一个具体值，所以它们需要做一些其他的事情来发挥作用。这些事情被称为副作用。它可能意味着产生用户可见的输出或修改解释器中的某些状态，以便稍后可以检测到。后者使它们非常适合定义变量或其他命名实体。</p>
 <aside name="expr">
-<p>You could make a language that treats variable declarations as expressions that
-both create a binding and produce a value. The only language I know that does
-that is Tcl. Scheme seems like a contender, but note that after a <code>let</code>
-expression is evaluated, the variable it bound is forgotten. The <code>define</code> syntax
-is not an expression.</p>
+<p>你可以创建一种语言，将变量声明视为既创建绑定又产生值的表达式。Tcl是其中唯一我知道的一个这样做的语言。虽然Scheme也有类似的语法，但需要注意的是，在  <code>let</code> 表达式被求值之后，它所绑定的变量就被遗忘了。而 <code>define</code> 语法则不是一个表达式。</p>
 </aside>
-<p>In this chapter, we&rsquo;ll do all of that. We&rsquo;ll define statements that produce
-output (<code>print</code>) and create state (<code>var</code>). We&rsquo;ll add expressions to access and
-assign to variables. Finally, we&rsquo;ll add blocks and local scope. That&rsquo;s a lot to
-stuff into one chapter, but we&rsquo;ll chew through it all one bite at a time.</p>
-<h2><a href="#statements" id="statements"><small>8&#8202;.&#8202;1</small>Statements</a></h2>
-<p>We start by extending Lox&rsquo;s grammar with statements. They aren&rsquo;t very different
-from expressions. We start with the two simplest kinds:</p>
+<p>在本章中，我们将完成这些任务。我们将定义产生输出（<code>print</code>）和创建状态（<code>var</code>）的语句，并添加表达式来访问和赋值变量。最后，我们会引入代码块和局部作用域。虽然内容很多，但我们会逐步学习，一步一步地消化它们。</p>
+<h2><a href="#语句" id="语句"><small>8&#8202;.&#8202;1</small>语句</a></h2>
+<p>我们首先扩展Lox的语法以支持语句。 语句与表达式并没有很大的不同，我们从两种最简单的类型开始：</p>
 <ol>
-<li>
-<p>An <strong>expression statement</strong> lets you place an expression where a statement
-is expected. They exist to evaluate expressions that have side effects. You
-may not notice them, but you use them all the time in <span
-name="expr-stmt">C</span>, Java, and other languages. Any time you see a
-function or method call followed by a <code>;</code>, you&rsquo;re looking at an expression
-statement.</p>
+<li>**表达式语句 ** 可以让您将表达式放在需要语句的位置。它们的存在是为了计算有副作用的表达式。您可能没有注意到它们，但其实你在<span   name="expr-stmt">C</span>、Java和其他语言中一直在使用表达式语句。如果你看到一个函数或方法调用后面跟着一个 <code>;</code>，您看到的其实就是一个表达式语句。</li>
+</ol>
 <aside name="expr-stmt">
-<p>Pascal is an outlier. It distinguishes between <em>procedures</em> and <em>functions</em>.
-Functions return values, but procedures cannot. There is a statement form
-for calling a procedure, but functions can only be called where an
-expression is expected. There are no expression statements in Pascal.</p>
-</aside></li>
+<p>Pascal是一个例外。它区分<em>过程</em>和<em>函数</em>。函数返回值，但过程没有返回值。有一种调用过程的语句形式，但只能在需要表达式的地方调用函数。Pascal中没有表达式语句。</p>
+</aside>
+<ol start="2">
 <li>
-<p>A <strong><code>print</code> statement</strong> evaluates an expression and displays the result to
-the user. I admit it&rsquo;s weird to bake printing right into the language
-instead of making it a library function. Doing so is a concession to the
-fact that we&rsquo;re building this interpreter one chapter at a time and want to
-be able to play with it before it&rsquo;s all done. To make print a library
-function, we&rsquo;d have to wait until we had all of the machinery for defining
-and calling functions <span name="print">before</span> we could witness any
-side effects.</p>
+<p><code>print</code> 语句会计算表达式，并将结果展示给用户。我承认,将 <code>print</code> 直接嵌入语言中，而不是把它变成一个库函数的做法有些奇怪。这样做是基于本书的编排策略的让步，即我们会以章节为单位逐步构建这个解释器，并希望能够在完成解释器的所有功能<span name="print">之前</span>能够使用它。如果让print成为一个标准库函数，我们必须等到拥有了定义和调用函数的所有机制之后，才能看到它发挥作用。</p>
 <aside name="print">
-<p>I will note with only a modicum of defensiveness that BASIC and Python
-have dedicated <code>print</code> statements and they are real languages. Granted,
-Python did remove their <code>print</code> statement in 3.0<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.&nbsp;</span></p>
+<p>这里提一下(原文中的防杠提示<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.&nbsp;</span>)，BASIC和Python都有专门的 <code>print</code> 语句，并且它们都是真正的编程语言。当然，在Python 3.0中，他们删除了 <code>print</code> 语句……</p>
 </aside></li>
 </ol>
-<p>New syntax means new grammar rules. In this chapter, we finally gain the ability
-to parse an entire Lox script. Since Lox is an imperative, dynamically typed
-language, the &ldquo;top level&rdquo; of a script is simply a list of statements. The new
-rules are:</p>
+<p>新的语法意味着新的语法规则。在本章中，我们终于可以解析整个Lox脚本。由于Lox是一种命令式、动态类型的语言，脚本的“顶层”只是一个语句列表。新的规则如下：</p>
 <div class="codehilite"><pre><span class="i">program</span>        → <span class="i">statement</span>* <span class="t">EOF</span> ;
 
 <span class="i">statement</span>      → <span class="i">exprStmt</span>
@@ -169,30 +127,14 @@ rules are:</p>
 <span class="i">exprStmt</span>       → <span class="i">expression</span> <span class="s">&quot;;&quot;</span> ;
 <span class="i">printStmt</span>      → <span class="s">&quot;print&quot;</span> <span class="i">expression</span> <span class="s">&quot;;&quot;</span> ;
 </pre></div>
-<p>The first rule is now <code>program</code>, which is the starting point for the grammar and
-represents a complete Lox script or REPL entry. A program is a list of
-statements followed by the special &ldquo;end of file&rdquo; token. The mandatory end token
-ensures the parser consumes the entire input and doesn&rsquo;t silently ignore
-erroneous unconsumed tokens at the end of a script.</p>
-<p>Right now, <code>statement</code> only has two cases for the two kinds of statements we&rsquo;ve
-described. We&rsquo;ll fill in more later in this chapter and in the following ones.
-The next step is turning this grammar into something we can store in memory<span class="em">&mdash;</span>syntax trees.</p>
-<h3><a href="#statement-syntax-trees" id="statement-syntax-trees"><small>8&#8202;.&#8202;1&#8202;.&#8202;1</small>Statement syntax trees</a></h3>
-<p>There is no place in the grammar where both an expression and a statement are
-allowed. The operands of, say, <code>+</code> are always expressions, never statements. The
-body of a <code>while</code> loop is always a statement.</p>
-<p>Since the two syntaxes are disjoint, we don&rsquo;t need a single base class that they
-all inherit from. Splitting expressions and statements into separate class
-hierarchies enables the Java compiler to help us find dumb mistakes like passing
-a statement to a Java method that expects an expression.</p>
-<p>That means a new base class for statements. As our elders did before us, we will
-use the cryptic name &ldquo;Stmt&rdquo;. With great <span name="foresight">foresight</span>,
-I have designed our little AST metaprogramming script in anticipation of this.
-That&rsquo;s why we passed in &ldquo;Expr&rdquo; as a parameter to <code>defineAst()</code>. Now we add
-another call to define Stmt and its <span name="stmt-ast">subclasses</span>.</p>
+<p>第一条规则是 <code>program</code>，它是语法的起点，代表一个完整的Lox脚本或REPL输入。一个程序是一系列语句，后面跟着特殊的“文件结束”(EOF)标记。这个结束标记是必须的，它确保解析器消费整个输入，而不会在脚本末尾忽略错误的未消耗的标记。</p>
+<p>目前，<code>statement</code> 只有两种情况，分别对应我们描述过的两种语句。在本章的后面和接下来的章节中，我们将填充更多的内容。下一步是将这个语法转换成我们可以存储在内存中的东西——语法树。</p>
+<h3><a href="#statement语法树" id="statement语法树"><small>8&#8202;.&#8202;1&#8202;.&#8202;1</small>Statement语法树</a></h3>
+<p>在语法中，没有同时允许表达式和语句的地方。例如，操作符，例如 <code>+</code>  的操作数始终是表达式，而不是语句。<code>while</code> 循环的主体始终是一个语句。 </p>
+<p>因为这两种语法是不相干的，所以我们不需要提供一个它们都继承的基类。将表达式和语句拆分为单独的类结构，可使Java编译器帮助我们发现一些愚蠢的错误，例如将语句传递给需要表达式的Java方法。 </p>
+<p>这意味着要为语句创建一个新的基类。我们将像我们的前辈一样使用神秘的名称“Stmt”。我很有<span name="foresight">远见</span>，在设计我们的AST元编程脚本时就已经预见到了这一点。这就是我们将“Expr”作为参数传给了 <code>defineAst()</code> 的原因。现在我们添加另一个方法调用来定义Stmt和它的<span name="stmt-ast">子类</span>。</p>
 <aside name="foresight">
-<p>Not really foresight: I wrote all the code for the book before I sliced it into
-chapters.</p>
+<p>不完全是因为远见：我在将代码分割成章节之前就已经编写了整本书的所有代码。</p>
 </aside>
 <div class="codehilite"><pre class="insert-before">      &quot;Unary    : Token operator, Expr right&quot;
     ));
@@ -209,15 +151,11 @@ in <em>main</em>()</div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\tool\GenerateAst.java</em>, in <em>main</em>()</div>
 
 <aside name="stmt-ast">
-<p>The generated code for the new nodes is in <a href="appendix-ii.html">Appendix II</a>: <a href="appendix-ii.html#expression-statement">Expression statement</a>, <a href="appendix-ii.html#print-statement">Print statement</a>.</p>
+<p>新节点的生成代码在 <a href="appendix-ii.html">附录 II</a>中： <a href="appendix-ii.html#expression-statement">Expression语句</a>, <a href="appendix-ii.html#print-statement">Print 语句</a>。</p>
 </aside>
-<p>Run the AST generator script and behold the resulting &ldquo;Stmt.java&rdquo; file with the
-syntax tree classes we need for expression and <code>print</code> statements. Don&rsquo;t forget
-to add the file to your IDE project or makefile or whatever.</p>
-<h3><a href="#parsing-statements" id="parsing-statements"><small>8&#8202;.&#8202;1&#8202;.&#8202;2</small>Parsing statements</a></h3>
-<p>The parser&rsquo;s <code>parse()</code> method that parses and returns a single expression was a
-temporary hack to get the last chapter up and running. Now that our grammar has
-the correct starting rule, <code>program</code>, we can turn <code>parse()</code> into the real deal.</p>
+<p>运行AST生成器脚本，然后查看生成的 <code>Stmt.java</code> 文件，其中包含我们需要的表达式和 <code>print</code> 语句的语法树类。不要忘记将该文件添加到您的IDE项目或makefile或其他相关文件中。</p>
+<h3><a href="#解析语句" id="解析语句"><small>8&#8202;.&#8202;1&#8202;.&#8202;2</small>解析语句</a></h3>
+<p>解析器的parse()方法会解析并返回一个表达式，这只是一个临时的hack，用于让上一章的代码能启动并运行起来。现在，我们的语法已经有了正确的起始规则，<code>program</code>，我们可以正式编写 <code>parse()</code> 方法了。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 method <em>parse</em>()<br>
 replace 7 lines</div>
@@ -233,14 +171,9 @@ replace 7 lines</div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, method <em>parse</em>(), replace 7 lines</div>
 
 <aside name="parse-error-handling">
-<p>What about the code we had in here for catching <code>ParseError</code> exceptions? We&rsquo;ll
-put better parse error handling in place soon when we add support for additional
-statement types.</p>
+<p>我们之前在这里添加的捕获 <code>ParseError</code> 异常的代码怎么办？当我们添加对其他语句类型的支持时，我们很快就会放置更好的解析错误处理代码。</p>
 </aside>
-<p>This parses a series of statements, as many as it can find until it hits the end
-of the input. This is a pretty direct translation of the <code>program</code> rule into
-recursive descent style. We must also chant a minor prayer to the Java verbosity
-gods since we are using ArrayList now.</p>
+<p>该方法会尽可能多地解析一系列语句，直到命中输入内容的结尾为止。这是一种非常直接的将program规则转换为递归下降风格的方式。由于我们现在使用ArrayList，所以我们还必须向Java的冗长之神祈祷一番。</p>
 <div class="codehilite"><pre class="insert-before">package com.craftinginterpreters.lox;
 
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em></div>
@@ -249,8 +182,7 @@ gods since we are using ArrayList now.</p>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em></div>
 
-<p>A program is a list of statements, and we parse one of those statements using
-this method:</p>
+<p>一个程序就是一系列的语句，而我们可以通过下面的方法解析每一条语句：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 add after <em>expression</em>()</div>
 <pre>  <span class="k">private</span> <span class="t">Stmt</span> <span class="i">statement</span>() {
@@ -261,14 +193,9 @@ add after <em>expression</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, add after <em>expression</em>()</div>
 
-<p>A little bare bones, but we&rsquo;ll fill it in with more statement types later. We
-determine which specific statement rule is matched by looking at the current
-token. A <code>print</code> token means it&rsquo;s obviously a <code>print</code> statement.</p>
-<p>If the next token doesn&rsquo;t look like any known kind of statement, we assume it
-must be an expression statement. That&rsquo;s the typical final fallthrough case when
-parsing a statement, since it&rsquo;s hard to proactively recognize an expression from
-its first token.</p>
-<p>Each statement kind gets its own method. First <code>print</code>:</p>
+<p>看起来有些简陋，不过我们稍后会填充更多的语句类型。我们通过查看当前标记来确定匹配的具体语句规则。例如 <code>print</code>标记，显然对应 <code>print</code> 语句。</p>
+<p>如果下一个标记看起来不像任何已知类型的语句，我们就假设它一定是一个表达式语句。这是解析语句时典型的最终失败分支，因为很难从第一个标记主动识别出一个表达式。</p>
+<p>每种语句类型都有自己的方法。首先是 <code>print</code>：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 add after <em>statement</em>()</div>
 <pre>  <span class="k">private</span> <span class="t">Stmt</span> <span class="i">printStatement</span>() {
@@ -279,10 +206,8 @@ add after <em>statement</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, add after <em>statement</em>()</div>
 
-<p>Since we already matched and consumed the <code>print</code> token itself, we don&rsquo;t need to
-do that here. We parse the subsequent expression, consume the terminating
-semicolon, and emit the syntax tree.</p>
-<p>If we didn&rsquo;t match a <code>print</code> statement, we must have one of these:</p>
+<p>由于我们已经匹配和消耗了 <code>print</code> 标记本身，所以这里不需要再次进行匹配。我们解析后续的表达式，消耗结束的分号，并生成语法树。</p>
+<p>如果我们没有匹配到print语句，那一定是一条表达式语句：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 add after <em>printStatement</em>()</div>
 <pre>  <span class="k">private</span> <span class="t">Stmt</span> <span class="i">expressionStatement</span>() {
@@ -293,15 +218,10 @@ add after <em>printStatement</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, add after <em>printStatement</em>()</div>
 
-<p>Similar to the previous method, we parse an expression followed by a semicolon.
-We wrap that Expr in a Stmt of the right type and return it.</p>
-<h3><a href="#executing-statements" id="executing-statements"><small>8&#8202;.&#8202;1&#8202;.&#8202;3</small>Executing statements</a></h3>
-<p>We&rsquo;re running through the previous couple of chapters in microcosm, working our
-way through the front end. Our parser can now produce statement syntax trees, so
-the next and final step is to interpret them. As in expressions, we use the
-Visitor pattern, but we have a new visitor interface, Stmt.Visitor, to
-implement since statements have their own base class.</p>
-<p>We add that to the list of interfaces Interpreter implements.</p>
+<p>与前面的方法类似，我们解析一个后面带分号的表达式。我们将该表达式 Expr 包装在正确类型的 Stmt 语句中并返回。</p>
+<h3><a href="#执行语句" id="执行语句"><small>8&#8202;.&#8202;1&#8202;.&#8202;3</small>执行语句</a></h3>
+<p>我们正在以微观的方式回顾前面的几章，逐步完成解释器的前端工作。我们的解析器现在可以生成语句的语法树，所以下一步也是最后一步就是解释它们。与表达式一样，我们使用访问者模式，但是我们需要实现一个新的访问者接口 Stmt.Visitor 需要实现，因为语句有自己的基类。</p>
+<p>我们将其添加到 Interpreter 实现的接口列表中。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 replace 1 line</div>
 <pre class="insert"><span class="k">class</span> <span class="t">Interpreter</span> <span class="k">implements</span> <span class="t">Expr</span>.<span class="t">Visitor</span>&lt;<span class="t">Object</span>&gt;,
@@ -311,14 +231,9 @@ replace 1 line</div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, replace 1 line</div>
 
 <aside name="void">
-<p>Java doesn&rsquo;t let you use lowercase &ldquo;void&rdquo; as a generic type argument for obscure
-reasons having to do with type erasure and the stack. Instead, there is a
-separate &ldquo;Void&rdquo; type specifically for this use. Sort of a &ldquo;boxed void&rdquo;, like
-&ldquo;Integer&rdquo; is for &ldquo;int&rdquo;.</p>
+<p>出于与类型擦除和堆栈有关的晦涩原因，Java不允许使用小写的 &ldquo;void&rdquo; 作为泛型类型参数。相反，有一个专门用于此用途的单独的 &ldquo;Void&rdquo; 类型。可以将其视为 &ldquo;void&rdquo; 的 &ldquo;包装类&ldquo;，类似于 &ldquo;Integer&rdquo; 是 &ldquo;int&rdquo; 的包装类。</p>
 </aside>
-<p>Unlike expressions, statements produce no values, so the return type of the
-visit methods is Void, not Object. We have two statement types, and we need a
-visit method for each. The easiest is expression statements.</p>
+<p>与表达式不同，语句不产生任何值，因此 visit 方法的返回类型是 Void，而不是 Object。我们有两种语句类型，每种类型都需要一个 visit 方法。最简单的是表达式语句。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 add after <em>evaluate</em>()</div>
 <pre>  <span class="a">@Override</span>
@@ -329,15 +244,11 @@ add after <em>evaluate</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, add after <em>evaluate</em>()</div>
 
-<p>We evaluate the inner expression using our existing <code>evaluate()</code> method and
-<span name="discard">discard</span> the value. Then we return <code>null</code>. Java
-requires that to satisfy the special capitalized Void return type. Weird, but
-what can you do?</p>
+<p>我们使用现有的 <code>evaluate()</code> 方法计算内部表达式，并<span name="discard">丢弃</span>其结果值。然后我们返回<code>null</code>，因为Java要求为特殊的大写Void返回类型返回该值。虽然有点奇怪，但你能做什么呢？</p>
 <aside name="discard">
-<p>Appropriately enough, we discard the value returned by <code>evaluate()</code> by placing
-that call inside a <em>Java</em> expression statement.</p>
+<p>刚巧，我们通过将 <code>evaluate()</code> 的调用放在一个 Java 表达式语句中来丢弃返回的值。</p>
 </aside>
-<p>The <code>print</code> statement&rsquo;s visit method isn&rsquo;t much different.</p>
+<p><code>print</code> 语句的visit方法没有太大的区别。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 add after <em>visitExpressionStmt</em>()</div>
 <pre>  <span class="a">@Override</span>
@@ -349,12 +260,8 @@ add after <em>visitExpressionStmt</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, add after <em>visitExpressionStmt</em>()</div>
 
-<p>Before discarding the expression&rsquo;s value, we convert it to a string using the
-<code>stringify()</code> method we introduced in the last chapter and then dump it to
-stdout.</p>
-<p>Our interpreter is able to visit statements now, but we have some work to do to
-feed them to it. First, modify the old <code>interpret()</code> method in the Interpreter
-class to accept a list of statements<span class="em">&mdash;</span>in other words, a program.</p>
+<p>在丢弃表达式的值之前，我们使用上一章介绍的 <code>stringify()</code> 方法将其转换为字符串，然后将其输出到 stdout。</p>
+<p>我们的解释器现在能够处理语句了，但是我们还需要做一些工作来将它们传递给解释器。首先，修改 Interpreter 类中的旧 <code>interpret()</code> 方法，以接受语句列表，即一段程序。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 method <em>interpret</em>()<br>
 replace 8 lines</div>
@@ -370,8 +277,7 @@ replace 8 lines</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, method <em>interpret</em>(), replace 8 lines</div>
 
-<p>This replaces the old code which took a single expression. The new code relies
-on this tiny helper method:</p>
+<p>这将替换掉原来处理单个表达式的旧代码。新代码依赖于下面的辅助小方法：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 add after <em>evaluate</em>()</div>
 <pre>  <span class="k">private</span> <span class="t">void</span> <span class="i">execute</span>(<span class="t">Stmt</span> <span class="i">stmt</span>) {
@@ -380,8 +286,7 @@ add after <em>evaluate</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, add after <em>evaluate</em>()</div>
 
-<p>That&rsquo;s the statement analogue to the <code>evaluate()</code> method we have for
-expressions. Since we&rsquo;re working with lists now, we need to let Java know.</p>
+<p>这里处理语句的方法类似处理表达式的 <code>evaluate()</code> 方法。因为要使用列表，所以我们需要在Java中引入一下。</p>
 <div class="codehilite"><pre class="insert-before">package com.craftinginterpreters.lox;
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em></div>
 <pre class="insert">
@@ -393,8 +298,7 @@ class Interpreter implements Expr.Visitor&lt;Object&gt;,
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em></div>
 
-<p>The main Lox class is still trying to parse a single expression and pass it to
-the interpreter. We fix the parsing line like so:</p>
+<p>Lox主类中仍然是只解析单个表达式并将其传给解释器。我们将其修正如下：</p>
 <div class="codehilite"><pre class="insert-before">    Parser parser = new Parser(tokens);
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Lox.java</em><br>
 in <em>run</em>()<br>
@@ -406,7 +310,7 @@ replace 1 line</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Lox.java</em>, in <em>run</em>(), replace 1 line</div>
 
-<p>And then replace the call to the interpreter with this:</p>
+<p>然后将对解释器的调用替换为以下内容：</p>
 <div class="codehilite"><pre class="insert-before">    if (hadError) return;
 
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Lox.java</em><br>
@@ -417,80 +321,45 @@ replace 1 line</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Lox.java</em>, in <em>run</em>(), replace 1 line</div>
 
-<p>Basically just plumbing the new syntax through. OK, fire up the interpreter and
-give it a try. At this point, it&rsquo;s worth sketching out a little Lox program in a
-text file to run as a script. Something like:</p>
+<p>基本就是对新语法的遍历。好了，启动解释器并尝试一下。此时，有必要在文本文件中草拟一个小的Lox程序作为脚本运行。类似于：</p>
 <div class="codehilite"><pre><span class="k">print</span> <span class="s">&quot;one&quot;</span>;
 <span class="k">print</span> <span class="k">true</span>;
 <span class="k">print</span> <span class="n">2</span> + <span class="n">1</span>;
 </pre></div>
-<p>It almost looks like a real program! Note that the REPL, too, now requires you
-to enter a full statement instead of a simple expression. Don&rsquo;t forget your
-semicolons.</p>
-<h2><a href="#global-variables" id="global-variables"><small>8&#8202;.&#8202;2</small>Global Variables</a></h2>
-<p>Now that we have statements, we can start working on state. Before we get into
-all of the complexity of lexical scoping, we&rsquo;ll start off with the easiest kind
-of variables<span class="em">&mdash;</span><span name="globals">globals</span>. We need two new constructs.</p>
+<p>它几乎看起来像一个真正的程序！请注意，REPL现在也要求您输入完整的语句，而不仅仅是简单的表达式。不要忘记分号。</p>
+<h2><a href="#全局变量" id="全局变量"><small>8&#8202;.&#8202;2</small>全局变量</a></h2>
+<p>现在我们有了语句，我们可以开始处理状态。在我们深入研究词法作用域的所有复杂性之前，我们将从最简单的变量--<span name="globals">全局变量</span>开始。我们需要两个新的结构。</p>
 <ol>
-<li>
-<p>A <strong>variable declaration</strong> statement brings a new variable into the world.</p>
+<li><strong>变量声明</strong> 语句用于创建一个新变量。</li>
+</ol>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">beverage</span> = <span class="s">&quot;espresso&quot;</span>;
 </pre></div>
-<p>This creates a new binding that associates a name (here &ldquo;beverage&rdquo;) with a
-value (here, the string <code>"espresso"</code>).</p>
-</li>
-<li>
-<p>Once that&rsquo;s done, a <strong>variable expression</strong> accesses that binding. When the
-identifier &ldquo;beverage&rdquo; is used as an expression, it looks up the value bound
-to that name and returns it.</p>
+<pre><code>该语句将创建一个新的绑定，将一个名称（这里是 "beverage"）和一个值（这里是字符串 `"espresso"`）关联起来。
+</code></pre>
+<ol start="2">
+<li>一旦声明完成，<strong>变量表达式</strong> 就可以访问该绑定。当标识符“beverage”被用作一个表达式时，程序会查找与该名称绑定的值并返回。</li>
+</ol>
 <div class="codehilite"><pre><span class="k">print</span> <span class="i">beverage</span>; <span class="c">// &quot;espresso&quot;.</span>
 </pre></div>
-</li>
-</ol>
-<p>Later, we&rsquo;ll add assignment and block scope, but that&rsquo;s enough to get moving.</p>
+<p>稍后，我们将添加赋值和块作用域，但现在这已经足够让我们继续前进了。</p>
 <aside name="globals">
-<p>Global state gets a bad rap. Sure, lots of global state<span class="em">&mdash;</span>especially <em>mutable</em>
-state<span class="em">&mdash;</span>makes it hard to maintain large programs. It&rsquo;s good software
-engineering to minimize how much you use.</p>
-<p>But when you&rsquo;re slapping together a simple programming language or, heck, even
-learning your first language, the flat simplicity of global variables helps. My
-first language was BASIC and, though I outgrew it eventually, it was nice that I
-didn&rsquo;t have to wrap my head around scoping rules before I could make a computer
-do fun stuff.</p>
+<p>全局状态的名声不好。确实，大量的全局状态，特别是可变状态，使得大型程序难以维护。在软件工程中，应该尽量减少使用全局状态。</p>
+<p>但是，当你在拼凑一个简单的编程语言，甚至是学习你的第一门语言时，全局变量的简单性是有帮助的。我的第一门语言是BASIC，尽管我最终不再使用它了，但是在我能让计算机做有趣的事情之前，不必理解作用域规则，挺好。</p>
 </aside>
-<h3><a href="#variable-syntax" id="variable-syntax"><small>8&#8202;.&#8202;2&#8202;.&#8202;1</small>Variable syntax</a></h3>
-<p>As before, we&rsquo;ll work through the implementation from front to back, starting
-with the syntax. Variable declarations are statements, but they are different
-from other statements, and we&rsquo;re going to split the statement grammar in two to
-handle them. That&rsquo;s because the grammar restricts where some kinds of statements
-are allowed.</p>
-<p>The clauses in control flow statements<span class="em">&mdash;</span>think the then and else branches of
-an <code>if</code> statement or the body of a <code>while</code><span class="em">&mdash;</span>are each a single statement. But
-that statement is not allowed to be one that declares a name. This is OK:</p>
+<h3><a href="#变量语法" id="变量语法"><small>8&#8202;.&#8202;2&#8202;.&#8202;1</small>变量语法</a></h3>
+<p>与前面一样，我们将从语法开始，从前到后依次完成实现。变量声明是一种语句，但它们不同于其他语句，我们把statement语法一分为二来处理该情况。这是因为语法限制了某些类型的语句可以出现的位置。</p>
+<p>控制流语句中的子句（比如if语句的then和else分支或while循环的循环体）都是单个语句。但是，这个语句不能是一个声明变量的语句。下面的代码是OK的：</p>
 <div class="codehilite"><pre><span class="k">if</span> (<span class="i">monday</span>) <span class="k">print</span> <span class="s">&quot;Ugh, already?&quot;</span>;
 </pre></div>
-<p>But this is not:</p>
+<p>但是这个不行：</p>
 <div class="codehilite"><pre><span class="k">if</span> (<span class="i">monday</span>) <span class="k">var</span> <span class="i">beverage</span> = <span class="s">&quot;espresso&quot;</span>;
 </pre></div>
-<p>We <em>could</em> allow the latter, but it&rsquo;s confusing. What is the scope of that
-<code>beverage</code> variable? Does it persist after the <code>if</code> statement? If so, what is
-its value on days other than Monday? Does the variable exist at all on those
-days?</p>
-<p>Code like this is weird, so C, Java, and friends all disallow it. It&rsquo;s as if
-there are two levels of <span name="brace">&ldquo;precedence&rdquo;</span> for statements.
-Some places where a statement is allowed<span class="em">&mdash;</span>like inside a block or at the top
-level<span class="em">&mdash;</span>allow any kind of statement, including declarations. Others allow only
-the &ldquo;higher&rdquo; precedence statements that don&rsquo;t declare names.</p>
+<p>我们也<em>可以</em>允许后者，但这会令人困惑。那个 <code>beverage</code> 变量的作用域是什么？在 <code>if</code> 语句之后是否仍然存在？如果是的话，在除了星期一以外的其他日子，它的值是什么？在那些日子里，变量是否存在？</p>
+<p>像这样的代码很奇怪，所以C、Java等语言都不允许这种写法。就像存在两个级别的<span name="brace">“优先级”</span>一样，语句的一些位置（比如在块内或顶层）允许任何类型的语句，包括声明语句。而其他位置只允许“更高级别”的语句，不允许声明语句。</p>
 <aside name="brace">
-<p>In this analogy, block statements work sort of like parentheses do for
-expressions. A block is itself in the &ldquo;higher&rdquo; precedence level and can be used
-anywhere, like in the clauses of an <code>if</code> statement. But the statements it
-<em>contains</em> can be lower precedence. You&rsquo;re allowed to declare variables and
-other names inside the block. The curlies let you escape back into the full
-statement grammar from a place where only some statements are allowed.</p>
+<p>代码块语句的工作方式类似于表达式中的括号。“块”本身处于“较高”的优先级，并且可以在任何地方使用，如if语句的子语句中。而其中<em>包含</em>的可以是优先级较低的语句。你可以在块中声明变量或其它名称。通过大括号，你可以在只允许某些语句的位置书写完整的语句语法。</p>
 </aside>
-<p>To accommodate the distinction, we add another rule for kinds of statements that
-declare names.</p>
+<p>为了适应这种区别，我们为声明语句添加了另一条规则。</p>
 <div class="codehilite"><pre><span class="i">program</span>        → <span class="i">declaration</span>* <span class="t">EOF</span> ;
 
 <span class="i">declaration</span>    → <span class="i">varDecl</span>
@@ -499,29 +368,22 @@ declare names.</p>
 <span class="i">statement</span>      → <span class="i">exprStmt</span>
                | <span class="i">printStmt</span> ;
 </pre></div>
-<p>Declaration statements go under the new <code>declaration</code> rule. Right now, it&rsquo;s only
-variables, but later it will include functions and classes. Any place where a
-declaration is allowed also allows non-declaring statements, so the
-<code>declaration</code> rule falls through to <code>statement</code>. Obviously, you can declare
-stuff at the top level of a script, so <code>program</code> routes to the new rule.</p>
-<p>The rule for declaring a variable looks like:</p>
+<p>声明语句属于新的 <code>declaration</code> 规则。目前，它只包括变量，但以后还会包括函数和类。任何允许声明的地方也允许非声明语句，所以 <code>declaration</code> 规则会转到 <code>statement</code> 规则。显然，你可以在脚本的顶层声明变量，所以 <code>program</code> 会遵循新的规则。</p>
+<p>声明一个变量的规则如下：</p>
 <div class="codehilite"><pre><span class="i">varDecl</span>        → <span class="s">&quot;var&quot;</span> <span class="t">IDENTIFIER</span> ( <span class="s">&quot;=&quot;</span> <span class="i">expression</span> )? <span class="s">&quot;;&quot;</span> ;
 </pre></div>
-<p>Like most statements, it starts with a leading keyword. In this case, <code>var</code>.
-Then an identifier token for the name of the variable being declared, followed
-by an optional initializer expression. Finally, we put a bow on it with the
-semicolon.</p>
-<p>To access a variable, we define a new kind of primary expression.</p>
+<p>和大多数语句一样，声明语句以一个关键字开头。这里是<code>var</code>关键字。然后是一个标识符令牌，表示正在声明的变量的名称，后面是可选的初始化表达式。最后，我们用分号结束它。</p>
+<p>为了访问一个变量，我们定义了一种新的基本表达式类型：</p>
 <div class="codehilite"><pre><span class="i">primary</span>        → <span class="s">&quot;true&quot;</span> | <span class="s">&quot;false&quot;</span> | <span class="s">&quot;nil&quot;</span>
                | <span class="t">NUMBER</span> | <span class="t">STRING</span>
                | <span class="s">&quot;(&quot;</span> <span class="i">expression</span> <span class="s">&quot;)&quot;</span>
                | <span class="t">IDENTIFIER</span> ;
 </pre></div>
-<p>That <code>IDENTIFIER</code> clause matches a single identifier token, which is understood
-to be the name of the variable being accessed.</p>
+<p><code>IDENTIFIER</code> 子句匹配一个单独的标识符令牌，该令牌被理解为要访问的变量的名称。</p>
 <p>These new grammar rules get their corresponding syntax trees. Over in the AST
 generator, we add a <span name="var-stmt-ast">new statement</span> node for a
-variable declaration.</p>
+variable declaration.
+这些新的语法规则需要其相应的语法树。在AST生成器中，我们为变量声明添加一个<span name="var-stmt-ast">新的</span>语句树。</p>
 <div class="codehilite"><pre class="insert-before">      &quot;Expression : Expr expression&quot;,
 </pre><pre class="insert-before">      <span class="s">&quot;Print      : Expr expression&quot;</span><span class="insert-comma">,</span>
 </pre><div class="source-file"><em>com\craftinginterpreters\tool\GenerateAst.java</em><br>
@@ -533,11 +395,10 @@ add <em>&ldquo;,&rdquo;</em> to previous line</div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\tool\GenerateAst.java</em>, in <em>main</em>(), add <em>&ldquo;,&rdquo;</em> to previous line</div>
 
 <aside name="var-stmt-ast">
-<p>The generated code for the new node is in <a href="appendix-ii.html#variable-statement">Appendix II</a>.</p>
+<p>生成的新节点的代码位于<a href="appendix-ii.html#variable-statement">Appendix II</a>中。</p>
 </aside>
-<p>It stores the name token so we know what it&rsquo;s declaring, along with the
-initializer expression. (If there isn&rsquo;t an initializer, that field is <code>null</code>.)</p>
-<p>Then we add an expression node for accessing a variable.</p>
+<p>这里存储了名称标记，以便我们知道该语句声明了什么，此外还有初始化表达式（如果没有，字段就是null）。</p>
+<p>然后我们添加一个表达式节点用于访问变量。</p>
 <div class="codehilite"><pre class="insert-before">      &quot;Literal  : Object value&quot;,
 </pre><pre class="insert-before">      <span class="s">&quot;Unary    : Token operator, Expr right&quot;</span><span class="insert-comma">,</span>
 </pre><div class="source-file"><em>com\craftinginterpreters\tool\GenerateAst.java</em><br>
@@ -548,16 +409,12 @@ add <em>&ldquo;,&rdquo;</em> to previous line</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\tool\GenerateAst.java</em>, in <em>main</em>(), add <em>&ldquo;,&rdquo;</em> to previous line</div>
 
-<p><span name="var-expr-ast">It&rsquo;s</span> simply a wrapper around the token for the
-variable name. That&rsquo;s it. As always, don&rsquo;t forget to run the AST generator
-script so that you get updated &ldquo;Expr.java&rdquo; and &ldquo;Stmt.java&rdquo; files.</p>
+<p><span name="var-expr-ast">这</span>只是对变量名称标记的简单包装，就是这样。一如既往，别忘了运行AST生成器脚本，以便获取更新的 &ldquo;Expr.java &ldquo;和 &ldquo;Stmt.java &ldquo;文件。</p>
 <aside name="var-expr-ast">
-<p>The generated code for the new node is in <a href="appendix-ii.html#variable-expression">Appendix II</a>.</p>
+<p>生成的新节点的代码位于<a href="appendix-ii.html#variable-expression">Appendix II</a>中。</p>
 </aside>
-<h3><a href="#parsing-variables" id="parsing-variables"><small>8&#8202;.&#8202;2&#8202;.&#8202;2</small>Parsing variables</a></h3>
-<p>Before we parse variable statements, we need to shift around some code to make
-room for the new <code>declaration</code> rule in the grammar. The top level of a program
-is now a list of declarations, so the entrypoint method to the parser changes.</p>
+<h3><a href="#解析变量" id="解析变量"><small>8&#8202;.&#8202;2&#8202;.&#8202;2</small>解析变量</a></h3>
+<p>在解析变量语句之前，我们需要修改一些代码，为语法中的新规则<code>declaration</code>腾出一些空间。现在，程序的最顶层是声明语句的列表，所以解析器方法的入口需要更改</p>
 <div class="codehilite"><pre class="insert-before">  List&lt;Stmt&gt; parse() {
     List&lt;Stmt&gt; statements = new ArrayList&lt;&gt;();
     while (!isAtEnd()) {
@@ -572,7 +429,7 @@ replace 1 line</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, in <em>parse</em>(), replace 1 line</div>
 
-<p>That calls this new method:</p>
+<p>这里会调用下面的新方法：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 add after <em>expression</em>()</div>
 <pre>  <span class="k">private</span> <span class="t">Stmt</span> <span class="i">declaration</span>() {
@@ -588,24 +445,11 @@ add after <em>expression</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, add after <em>expression</em>()</div>
 
-<p>Hey, do you remember way back in that <a href="parsing-expressions.html">earlier chapter</a> when we put the
-infrastructure in place to do error recovery? We are finally ready to hook that
-up.</p>
-<p>This <code>declaration()</code> method is the method we call repeatedly when parsing a
-series of statements in a block or a script, so it&rsquo;s the right place to
-synchronize when the parser goes into panic mode. The whole body of this method
-is wrapped in a try block to catch the exception thrown when the parser begins
-error recovery. This gets it back to trying to parse the beginning of the next
-statement or declaration.</p>
-<p>The real parsing happens inside the try block. First, it looks to see if we&rsquo;re
-at a variable declaration by looking for the leading <code>var</code> keyword. If not, it
-falls through to the existing <code>statement()</code> method that parses <code>print</code> and
-expression statements.</p>
-<p>Remember how <code>statement()</code> tries to parse an expression statement if no other
-statement matches? And <code>expression()</code> reports a syntax error if it can&rsquo;t parse
-an expression at the current token? That chain of calls ensures we report an
-error if a valid declaration or statement isn&rsquo;t parsed.</p>
-<p>When the parser matches a <code>var</code> token, it branches to:</p>
+<p>嘿，你还记得在 <a href="parsing-expressions.html">前面的章节</a> 中我们建立了<a href="parsing-expressions.html#panic-mode-error-recovery">错误恢复</a>的手脚架吗？现在我们终于准备好跟它串起来了。</p>
+<p><code>declaration()</code>  方法在解析块或脚本中的一系列语句时会被重复调用，因此当解析器进入恐慌模式时，它就是进行同步的正确位置。该方法的整个体被包裹在一个try块中，以捕获解析器开始错误恢复时抛出的异常。这使得解析器可以尝试解析下一条语句或声明的开头。</p>
+<p>真正的解析发生在try块内部。首先，它通过查找前导的<code>var</code> 关键字来判断是否为变量声明。如果不是，它将继续执行现有的<code>statement()</code>方法，该方法解析<code>print</code>和语句表达式。</p>
+<p>还记得 <code>statement()</code> 会在没有其它语句匹配时会尝试解析一个表达式语句吗？而 <code>expression()</code> 如果无法在当前语法标记处解析表达式，则会抛出一个语法错误？这一系列调用链可以保证在解析无效的声明或语句时能报告错误。</p>
+<p>当解析器匹配到一个 <code>var</code> 标记时，它会进入相应的处理分支：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 add after <em>printStatement</em>()</div>
 <pre>  <span class="k">private</span> <span class="t">Stmt</span> <span class="i">varDeclaration</span>() {
@@ -622,15 +466,9 @@ add after <em>printStatement</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, add after <em>printStatement</em>()</div>
 
-<p>As always, the recursive descent code follows the grammar rule. The parser has
-already matched the <code>var</code> token, so next it requires and consumes an identifier
-token for the variable name.</p>
-<p>Then, if it sees an <code>=</code> token, it knows there is an initializer expression and
-parses it. Otherwise, it leaves the initializer <code>null</code>. Finally, it consumes the
-required semicolon at the end of the statement. All this gets wrapped in a
-Stmt.Var syntax tree node and we&rsquo;re groovy.</p>
-<p>Parsing a variable expression is even easier. In <code>primary()</code>, we look for an
-identifier token.</p>
+<p>一如既往，递归下降代码遵循语法规则。解析器已经匹配了 <code>var</code> 标记，因此接下来需要并消耗一个标识符标记作为变量名。</p>
+<p>然后，如果遇到 <code>=</code> 标记，解析器就知道后面有一个初始化表达式，并对其进行解析。否则，它将初始化为 <code>null</code>。最后，解析器会消耗语句末尾必需的分号。所有这些都被包装在一个Stmt.Var语法树节点中，然后我们就完成解析了。</p>
+<p>解析变量表达式更加简单。在 <code>primary()</code> 函数中，我们需要查找一个标识符标记。</p>
 <div class="codehilite"><pre class="insert-before">      return new Expr.Literal(previous().literal);
     }
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
@@ -646,28 +484,16 @@ in <em>primary</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, in <em>primary</em>()</div>
 
-<p>That gives us a working front end for declaring and using variables. All that&rsquo;s
-left is to feed it into the interpreter. Before we get to that, we need to talk
-about where variables live in memory.</p>
-<h2><a href="#environments" id="environments"><small>8&#8202;.&#8202;3</small>Environments</a></h2>
-<p>The bindings that associate variables to values need to be stored somewhere.
-Ever since the Lisp folks invented parentheses, this data structure has been
-called an <span name="env"><strong>environment</strong></span>.</p><img src="image/statements-and-state/environment.png" alt="An environment containing two bindings." />
+<p>这样我们就有了一个可以声明和使用变量的工作前端。剩下的就是将其接入解释器。在此之前，我们需要讨论变量在内存中的位置。</p>
+<h2><a href="#环境" id="环境"><small>8&#8202;.&#8202;3</small>环境</a></h2>
+<p>将变量与值关联的绑定需要存储在某个地方。自从Lisp发明了圆括号以来，这个数据结构就被称为<span name="env"><strong>环境</strong></span>。</p><img src="image/statements-and-state/environment.png" alt="An environment containing two bindings." />
 <aside name="env">
-<p>I like to imagine the environment literally, as a sylvan wonderland where
-variables and values frolic.</p>
+<p>我喜欢将环境想象成一个真实的仙境，变量和值在其中嬉戏玩耍。</p>
 </aside>
-<p>You can think of it like a <span name="map">map</span> where the keys are
-variable names and the values are the variable&rsquo;s, uh, values. In fact, that&rsquo;s
-how we&rsquo;ll implement it in Java. We could stuff that map and the code to manage
-it right into Interpreter, but since it forms a nicely delineated concept, we&rsquo;ll
-pull it out into its own class.</p>
-<p>Start a new file and add:</p>
+<p>你可以将其想象成一个<span name="map">映射</span>，其中键是变量名，值是变量的值。实际上，这就是我们在Java中实现的方式。我们可以将这个映射和管理它的代码直接放入解释器中，但由于它形成了一个清晰的概念，我们可以将其提取到一个独立的类中。</p>
+<p>创建一个新文件并添加以下内容：</p>
 <aside name="map">
-<p>Java calls them <strong>maps</strong> or <strong>hashmaps</strong>. Other languages call them <strong>hash
-tables</strong>, <strong>dictionaries</strong> (Python and C#), <strong>hashes</strong> (Ruby and Perl),
-<strong>tables</strong> (Lua), or <strong>associative arrays</strong> (PHP). Way back when, they were
-known as <strong>scatter tables</strong>.</p>
+<p>Java称之为<strong>maps</strong>或<strong>hashmaps</strong>。其他语言称之为<strong>hash tables</strong>、<strong>dictionaries</strong>（Python和C#）、<strong>hashes</strong>（Ruby和Perl）、<strong>tables</strong>（Lua）或<strong>associative arrays</strong>（PHP）。在很久以前，它们被称为<strong>scatter tables</strong>。</p>
 </aside>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Environment.java</em><br>
 create new file</div>
@@ -682,13 +508,8 @@ create new file</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Environment.java</em>, create new file</div>
 
-<p>There&rsquo;s a Java Map in there to store the bindings. It uses bare strings for the
-keys, not tokens. A token represents a unit of code at a specific place in the
-source text, but when it comes to looking up variables, all identifier tokens
-with the same name should refer to the same variable (ignoring scope for now).
-Using the raw string ensures all of those tokens refer to the same map key.</p>
-<p>There are two operations we need to support. First, a variable definition binds
-a new name to a value.</p>
+<p>在其中有一个Java Map用于存储绑定。它使用裸字符串作为键，而不是标记（tokens）。标记表示源文本中特定位置的代码单元，但在查找变量时，所有具有相同名称的标识符标记应该引用同一个变量（暂时忽略作用域）。使用裸字符串可以确保所有这些标记都指向同一个映射键。</p>
+<p>我们需要支持两个操作。首先，是变量定义，将一个新的名称与一个值绑定在一起。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Environment.java</em><br>
 in class <em>Environment</em></div>
 <pre>  <span class="t">void</span> <span class="i">define</span>(<span class="t">String</span> <span class="i">name</span>, <span class="t">Object</span> <span class="i">value</span>) {
@@ -697,34 +518,19 @@ in class <em>Environment</em></div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Environment.java</em>, in class <em>Environment</em></div>
 
-<p>Not exactly brain surgery, but we have made one interesting semantic choice.
-When we add the key to the map, we don&rsquo;t check to see if it&rsquo;s already present.
-That means that this program works:</p>
+<p>虽然不是特别复杂，但是我们这里也做出了一个有趣的语义抉择。当我们向映射中添加键时，没有检查该键是否已存在。这意味着下面的程序可以正常工作：</p>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">a</span> = <span class="s">&quot;before&quot;</span>;
 <span class="k">print</span> <span class="i">a</span>; <span class="c">// &quot;before&quot;.</span>
 <span class="k">var</span> <span class="i">a</span> = <span class="s">&quot;after&quot;</span>;
 <span class="k">print</span> <span class="i">a</span>; <span class="c">// &quot;after&quot;.</span>
 </pre></div>
-<p>A variable statement doesn&rsquo;t just define a <em>new</em> variable, it can also be used
-to <em>re</em>define an existing variable. We could <span name="scheme">choose</span>
-to make this an error instead. The user may not intend to redefine an existing
-variable. (If they did mean to, they probably would have used assignment, not
-<code>var</code>.) Making redefinition an error would help them find that bug.</p>
-<p>However, doing so interacts poorly with the REPL. In the middle of a REPL
-session, it&rsquo;s nice to not have to mentally track which variables you&rsquo;ve already
-defined. We could allow redefinition in the REPL but not in scripts, but then
-users would have to learn two sets of rules, and code copied and pasted from one
-form to the other might not work.</p>
+<p>一个变量声明不仅仅定义一个<em>新</em>变量，还可以用来<em>重新</em>定义一个已有变量。我们可以<span name="scheme">选择</span>将这视为错误来处理。用户可能并不打算重新定义一个已有变量（如果他们确实想这样做，他们可能会使用赋值语句而不是 <code>var</code> ）。将重新定义视为错误可以帮助用户找到这个bug。</p>
+<p>但是，这样做会对REPL的使用造成不良影响。在REPL会话中，我们不需要费心去记住已经定义的变量。我们可以在REPL中允许重新定义变量，但在脚本中不允许。但这样一来，用户就需要学习两套规则，而且从一个地方复制粘贴到另一个地方的代码可能无法正常工作。</p>
 <aside name="scheme">
-<p>My rule about variables and scoping is, &ldquo;When in doubt, do what Scheme does&rdquo;.
-The Scheme folks have probably spent more time thinking about variable scope
-than we ever will<span class="em">&mdash;</span>one of the main goals of Scheme was to introduce lexical
-scoping to the world<span class="em">&mdash;</span>so it&rsquo;s hard to go wrong if you follow in their
-footsteps.</p>
-<p>Scheme allows redefining variables at the top level.</p>
+<p>我关于变量和作用域的原则是：“当你不确定的时候，就按照Scheme的做法来”。Scheme的开发者花了很多时间思考变量的作用范围，他们的目标就是让变量的使用更清晰明了。所以，如果你遵循他们的方式，就不容易出错。</p>
+<p>在Scheme中，你可以在顶层重新定义变量。（这就像是在一个程序的最外层给变量起了一个新的名字。这样做的好处是，你可以在不同的地方使用相同的变量名，而不会造成混淆。）</p>
 </aside>
-<p>So, to keep the two modes consistent, we&rsquo;ll allow it<span class="em">&mdash;</span>at least for global
-variables. Once a variable exists, we need a way to look it up.</p>
+<p>所以，为了保持这两种模式的一致性，我们将允许重定义——至少对于全局变量来说是如此。一旦一个变量存在，我们就需要可以查找该变量的方法。</p>
 <div class="codehilite"><pre class="insert-before">class Environment {
   private final Map&lt;String, Object&gt; values = new HashMap&lt;&gt;();
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Environment.java</em><br>
@@ -744,32 +550,21 @@ in class <em>Environment</em></div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Environment.java</em>, in class <em>Environment</em></div>
 
-<p>This is a little more semantically interesting. If the variable is found, it
-simply returns the value bound to it. But what if it&rsquo;s not? Again, we have a
-choice:</p>
+<p>这个情况在语义上有点意思。如果找到了这个变量，它就会直接返回与之绑定的值。但是如果没有找到呢？这时候我们又有几种选择：</p>
 <ul>
 <li>
-<p>Make it a syntax error.</p>
+<p>抛出语法错误</p>
 </li>
 <li>
-<p>Make it a runtime error.</p>
+<p>抛出运行时错误.</p>
 </li>
 <li>
-<p>Allow it and return some default value like <code>nil</code>.</p>
+<p>允许该操作并返回默认值，比如 <code>nil</code>.</p>
 </li>
 </ul>
-<p>Lox is pretty lax, but the last option is a little <em>too</em> permissive to me.
-Making it a syntax error<span class="em">&mdash;</span>a compile-time error<span class="em">&mdash;</span>seems like a smart choice.
-Using an undefined variable is a bug, and the sooner you detect the mistake, the
-better.</p>
-<p>The problem is that <em>using</em> a variable isn&rsquo;t the same as <em>referring</em> to it. You
-can refer to a variable in a chunk of code without immediately evaluating it if
-that chunk of code is wrapped inside a function. If we make it a static error to
-<em>mention</em> a variable before it&rsquo;s been declared, it becomes much harder to define
-recursive functions.</p>
-<p>We could accommodate single recursion<span class="em">&mdash;</span>a function that calls itself<span class="em">&mdash;</span>by
-declaring the function&rsquo;s own name before we examine its body. But that doesn&rsquo;t
-help with mutually recursive procedures that call each other. Consider:</p>
+<p>Lox是相当宽松的，但是最后一个选项对我来说有点太宽松了。把它作为一个语法错误，也就是编译时的错误，听起来是个聪明的选择。使用未定义的变量是一个bug，而且你越早发现这个错误，越好。</p>
+<p>问题在于<em>使用</em>变量并不等同于<em>引用</em>变量。如果一段代码块被包裹在一个函数内部，你可以在这段代码中引用一个变量，而不需要立即对其进行求值。如果我们把<em>引用</em>未声明的变量定义为静态错误，那么定义递归函数将变得更加困难。</p>
+<p>我们可以通过在检查函数体之前先声明函数自己的名字来处理单一递归——一个调用自身的函数。但是这对于互相递归调用的函数无效。考虑以下情况：</p>
 <p><span name="contrived"></span></p>
 <div class="codehilite"><pre><span class="k">fun</span> <span class="i">isOdd</span>(<span class="i">n</span>) {
   <span class="k">if</span> (<span class="i">n</span> == <span class="n">0</span>) <span class="k">return</span> <span class="k">false</span>;
@@ -782,39 +577,20 @@ help with mutually recursive procedures that call each other. Consider:</p>
 }
 </pre></div>
 <aside name="contrived">
-<p>Granted, this is probably not the most efficient way to tell if a number is even
-or odd (not to mention the bad things that happen if you pass a non-integer or
-negative number to them). Bear with me.</p>
+<p>确实，这可能不是判断一个数字是偶数还是奇数的最好方法（更不用说如果传入一个非整数或负数会发生一些不可控的事情）。不过请忍耐一下。</p>
 </aside>
-<p>The <code>isEven()</code> function isn&rsquo;t defined by the <span name="declare">time</span> we
-are looking at the body of <code>isOdd()</code> where it&rsquo;s called. If we swap the order of
-the two functions, then <code>isOdd()</code> isn&rsquo;t defined when we&rsquo;re looking at
-<code>isEven()</code>&rsquo;s body.</p>
+<p>在我们查看<code>isOdd()</code>函数体的<span name="declare">时候</span>，<code>isEven()</code>函数还没有被定义。如果我们交换这两个函数的顺序，那么当我们查看<code>isEven()</code>函数体的时候，<code>isOdd()</code>函数也还没有被定义。</p>
 <aside name="declare">
-<p>Some statically typed languages like Java and C# solve this by specifying that
-the top level of a program isn&rsquo;t a sequence of imperative statements. Instead, a
-program is a set of declarations which all come into being simultaneously. The
-implementation declares <em>all</em> of the names before looking at the bodies of <em>any</em>
-of the functions.</p>
-<p>Older languages like C and Pascal don&rsquo;t work like this. Instead, they force you
-to add explicit <em>forward declarations</em> to declare a name before it&rsquo;s fully
-defined. That was a concession to the limited computing power at the time. They
-wanted to be able to compile a source file in one single pass through the text,
-so those compilers couldn&rsquo;t gather up all of the declarations first before
-processing function bodies.</p>
+<p>有些静态类型的编程语言，比如Java和C#，为了解决这个问题，规定程序的顶层不是一连串的命令式语句。相反，它们规定一个程序是一组同时存在的声明。在实际执行时，会先声明<em>所有</em>的名字，然后再去看函数的具体内容。</p>
+<p>而像C和Pascal这样的老式编程语言不是这样工作的。它们要求在一个名称完全定义之前，必须先添加明确的<em>前向声明</em>。这是为了适应当时计算机性能有限的情况而做出的妥协。它们希望能够通过一次遍历源代码的方式，在处理函数具体内容之前就能够编译整个源文件。</p>
 </aside>
-<p>Since making it a <em>static</em> error makes recursive declarations too difficult,
-we&rsquo;ll defer the error to runtime. It&rsquo;s OK to refer to a variable before it&rsquo;s
-defined as long as you don&rsquo;t <em>evaluate</em> the reference. That lets the program
-for even and odd numbers work, but you&rsquo;d get a runtime error in:</p>
+<p>因为把它作为<em>静态</em>错误会让递归声明变得太难，所以我们将错误推迟到运行时。只要不对变量引用进行<em>求值</em>，就可以在变量定义之前引用它。这样程序就可以正常工作，但是在以下情况下会出现运行时错误：</p>
 <div class="codehilite"><pre><span class="k">print</span> <span class="i">a</span>;
 <span class="k">var</span> <span class="i">a</span> = <span class="s">&quot;too late!&quot;</span>;
 </pre></div>
-<p>As with type errors in the expression evaluation code, we report a runtime error
-by throwing an exception. The exception contains the variable&rsquo;s token so we can
-tell the user where in their code they messed up.</p>
-<h3><a href="#interpreting-global-variables" id="interpreting-global-variables"><small>8&#8202;.&#8202;3&#8202;.&#8202;1</small>Interpreting global variables</a></h3>
-<p>The Interpreter class gets an instance of the new Environment class.</p>
+<p>就像表达式求值代码中的类型错误一样，我们通过抛出异常来报告运行时错误。异常中包含变量的标记，这样我们就可以告诉用户在他们的代码在哪里搞砸了。</p>
+<h3><a href="#解释全局变量" id="解释全局变量"><small>8&#8202;.&#8202;3&#8202;.&#8202;1</small>解释全局变量</a></h3>
+<p>Interpreter类会获得一个新的Environment类的实例。</p>
 <div class="codehilite"><pre class="insert-before">class Interpreter implements Expr.Visitor&lt;Object&gt;,
                              Stmt.Visitor&lt;Void&gt; {
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
@@ -825,10 +601,8 @@ in class <em>Interpreter</em></div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, in class <em>Interpreter</em></div>
 
-<p>We store it as a field directly in Interpreter so that the variables stay in
-memory as long as the interpreter is still running.</p>
-<p>We have two new syntax trees, so that&rsquo;s two new visit methods. The first is for
-declaration statements.</p>
+<p>我们将其直接存储为Interpreter中的字段，这样只要解释器还在运行，变量就会一直保留在内存中。</p>
+<p>我们有两个新的语法树，因此需要两个新的visit方法。第一个是用于声明语句的。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 add after <em>visitPrintStmt</em>()</div>
 <pre>  <span class="a">@Override</span>
@@ -844,22 +618,13 @@ add after <em>visitPrintStmt</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, add after <em>visitPrintStmt</em>()</div>
 
-<p>If the variable has an initializer, we evaluate it. If not, we have another
-choice to make. We could have made this a syntax error in the parser by
-<em>requiring</em> an initializer. Most languages don&rsquo;t, though, so it feels a little
-harsh to do so in Lox.</p>
-<p>We could make it a runtime error. We&rsquo;d let you define an uninitialized variable,
-but if you accessed it before assigning to it, a runtime error would occur. It&rsquo;s
-not a bad idea, but most dynamically typed languages don&rsquo;t do that. Instead,
-we&rsquo;ll keep it simple and say that Lox sets a variable to <code>nil</code> if it isn&rsquo;t
-explicitly initialized.</p>
+<p>如果变量有初始化式，我们就对其求值。如果没有，我们就需要做一个选择。我们可以通过在解析器中<em>要求</em>必须有初始化式来将其视为语法错误。但是，大多数语言并不这么做，所以在Lox中这样做可能有点太过苛刻。</p>
+<p>我们可以把它当作运行时错误。我们允许你定义一个未初始化的变量，但是如果在给它赋值之前访问它，就会发生一个运行时错误。这个想法不错，但是大多数动态类型的语言并不这么做。相反，我们将保持简单，规定在Lox中，如果变量没有被显式初始化，它就会被设置为<code>nil</code>。</p>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">a</span>;
 <span class="k">print</span> <span class="i">a</span>; <span class="c">// &quot;nil&quot;.</span>
 </pre></div>
-<p>Thus, if there isn&rsquo;t an initializer, we set the value to <code>null</code>, which is the
-Java representation of Lox&rsquo;s <code>nil</code> value. Then we tell the environment to bind
-the variable to that value.</p>
-<p>Next, we evaluate a variable expression.</p>
+<p>因此，如果没有初始化式，我们将值设为<code>null</code>，这也是Lox中的<code>nil</code>值的Java表示形式。然后，我们告诉环境上下文将变量与该值进行绑定。</p>
+<p>接下来，我们要对变量表达式求值。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 add after <em>visitUnaryExpr</em>()</div>
 <pre>  <span class="a">@Override</span>
@@ -869,55 +634,33 @@ add after <em>visitUnaryExpr</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, add after <em>visitUnaryExpr</em>()</div>
 
-<p>This simply forwards to the environment which does the heavy lifting to make
-sure the variable is defined. With that, we&rsquo;ve got rudimentary variables
-working. Try this out:</p>
+<p>这里只是简单地将操作转发到环境上下文中，环境做了一些繁重的工作保证变量已被定义。这样，我们就可以支持基本的变量操作了。试试这个：</p>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">a</span> = <span class="n">1</span>;
 <span class="k">var</span> <span class="i">b</span> = <span class="n">2</span>;
 <span class="k">print</span> <span class="i">a</span> + <span class="i">b</span>;
 </pre></div>
-<p>We can&rsquo;t reuse <em>code</em> yet, but we can start to build up programs that reuse
-<em>data</em>.</p>
-<h2><a href="#assignment" id="assignment"><small>8&#8202;.&#8202;4</small>Assignment</a></h2>
-<p>It&rsquo;s possible to create a language that has variables but does not let you
-reassign<span class="em">&mdash;</span>or <strong>mutate</strong><span class="em">&mdash;</span>them. Haskell is one example. SML supports only
-mutable references and arrays<span class="em">&mdash;</span>variables cannot be reassigned. Rust steers you
-away from mutation by requiring a <code>mut</code> modifier to enable assignment.</p>
-<p>Mutating a variable is a side effect and, as the name suggests, some language
-folks think side effects are <span name="pure">dirty</span> or inelegant. Code
-should be pure math that produces values<span class="em">&mdash;</span>crystalline, unchanging ones<span class="em">&mdash;</span>like
-an act of divine creation. Not some grubby automaton that beats blobs of data
-into shape, one imperative grunt at a time.</p>
+<p>我们目前还不能重用<em>代码</em>，但我们可以开始构建重用<em>数据</em>的程序。</p>
+<h2><a href="#赋值" id="赋值"><small>8&#8202;.&#8202;4</small>赋值</a></h2>
+<p>有些语言可以使用变量，但不允许你重新赋值或<strong>修改</strong>它们。比如Haskell就是这样的一种语言。SML只支持可变引用和数组，变量不能重新赋值。而Rust则通过要求使用<code>mut</code>修饰符来启用赋值，以避免变量的修改。</p>
+<p>修改变量给它添加了副作用，有些语言专家认为这样的副作用<span name="pure">不够优雅</span>或者不够干净。他们认为代码应该像纯粹的数学一样，创造出一系列值，就像是神圣的创世一样，这些值是晶莹剔透、永恒不变的。而不是像一个肮脏的机器人，一次又一次地将数据进行改造，发出命令式的咕哝声。</p>
 <aside name="pure">
-<p>I find it delightful that the same group of people who pride themselves on
-dispassionate logic are also the ones who can&rsquo;t resist emotionally loaded terms
-for their work: &ldquo;pure&rdquo;, &ldquo;side effect&rdquo;, &ldquo;lazy&rdquo;, &ldquo;persistent&rdquo;, &ldquo;first-class&rdquo;,
-&ldquo;higher-order&rdquo;.</p>
+<p>我发现有趣的是，那些以冷静逻辑为傲的人群，却无法抵挡对自己工作使用情感负荷的术语的诱惑：“纯净”，“副作用”，“惰性”，“持久”，“一流”，“高阶”（&ldquo;pure&rdquo;, &ldquo;side effect&rdquo;, &ldquo;lazy&rdquo;, &ldquo;persistent&rdquo;, &ldquo;first-class&rdquo;,
+&ldquo;higher-order&rdquo;）。</p>
 </aside>
-<p>Lox is not so austere. Lox is an imperative language, and mutation comes with
-the territory. Adding support for assignment doesn&rsquo;t require much work. Global
-variables already support redefinition, so most of the machinery is there now.
-Mainly, we&rsquo;re missing an explicit assignment notation.</p>
+<p>Lox并不那么严肃。Lox是一种命令式语言，变量的修改是其中的一部分。添加对赋值的支持并不需要太多的工作。全局变量已经支持重新定义，所以大部分机制已经存在了。主要的问题是缺少显式的赋值表示法。</p>
 <h3><a href="#assignment-syntax" id="assignment-syntax"><small>8&#8202;.&#8202;4&#8202;.&#8202;1</small>Assignment syntax</a></h3>
-<p>That little <code>=</code> syntax is more complex than it might seem. Like most C-derived
-languages, assignment is an <span name="assign">expression</span> and not a
-statement. As in C, it is the lowest precedence expression form. That means the
-rule slots between <code>expression</code> and <code>equality</code> (the next lowest precedence
-expression).</p>
+<p>这个小小的 <code>=</code> 语法比它看起来要复杂。和大多数C衍生语言一样，赋值是一个<span name="assign">表达式</span>而不是一个语句。就像在C语言中一样，它是最低优先级的表达式形式。这意味着这个规则位于表达式 <code>expression</code> 和等式  <code>equality</code> 之间（下一个最低优先级的表达式）。</p>
 <aside name="assign">
-<p>In some other languages, like Pascal, Python, and Go, assignment is a statement.</p>
+<p>在其他一些语言中，比如Pascal、Python和Go，赋值是一个语句。</p>
 </aside>
 <div class="codehilite"><pre><span class="i">expression</span>     → <span class="i">assignment</span> ;
 <span class="i">assignment</span>     → <span class="t">IDENTIFIER</span> <span class="s">&quot;=&quot;</span> <span class="i">assignment</span>
                | <span class="i">equality</span> ;
 </pre></div>
-<p>This says an <code>assignment</code> is either an identifier followed by an <code>=</code> and an
-expression for the value, or an <code>equality</code> (and thus any other) expression.
-Later, <code>assignment</code> will get more complex when we add property setters on
-objects, like:</p>
+<p>这就是说，一个赋值操作要么是一个标识符后面跟着一个等号和一个表达式来表示赋给该标识符的值，要么是一个等式（或其他）表达式。稍后，当我们在对象上添加属性设置器时，赋值操作将变得更加复杂，比如：</p>
 <div class="codehilite"><pre><span class="i">instance</span>.<span class="i">field</span> = <span class="s">&quot;value&quot;</span>;
 </pre></div>
-<p>The easy part is adding the <span name="assign-ast">new syntax tree node</span>.</p>
+<p>最简单的部分就是添加<span name="assign-ast">新的语法树节点</span>。</p>
 <div class="codehilite"><pre class="insert-before">    defineAst(outputDir, &quot;Expr&quot;, Arrays.asList(
 </pre><div class="source-file"><em>com\craftinginterpreters\tool\GenerateAst.java</em><br>
 in <em>main</em>()</div>
@@ -927,12 +670,9 @@ in <em>main</em>()</div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\tool\GenerateAst.java</em>, in <em>main</em>()</div>
 
 <aside name="assign-ast">
-<p>The generated code for the new node is in <a href="appendix-ii.html#assign-expression">Appendix II</a>.</p>
+<p>新节点的生成代码在以下位置： <a href="appendix-ii.html#assign-expression">Appendix II</a>.</p>
 </aside>
-<p>It has a token for the variable being assigned to, and an expression for the new
-value. After you run the AstGenerator to get the new Expr.Assign class, swap out
-the body of the parser&rsquo;s existing <code>expression()</code> method to match the updated
-rule.</p>
+<p>它包含了用于赋值的变量的标记，以及表示新值的表达式。当你运行AstGenerator生成新的Expr.Assign类后，需要将解析器现有的 <code>expression()</code> 方法的代码替换为与更新规则相匹配的代码。</p>
 <div class="codehilite"><pre class="insert-before">  private Expr expression() {
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 in <em>expression</em>()<br>
@@ -942,41 +682,23 @@ replace 1 line</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, in <em>expression</em>(), replace 1 line</div>
 
-<p>Here is where it gets tricky. A single token lookahead recursive descent parser
-can&rsquo;t see far enough to tell that it&rsquo;s parsing an assignment until <em>after</em> it
-has gone through the left-hand side and stumbled onto the <code>=</code>. You might wonder
-why it even needs to. After all, we don&rsquo;t know we&rsquo;re parsing a <code>+</code> expression
-until after we&rsquo;ve finished parsing the left operand.</p>
-<p>The difference is that the left-hand side of an assignment isn&rsquo;t an expression
-that evaluates to a value. It&rsquo;s a sort of pseudo-expression that evaluates to a
-&ldquo;thing&rdquo; you can assign to. Consider:</p>
+<p>这里开始变得棘手。在单个标记的前瞻递归下降解析器中，直到解析完左侧并遇到 <code>=</code> <em>之后</em>，它才能确定是否正在解析一个赋值语句。你可能会好奇为什么需要这样做。毕竟，我们在解析左操作数之后才能确定是否解析的是一个 <code>+</code> 加法表达式。</p>
+<p>左侧赋值语句与普通表达式的区别在于，它不是一个可以求值的表达式，而是一种伪表达式，它的求值结果是一个可以赋值的&ldquo;对象&ldquo;。让我们来看一个例子：</p>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">a</span> = <span class="s">&quot;before&quot;</span>;
 <span class="i">a</span> = <span class="s">&quot;value&quot;</span>;
 </pre></div>
-<p>On the second line, we don&rsquo;t <em>evaluate</em> <code>a</code> (which would return the string
-&ldquo;before&rdquo;). We figure out what variable <code>a</code> refers to so we know where to store
-the right-hand side expression&rsquo;s value. The <a href="https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue">classic terms</a> for these
-two <span name="l-value">constructs</span> are <strong>l-value</strong> and <strong>r-value</strong>. All
-of the expressions that we&rsquo;ve seen so far that produce values are r-values. An
-l-value &ldquo;evaluates&rdquo; to a storage location that you can assign into.</p>
+<p>在第二行，我们不对变量<code>a</code>进行<em>求值</em>（这将返回字符串&ldquo;before&rdquo;）。我们通过确定变量<code>a</code>引用的内容，来确定在哪里存储右侧表达式的值。对这两个<span name="l-value">概念</span>的<a href="https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue">经典术语</a>是<strong>左值</strong>和<strong>右值</strong>。到目前为止，我们所见到的所有产生值的表达式都是右值。而左值则&ldquo;求值&ldquo;为一个可以进行赋值的存储位置。</p>
 <aside name="l-value">
-<p>In fact, the names come from assignment expressions: <em>l</em>-values appear on the
-<em>left</em> side of the <code>=</code> in an assignment, and <em>r</em>-values on the <em>right</em>.</p>
+<p>实际上，这些术语来源于赋值表达式：左值<em>l</em>-value出现在赋值语句中的<em>左侧</em>，而右值<em>r</em>-value出现在<em>右侧</em>。</p>
 </aside>
-<p>We want the syntax tree to reflect that an l-value isn&rsquo;t evaluated like a normal
-expression. That&rsquo;s why the Expr.Assign node has a <em>Token</em> for the left-hand
-side, not an Expr. The problem is that the parser doesn&rsquo;t know it&rsquo;s parsing an
-l-value until it hits the <code>=</code>. In a complex l-value, that may occur <span
-name="many">many</span> tokens later.</p>
+<p>我们希望语法树能够准确反映出左值与普通表达式的求值方式不同。这就是为什么Expr.Assign节点的左侧使用了一个<em>Token</em>，而不是一个Expr。然而，问题在于解析器在遇到等号（=）之前并不知道它正在解析一个左值。在复杂的左值中，可能在出现<span
+name="many">很多</span>标记之后才能识别到。</p>
 <div class="codehilite"><pre><span class="i">makeList</span>().<span class="i">head</span>.<span class="i">next</span> = <span class="i">node</span>;
 </pre></div>
 <aside name="many">
-<p>Since the receiver of a field assignment can be any expression, and expressions
-can be as long as you want to make them, it may take an <em>unbounded</em> number of
-tokens of lookahead to find the <code>=</code>.</p>
+<p>由于字段赋值的接收者可以是任何表达式，并且表达式可以任意长，因此可能需要<em>无限</em>数量的前瞻标记才能找到等号（<code>=</code>）。</p>
 </aside>
-<p>We have only a single token of lookahead, so what do we do? We use a little
-trick, and it looks like this:</p>
+<p>我们只会前瞻一个标记，那么我们应该如何处理呢？我们可以使用一个小技巧，具体如下：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 add after <em>expressionStatement</em>()</div>
 <pre>  <span class="k">private</span> <span class="t">Expr</span> <span class="i">assignment</span>() {
@@ -999,59 +721,34 @@ add after <em>expressionStatement</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, add after <em>expressionStatement</em>()</div>
 
-<p>Most of the code for parsing an assignment expression looks similar to that of
-the other binary operators like <code>+</code>. We parse the left-hand side, which can be
-any expression of higher precedence. If we find an <code>=</code>, we parse the right-hand
-side and then wrap it all up in an assignment expression tree node.</p>
+<p>大部分解析赋值表达式的代码与其他二元操作符（如<code>+</code>）的代码非常相似。我们首先解析左侧表达式，该表达式可以是任何优先级较高的表达式。如果我们找到一个等号（<code>=</code>），则解析右侧表达式，并将其封装在一个赋值表达式的语法树节点中。</p>
 <aside name="no-throw">
-<p>We <em>report</em> an error if the left-hand side isn&rsquo;t a valid assignment target, but
-we don&rsquo;t <em>throw</em> it because the parser isn&rsquo;t in a confused state where we need
-to go into panic mode and synchronize.</p>
+<p>如果左侧不是一个有效的赋值目标，我们会<em>报告</em>一个错误，但我们不会<em>抛出</em>异常。因为解析器没有陷入混乱状态，所以我们不需要进入紧急模式并进行同步。</p>
 </aside>
-<p>One slight difference from binary operators is that we don&rsquo;t loop to build up a
-sequence of the same operator. Since assignment is right-associative, we instead
-recursively call <code>assignment()</code> to parse the right-hand side.</p>
-<p>The trick is that right before we create the assignment expression node, we look
-at the left-hand side expression and figure out what kind of assignment target
-it is. We convert the r-value expression node into an l-value representation.</p>
-<p>This conversion works because it turns out that every valid assignment target
-happens to also be <span name="converse">valid syntax</span> as a normal
-expression. Consider a complex field assignment like:</p>
+<p>与二元操作符稍有不同的是，我们不会循环构建相同操作符的序列。由于赋值是右结合的，我们会通过递归调用 <code>assignment()</code> 来解析右侧表达式。</p>
+<p>关键是在创建赋值表达式节点之前，我们会查看左侧表达式，并确定它是何种类型的赋值目标。我们将右侧表达式节点转换为左侧值的表示形式。</p>
+<p>这种转换有效的原因是，每个有效的赋值目标正好也是符合普通表达式的<span name="converse">有效语法</span>。考虑一个复杂的字段赋值，例如：</p>
 <aside name="converse">
-<p>You can still use this trick even if there are assignment targets that are not
-valid expressions. Define a <strong>cover grammar</strong>, a looser grammar that accepts
-all of the valid expression <em>and</em> assignment target syntaxes. When you hit
-an <code>=</code>, report an error if the left-hand side isn&rsquo;t within the valid assignment
-target grammar. Conversely, if you <em>don&rsquo;t</em> hit an <code>=</code>, report an error if the
-left-hand side isn&rsquo;t a valid <em>expression</em>.</p>
+<p>即使存在一些不是有效表达式的赋值目标，您仍然可以使用这个技巧。定义一个<em>包容性的语法</em>，它可以接受所有有效的表达式和赋值目标的语法。当遇到一个等号（=）时，如果左侧<em>不符合</em>有效的赋值目标的语法，则报告错误。反之，如果<em>没有</em>遇到等号（=），则如果左侧不是一个有效的<em>表达式</em>，也报告错误。</p>
 </aside>
 <div class="codehilite"><pre><span class="i">newPoint</span>(<span class="i">x</span> + <span class="n">2</span>, <span class="n">0</span>).<span class="i">y</span> = <span class="n">3</span>;
 </pre></div>
-<p>The left-hand side of that assignment could also work as a valid expression.</p>
+<p>该赋值表达式的左侧也是一个有效的表达式。</p>
 <div class="codehilite"><pre><span class="i">newPoint</span>(<span class="i">x</span> + <span class="n">2</span>, <span class="n">0</span>).<span class="i">y</span>;
 </pre></div>
-<p>The first example sets the field, the second gets it.</p>
-<p>This means we can parse the left-hand side <em>as if it were</em> an expression and
-then after the fact produce a syntax tree that turns it into an assignment
-target. If the left-hand side expression isn&rsquo;t a <span name="paren">valid</span>
-assignment target, we fail with a syntax error. That ensures we report an error
-on code like this:</p>
+<p>第一个示例是设置字段的值，第二个示例是获取字段的值。</p>
+<p>这意味着我们可以将左侧<em>视为</em>一个表达式进行解析，然后在解析完成后生成一个语法树，将其转换为赋值目标。如果左侧的表达式不是一个<span name="paren">有效</span>的赋值目标，我们将报告语法错误。这样可以确保在遇到类似下面的代码时会报告错误：</p>
 <div class="codehilite"><pre><span class="i">a</span> + <span class="i">b</span> = <span class="i">c</span>;
 </pre></div>
 <aside name="paren">
-<p>Way back in the parsing chapter, I said we represent parenthesized expressions
-in the syntax tree because we&rsquo;ll need them later. This is why. We need to be
-able to distinguish these cases:</p>
+<p>早在解析那章，我就说过我们要在语法树中表示圆括号表达式，因为我们将在后续使用它们。这就是原因。我们需要能够区分以下情况：</p>
 <div class="codehilite"><pre><span class="i">a</span> = <span class="n">3</span>;   <span class="c">// OK.</span>
 (<span class="i">a</span>) = <span class="n">3</span>; <span class="c">// Error.</span>
 </pre></div>
 </aside>
-<p>Right now, the only valid target is a simple variable expression, but we&rsquo;ll add
-fields later. The end result of this trick is an assignment expression tree node
-that knows what it is assigning to and has an expression subtree for the value
-being assigned. All with only a single token of lookahead and no backtracking.</p>
-<h3><a href="#assignment-semantics" id="assignment-semantics"><small>8&#8202;.&#8202;4&#8202;.&#8202;2</small>Assignment semantics</a></h3>
-<p>We have a new syntax tree node, so our interpreter gets a new visit method.</p>
+<p>现在，唯一有效的赋值目标就是一个简单的变量表达式，但是我们后面会添加属性字段。这个技巧的最终结果是一个赋值表达式树节点，该节点知道要向什么赋值，并且有一个表达式子树用于计算要使用的值。所有这些都只用了一个前瞻标记，并且没有回溯。</p>
+<h3><a href="#赋值语义" id="赋值语义"><small>8&#8202;.&#8202;4&#8202;.&#8202;2</small>赋值语义</a></h3>
+<p>我们有了一个新的语法树节点，所以我们的解释器也需要一个新的访问方法。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 add after <em>visitVarStmt</em>()</div>
 <pre>  <span class="a">@Override</span>
@@ -1063,9 +760,7 @@ add after <em>visitVarStmt</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, add after <em>visitVarStmt</em>()</div>
 
-<p>For obvious reasons, it&rsquo;s similar to variable declaration. It evaluates the
-right-hand side to get the value, then stores it in the named variable. Instead
-of using <code>define()</code> on Environment, it calls this new method:</p>
+<p>很明显，这与变量声明很类似。首先，对右侧表达式运算以获取值，然后将其保存到命名变量中。这里不使用Environment中的 <code>define()</code> ，而是调用下面的新方法：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Environment.java</em><br>
 add after <em>get</em>()</div>
 <pre>  <span class="t">void</span> <span class="i">assign</span>(<span class="t">Token</span> <span class="i">name</span>, <span class="t">Object</span> <span class="i">value</span>) {
@@ -1080,53 +775,27 @@ add after <em>get</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Environment.java</em>, add after <em>get</em>()</div>
 
-<p>The key difference between assignment and definition is that assignment is not
-<span name="new">allowed</span> to create a <em>new</em> variable. In terms of our
-implementation, that means it&rsquo;s a runtime error if the key doesn&rsquo;t already exist
-in the environment&rsquo;s variable map.</p>
+<p>赋值和定义的主要区别就是赋值不<span name="new">允许</span>创建新的变量。在我们的实现中，这意味着如果在环境的变量映射中找不到变量的键，那就会发生运行时错误。</p>
 <aside name="new">
-<p>Unlike Python and Ruby, Lox doesn&rsquo;t do <a href="#design-note">implicit variable declaration</a>.</p>
+<p>与Python和Ruby不同，Lox不做<a href="#design-note">隐式变量声明</a>。</p>
 </aside>
-<p>The last thing the <code>visit()</code> method does is return the assigned value. That&rsquo;s
-because assignment is an expression that can be nested inside other expressions,
-like so:</p>
+<p><code>visit()</code> 方法的最后一步就是返回赋值的结果。这是因为赋值是一种表达式，可以嵌套在其他表达式中使用。就像这样:</p>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">a</span> = <span class="n">1</span>;
 <span class="k">print</span> <span class="i">a</span> = <span class="n">2</span>; <span class="c">// &quot;2&quot;.</span>
 </pre></div>
-<p>Our interpreter can now create, read, and modify variables. It&rsquo;s about as
-sophisticated as early <span name="basic">BASICs</span>. Global variables are
-simple, but writing a large program when any two chunks of code can accidentally
-step on each other&rsquo;s state is no fun. We want <em>local</em> variables, which means
-it&rsquo;s time for <em>scope</em>.</p>
+<p>我们的解释器现在可以创建、读取和修改变量了，就像早期的<span name="basic">BASICs</span>语言一样厉害。全局变量很简单，但是如果在写一个大程序的时候，任何两个代码块都可能不小心互相干扰，那就不好玩了。所以我们需要<em>局部</em>变量，也就是说现在是引入<em>作用域</em>的时候了。</p>
 <aside name="basic">
-<p>Maybe a little better than that. Unlike some old BASICs, Lox can handle variable
-names longer than two characters.</p>
+<p>也许比那更好一些。与一些旧版的BASIC语言不同的是，Lox可以处理超过两个字符的变量名。</p>
 </aside>
-<h2><a href="#scope" id="scope"><small>8&#8202;.&#8202;5</small>Scope</a></h2>
-<p>A <strong>scope</strong> defines a region where a name maps to a certain entity. Multiple
-scopes enable the same name to refer to different things in different contexts.
-In my house, &ldquo;Bob&rdquo; usually refers to me. But maybe in your town you know a
-different Bob. Same name, but different dudes based on where you say it.</p>
-<p><span name="lexical"><strong>Lexical scope</strong></span> (or the less commonly heard
-<strong>static scope</strong>) is a specific style of scoping where the text of the program
-itself shows where a scope begins and ends. In Lox, as in most modern languages,
-variables are lexically scoped. When you see an expression that uses some
-variable, you can figure out which variable declaration it refers to just by
-statically reading the code.</p>
+<h2><a href="#作用域" id="作用域"><small>8&#8202;.&#8202;5</small>作用域</a></h2>
+<p><strong>作用域</strong>定义了一个区域，其中一个名称映射到一个特定的实体。多个作用域使得相同的名称在不同的上下文中可以引用不同的事物。在我的家里，“Bob”通常指的是我。但是在你的城镇里，也许你认识另一个不同的Bob。相同的名字，但是根据你说的地方，指的是不同的人。</p>
+<p><span name="lexical"><strong>词法作用域</strong></span>（或者较少听到的<strong>静态作用域</strong>）是一种特定的作用域定义方式，程序的文本本身显示了作用域的开始和结束位置。在Lox中，就像大多数现代语言一样，变量在词法作用域内有效。当你看到一个表达式使用某个变量时，你可以通过静态地阅读代码来确定它所引用的变量声明。</p>
 <aside name="lexical">
-<p>&ldquo;Lexical&rdquo; comes from the Greek &ldquo;lexikos&rdquo; which means &ldquo;related to words&rdquo;. When we
-use it in programming languages, it usually means a thing you can figure out
-from source code itself without having to execute anything.</p>
-<p>Lexical scope came onto the scene with ALGOL. Earlier languages were often
-dynamically scoped. Computer scientists back then believed dynamic scope was
-faster to execute. Today, thanks to early Scheme hackers, we know that isn&rsquo;t
-true. If anything, it&rsquo;s the opposite.</p>
-<p>Dynamic scope for variables lives on in some corners. Emacs Lisp defaults to
-dynamic scope for variables. The <a href="http://clojuredocs.org/clojure.core/binding"><code>binding</code></a> macro in Clojure provides
-it. The widely disliked <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/with"><code>with</code> statement</a> in JavaScript turns properties
-on an object into dynamically scoped variables.</p>
+<p>“词法”一词来自希腊语的“lexikos”，意为“与词语相关”。当我们在编程语言中使用它时，通常指的是通过源代码本身就可以推断出来，而无需执行任何操作。</p>
+<p>词法作用域首次出现在ALGOL中。早期的编程语言通常采用动态作用域。当时的计算机科学家认为动态作用域执行速度更快。如今，多亏了早期的Scheme黑客，我们知道这并不正确。事实上，相反，动态作用域的执行速度更慢。</p>
+<p>变量的动态作用域在某些领域仍然存在。Emacs Lisp默认采用动态作用域来处理变量。Clojure中的<a href="http://clojuredocs.org/clojure.core/binding"><code>binding</code></a>宏也提供了动态作用域。而JavaScript中广受诟病的<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/with"><code>with</code> 语句</a> 将对象的属性转换为动态作用域变量。</p>
 </aside>
-<p>For example:</p>
+<p>举例来说:</p>
 <div class="codehilite"><pre>{
   <span class="k">var</span> <span class="i">a</span> = <span class="s">&quot;first&quot;</span>;
   <span class="k">print</span> <span class="i">a</span>; <span class="c">// &quot;first&quot;.</span>
@@ -1137,13 +806,8 @@ on an object into dynamically scoped variables.</p>
   <span class="k">print</span> <span class="i">a</span>; <span class="c">// &quot;second&quot;.</span>
 }
 </pre></div>
-<p>Here, we have two blocks with a variable <code>a</code> declared in each of them. You and
-I can tell just from looking at the code that the use of <code>a</code> in the first
-<code>print</code> statement refers to the first <code>a</code>, and the second one refers to the
-second.</p><img src="image/statements-and-state/blocks.png" alt="An environment for each 'a'." />
-<p>This is in contrast to <strong>dynamic scope</strong> where you don&rsquo;t know what a name refers
-to until you execute the code. Lox doesn&rsquo;t have dynamically scoped <em>variables</em>,
-but methods and fields on objects are dynamically scoped.</p>
+<p>在这里，我们有两个代码块，每个代码块里都声明了一个变量a。只需看一眼代码就能知道，第一个<code>print</code>语句中的a指的是第一个块里的<code>a</code>变量，而第二个<code>print</code>语句中的a指的是第二个块里的<code>a</code>变量。</p><img src="image/statements-and-state/blocks.png" alt="An environment for each 'a'." />
+<p>这与<strong>动态作用域</strong>不同，动态作用域需要在执行代码时才能确定名称指向的内容。Lox中没有动态作用域的<em>变量</em>，但对象上的方法和字段是动态作用域的。</p>
 <div class="codehilite"><pre><span class="k">class</span> <span class="t">Saxophone</span> {
   <span class="i">play</span>() {
     <span class="k">print</span> <span class="s">&quot;Careless Whisper&quot;</span>;
@@ -1160,37 +824,25 @@ but methods and fields on objects are dynamically scoped.</p>
   <span class="i">thing</span>.<span class="i">play</span>();
 }
 </pre></div>
-<p>When <code>playIt()</code> calls <code>thing.play()</code>, we don&rsquo;t know if we&rsquo;re about to hear
-&ldquo;Careless Whisper&rdquo; or &ldquo;Fore!&rdquo; It depends on whether you pass a Saxophone or a
-GolfClub to the function, and we don&rsquo;t know that until runtime.</p>
-<p>Scope and environments are close cousins. The former is the theoretical concept,
-and the latter is the machinery that implements it. As our interpreter works its
-way through code, syntax tree nodes that affect scope will change the
-environment. In a C-ish syntax like Lox&rsquo;s, scope is controlled by curly-braced
-blocks. (That&rsquo;s why we call it <strong>block scope</strong>.)</p>
+<p>当<code>playIt()</code>调用<code>thing.play()</code>函数时，我们不知道会播放的是 &ldquo;Careless Whisper&rdquo; 还是 &ldquo;Fore!&rdquo;。这取决于你在调用函数时传递的是Saxophone还是GolfClub，而我们只有在真正运行代码时才能知道这一点。</p>
+<p>作用域和环境是近亲。前者是一个理论概念，而后者是实现它的机制。当解释器遍历代码时，影响作用域的语法树节点将改变环境上下文。在类似C语言的Lox语法中，作用域由花括号块控制（这就是我们称之为<strong>块作用域</strong>的原因）。</p>
 <div class="codehilite"><pre>{
   <span class="k">var</span> <span class="i">a</span> = <span class="s">&quot;in block&quot;</span>;
 }
 <span class="k">print</span> <span class="i">a</span>; <span class="c">// Error! No more &quot;a&quot;.</span>
 </pre></div>
-<p>The beginning of a block introduces a new local scope, and that scope ends when
-execution passes the closing <code>}</code>. Any variables declared inside the block
-disappear.</p>
-<h3><a href="#nesting-and-shadowing" id="nesting-and-shadowing"><small>8&#8202;.&#8202;5&#8202;.&#8202;1</small>Nesting and shadowing</a></h3>
-<p>A first cut at implementing block scope might work like this:</p>
+<p>一个块的开始引入了一个新的局部作用域，当执行到闭合的 <code>}</code> 符号时，该作用域就结束了。在块内部声明的任何变量都会消失。</p>
+<h3><a href="#嵌套和遮罩" id="嵌套和遮罩"><small>8&#8202;.&#8202;5&#8202;.&#8202;1</small>嵌套和遮罩</a></h3>
+<p>首次尝试实现块作用域可能会像这样：</p>
 <ol>
 <li>
-<p>As we visit each statement inside the block, keep track of any variables
-declared.</p>
+<p>当我们遍历块内的每个语句时，要记住所有声明的变量。</p>
 </li>
 <li>
-<p>After the last statement is executed, tell the environment to delete all of
-those variables.</p>
+<p>执行完最后一条语句后，告诉环境将这些变量全部删除。</p>
 </li>
 </ol>
-<p>That would work for the previous example. But remember, one motivation for
-local scope is encapsulation<span class="em">&mdash;</span>a block of code in one corner of the program
-shouldn&rsquo;t interfere with some other block. Check this out:</p>
+<p>这对于之前的例子是可行的。但是要记住，局部作用域的一个动机是为了封装 - 程序中的代码块不应该影响其他代码块。看看这个例子：</p>
 <div class="codehilite"><pre><span class="c">// How loud?</span>
 <span class="k">var</span> <span class="i">volume</span> = <span class="n">11</span>;
 
@@ -1203,48 +855,23 @@ shouldn&rsquo;t interfere with some other block. Check this out:</p>
   <span class="k">print</span> <span class="i">volume</span>;
 }
 </pre></div>
-<p>Look at the block where we calculate the volume of the cuboid using a local
-declaration of <code>volume</code>. After the block exits, the interpreter will delete the
-<em>global</em> <code>volume</code> variable. That ain&rsquo;t right. When we exit the block, we should
-remove any variables declared inside the block, but if there is a variable with
-the same name declared outside of the block, <em>that&rsquo;s a different variable</em>. It
-shouldn&rsquo;t get touched.</p>
-<p>When a local variable has the same name as a variable in an enclosing scope, it
-<strong>shadows</strong> the outer one. Code inside the block can&rsquo;t see it any more<span class="em">&mdash;</span>it is
-hidden in the &ldquo;shadow&rdquo; cast by the inner one<span class="em">&mdash;</span>but it&rsquo;s still there.</p>
-<p>When we enter a new block scope, we need to preserve variables defined in outer
-scopes so they are still around when we exit the inner block. We do that by
-defining a fresh environment for each block containing only the variables
-defined in that scope. When we exit the block, we discard its environment and
-restore the previous one.</p>
-<p>We also need to handle enclosing variables that are <em>not</em> shadowed.</p>
+<p>看看我们用来计算长方体体积的那一段代码，里面使用了一个局部声明的变量<code>volume</code>。在代码块结束后，解释器会删除<em>全局变量</em> <code>volume</code>。这样做是不对的。当我们退出代码块时，应该删除在代码块内部声明的变量，但是如果在代码块外面有一个同名的变量声明，那就是一个<em>不同的变量</em>，它不应该被删除。</p>
+<p>当一个局部变量和外面的变量同名时，它会把外面的变量给<strong>遮住</strong>。代码块里面的代码看不到这个变量了 - 它被内部的变量遮住了，但是它还是存在的。</p>
+<p>当我们进入一个新的代码块时，我们需要保留在外部作用域中定义的变量，这样当我们退出内部代码块时它们仍然存在。我们通过为每个代码块定义一个新的环境来实现这一点，该环境只包含在该代码块中定义的变量。当我们退出代码块时，我们丢弃它的环境并恢复之前的环境。</p>
+<p>我们还需要处理<em>未</em>被遮蔽的封闭变量。</p>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">global</span> = <span class="s">&quot;outside&quot;</span>;
 {
   <span class="k">var</span> <span class="i">local</span> = <span class="s">&quot;inside&quot;</span>;
   <span class="k">print</span> <span class="i">global</span> + <span class="i">local</span>;
 }
 </pre></div>
-<p>Here, <code>global</code> lives in the outer global environment and <code>local</code> is defined
-inside the block&rsquo;s environment. In that <code>print</code> statement, both of those
-variables are in scope. In order to find them, the interpreter must search not
-only the current innermost environment, but also any enclosing ones.</p>
-<p>We implement this by <span name="cactus">chaining</span> the environments
-together. Each environment has a reference to the environment of the immediately
-enclosing scope. When we look up a variable, we walk that chain from innermost
-out until we find the variable. Starting at the inner scope is how we make local
-variables shadow outer ones.</p><img src="image/statements-and-state/chaining.png" alt="Environments for each scope, linked together." />
+<p>这段代码中，<code>global</code>在外部全局环境中，<code>local</code>则在块环境中定义。在执行<code>print</code>语句时，这两个变量都在作用域内。为了找到它们，解释器不仅要搜索当前最内层的环境，还必须搜索所有外围的环境。</p>
+<p>我们通过将环境<span name="cactus">链接</span>在一起来实现这个功能。每个环境都有一个指向外部环境的引用，就像是一个环环相扣的链条。当我们查找一个变量时，我们从最里面的环境开始往外找，直到找到这个变量为止。我们从内部环境开始查找变量，这样就可以让局部变量覆盖外部变量。</p><img src="image/statements-and-state/chaining.png" alt="Environments for each scope, linked together." />
 <aside name="cactus">
-<p>While the interpreter is running, the environments form a linear list of
-objects, but consider the full set of environments created during the entire
-execution. An outer scope may have multiple blocks nested within it, and each
-will point to the outer one, giving a tree-like structure, though only one path
-through the tree exists at a time.</p>
-<p>The boring name for this is a <a href="https://en.wikipedia.org/wiki/Parent_pointer_tree"><strong>parent-pointer tree</strong></a>, but I
-much prefer the evocative <strong>cactus stack</strong>.</p><img class="above" src="image/statements-and-state/cactus.png" alt="Each branch points to its parent. The root is global scope." />
+<p>在解释器运行时，环境对象会形成一个线性列表。但是，在整个执行过程中，我们需要考虑所有创建的环境。一个外部作用域可以包含多个嵌套的代码块，每个代码块都会指向外部作用域，形成一个类似树状结构。尽管在任何时刻只有一条路径可以通过这个树。</p>
+<p>这个概念有个很无聊的名称 <a href="https://en.wikipedia.org/wiki/Parent_pointer_tree"><strong>父指针树</strong></a>, 但是我更喜欢生动形象的“仙人掌堆栈”。</p><img class="above" src="image/statements-and-state/cactus.png" alt="Each branch points to its parent. The root is global scope." />
 </aside>
-<p>Before we add block syntax to the grammar, we&rsquo;ll beef up our Environment class
-with support for this nesting. First, we give each environment a reference to
-its enclosing one.</p>
+<p>在我们添加块语法之前，我们要强化Environment类对这种嵌套的支持。首先，我们在每个环境中添加一个对其外围环境的引用。</p>
 <div class="codehilite"><pre class="insert-before">class Environment {
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Environment.java</em><br>
 in class <em>Environment</em></div>
@@ -1253,7 +880,7 @@ in class <em>Environment</em></div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Environment.java</em>, in class <em>Environment</em></div>
 
-<p>This field needs to be initialized, so we add a couple of constructors.</p>
+<p>这个字段需要初始化，所以我们添加两个构造函数。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Environment.java</em><br>
 in class <em>Environment</em></div>
 <pre>  <span class="t">Environment</span>() {
@@ -1266,13 +893,8 @@ in class <em>Environment</em></div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Environment.java</em>, in class <em>Environment</em></div>
 
-<p>The no-argument constructor is for the global scope&rsquo;s environment, which ends
-the chain. The other constructor creates a new local scope nested inside the
-given outer one.</p>
-<p>We don&rsquo;t have to touch the <code>define()</code> method<span class="em">&mdash;</span>a new variable is always
-declared in the current innermost scope. But variable lookup and assignment work
-with existing variables and they need to walk the chain to find them. First,
-lookup:</p>
+<p>无参构造函数用于全局作用域环境，它是环境链的结束点。另一个构造函数创建一个新的局部作用域，嵌套在给定的外部作用域中。</p>
+<p>我们不需要修改<code>define()</code>方法 - 新变量总是在当前最内层的作用域中声明。但是变量的查找和赋值需要使用现有的变量，并且它们需要遍历链条来找到它们。。首先是查找操作：</p>
 <div class="codehilite"><pre class="insert-before">      return values.get(name.lexeme);
     }
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Environment.java</em><br>
@@ -1287,15 +909,10 @@ in <em>get</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Environment.java</em>, in <em>get</em>()</div>
 
-<p>If the variable isn&rsquo;t found in this environment, we simply try the enclosing
-one. That in turn does the same thing <span name="recurse">recursively</span>,
-so this will ultimately walk the entire chain. If we reach an environment with
-no enclosing one and still don&rsquo;t find the variable, then we give up and report
-an error as before.</p>
-<p>Assignment works the same way.</p>
+<p>如果在当前这个地方找不到变量，我们就会去上一层找。然后上一层再去上一层，一直这样<span name="recurse">递归</span>下去，直到找遍整个链条。如果到了最后一层还是找不到变量，那么我们就放弃，报告一个错误，就像之前一样。</p>
+<p>赋值操作也是一样的处理方式。</p>
 <aside name="recurse">
-<p>It&rsquo;s likely faster to iteratively walk the chain, but I think the recursive
-solution is prettier. We&rsquo;ll do something <em>much</em> faster in clox.</p>
+<p>迭代地遍历环境链可能更快，但我认为递归的解决方案更加优雅。在 clox 中，我们将采用<em>更</em>快的解决方案。</p>
 </aside>
 <div class="codehilite"><pre class="insert-before">      values.put(name.lexeme, value);
       return;
@@ -1312,20 +929,16 @@ in <em>assign</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Environment.java</em>, in <em>assign</em>()</div>
 
-<p>Again, if the variable isn&rsquo;t in this environment, it checks the outer one,
-recursively.</p>
-<h3><a href="#block-syntax-and-semantics" id="block-syntax-and-semantics"><small>8&#8202;.&#8202;5&#8202;.&#8202;2</small>Block syntax and semantics</a></h3>
-<p>Now that Environments nest, we&rsquo;re ready to add blocks to the language. Behold
-the grammar:</p>
+<p>同样，如果变量不在当前环境中，它会递归地检查外部环境。</p>
+<h3><a href="#块语法和语义" id="块语法和语义"><small>8&#8202;.&#8202;5&#8202;.&#8202;2</small>块语法和语义</a></h3>
+<p>现在环境可以嵌套，我们可以开始在语言中添加块。请看语法规则：</p>
 <div class="codehilite"><pre><span class="i">statement</span>      → <span class="i">exprStmt</span>
                | <span class="i">printStmt</span>
                | <span class="i">block</span> ;
 
 <span class="i">block</span>          → <span class="s">&quot;{&quot;</span> <span class="i">declaration</span>* <span class="s">&quot;}&quot;</span> ;
 </pre></div>
-<p>A block is a (possibly empty) series of statements or declarations surrounded by
-curly braces. A block is itself a statement and can appear anywhere a statement
-is allowed. The <span name="block-ast">syntax tree</span> node looks like this:</p>
+<p>块是由花括号包围的一系列语句或声明（可能为空）。块本身是一个语句，并且可以出现在任何允许语句的位置。<span name="block-ast">语法树</span>节点如下所示：</p>
 <div class="codehilite"><pre class="insert-before">    defineAst(outputDir, &quot;Stmt&quot;, Arrays.asList(
 </pre><div class="source-file"><em>com\craftinginterpreters\tool\GenerateAst.java</em><br>
 in <em>main</em>()</div>
@@ -1335,14 +948,11 @@ in <em>main</em>()</div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\tool\GenerateAst.java</em>, in <em>main</em>()</div>
 
 <aside name="block-ast">
-<p>The generated code for the new node is in <a href="appendix-ii.html#block-statement">Appendix II</a>.</p>
+<p>新节点的生成代码在以下位置： <a href="appendix-ii.html#block-statement">Appendix II</a>.</p>
 </aside>
-<p><span name="generate">It</span> contains the list of statements that are inside
-the block. Parsing is straightforward. Like other statements, we detect the
-beginning of a block by its leading token<span class="em">&mdash;</span>in this case the <code>{</code>. In the
-<code>statement()</code> method, we add:</p>
+<p><span name="generate">它</span>包含了块内部的语句列表。解析过程很简单。与其他语句一样，我们通过其前导标记（在本例中为 <code>{</code>）来检测块的开始。在 <code>statement()</code> 方法中，我们添加：</p>
 <aside name="generate">
-<p>As always, don&rsquo;t forget to run &ldquo;GenerateAst.java&rdquo;.</p>
+<p>一如既往，请不要忘记运行 &ldquo;GenerateAst.java&rdquo;。</p>
 </aside>
 <div class="codehilite"><pre class="insert-before">    if (match(PRINT)) return printStatement();
 </pre><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
@@ -1354,7 +964,7 @@ in <em>statement</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, in <em>statement</em>()</div>
 
-<p>All the real work happens here:</p>
+<p>真正的工作都在这里进行:</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Parser.java</em><br>
 add after <em>expressionStatement</em>()</div>
 <pre>  <span class="k">private</span> <span class="t">List</span>&lt;<span class="t">Stmt</span>&gt; <span class="i">block</span>() {
@@ -1370,18 +980,11 @@ add after <em>expressionStatement</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Parser.java</em>, add after <em>expressionStatement</em>()</div>
 
-<p>We <span name="list">create</span> an empty list and then parse statements and
-add them to the list until we reach the end of the block, marked by the closing
-<code>}</code>. Note that the loop also has an explicit check for <code>isAtEnd()</code>. We have to
-be careful to avoid infinite loops, even when parsing invalid code. If the user
-forgets a closing <code>}</code>, the parser needs to not get stuck.</p>
+<p>在这里，我们<span name="list">创建</span>一个空列表，然后解析语句并将它们添加到列表中，直到我们遇到由闭合的 <code>}</code> 标记的块的末尾。请注意，循环中还有一个明确的检查 <code>isAtEnd()</code> 的条件。我们必须小心处理，以避免陷入无限循环，即使在解析无效的代码时也是如此。如果用户忘记了闭合的  <code>}</code>，解析器也不能陷入困境。</p>
 <aside name="list">
-<p>Having <code>block()</code> return the raw list of statements and leaving it to
-<code>statement()</code> to wrap the list in a Stmt.Block looks a little odd. I did it that
-way because we&rsquo;ll reuse <code>block()</code> later for parsing function bodies and we don&rsquo;t
-want that body wrapped in a Stmt.Block.</p>
+<p>让 <code>block()</code> 返回原始的语句列表，然后由 <code>statement()</code> 来将列表包装在 Stmt.Block 中，看起来有点奇怪。我之所以这样做，是因为我们稍后会重用 <code>block()</code> 来解析函数体，而我们不希望该函数体被包装在 Stmt.Block 中。</p>
 </aside>
-<p>That&rsquo;s it for syntax. For semantics, we add another visit method to Interpreter.</p>
+<p>至此，语法部分就完成了。对于语义部分，我们需要为解释器添加另一个 visit 方法。</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 add after <em>execute</em>()</div>
 <pre>  <span class="a">@Override</span>
@@ -1392,8 +995,7 @@ add after <em>execute</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, add after <em>execute</em>()</div>
 
-<p>To execute a block, we create a new environment for the block&rsquo;s scope and pass
-it off to this other method:</p>
+<p>要执行一个块，我们先为该块作用域创建一个新的环境，然后将其传入下面这个方法：</p>
 <div class="codehilite"><div class="source-file"><em>com\craftinginterpreters\lox\Interpreter.java</em><br>
 add after <em>execute</em>()</div>
 <pre>  <span class="t">void</span> <span class="i">executeBlock</span>(<span class="t">List</span>&lt;<span class="t">Stmt</span>&gt; <span class="i">statements</span>,
@@ -1412,29 +1014,13 @@ add after <em>execute</em>()</div>
 </pre></div>
 <div class="source-file-narrow"><em>com\craftinginterpreters\lox\Interpreter.java</em>, add after <em>execute</em>()</div>
 
-<p>This new method executes a list of statements in the context of a given <span
-name="param">environment</span>. Up until now, the <code>environment</code> field in
-Interpreter always pointed to the same environment<span class="em">&mdash;</span>the global one. Now, that
-field represents the <em>current</em> environment. That&rsquo;s the environment that
-corresponds to the innermost scope containing the code to be executed.</p>
-<p>To execute code within a given scope, this method updates the interpreter&rsquo;s
-<code>environment</code> field, visits all of the statements, and then restores the
-previous value. As is always good practice in Java, it restores the previous
-environment using a finally clause. That way it gets restored even if an
-exception is thrown.</p>
+<p>这个新方法在给定的 <span name="param">环境</span>下执行一系列语句。在此之前，解释器中的<code>environment</code> 环境字段始终指向同一个环境，即全局环境。现在，该字段表示<em>当前</em>的环境，也就是包含要执行的代码的最内层作用域对应的环境。</p>
+<p>为了在给定作用域内执行代码，该方法会先更新解释器的 <code>environment</code> 字段，执行所有的语句，然后恢复之前的环境。基于Java中一贯的优良传统，它使用finally子句来恢复先前的环境。这样一来，即使抛出异常，也能恢复先前的环境。</p>
 <aside name="param">
-<p>Manually changing and restoring a mutable <code>environment</code> field feels inelegant.
-Another classic approach is to explicitly pass the environment as a parameter to
-each visit method. To &ldquo;change&rdquo; the environment, you pass a different one as you
-recurse down the tree. You don&rsquo;t have to restore the old one, since the new one
-lives on the Java stack and is implicitly discarded when the interpreter returns
-from the block&rsquo;s visit method.</p>
-<p>I considered that for jlox, but it&rsquo;s kind of tedious and verbose adding an
-environment parameter to every single visit method. To keep the book a little
-simpler, I went with the mutable field.</p>
+<p>手动修改和恢复可变的 <code>environment</code> 字段感觉不够优雅。 另一种经典的方法是将环境作为参数明确地传递给每个访问方法。为了“修改”环境，在递归遍历树时传递一个不同的环境。你不需要恢复旧的环境，因为新的环境存在于Java堆栈中，并且当解释器从块的访问方法返回时会被自动丢弃。</p>
+<p>我考虑过在jlox中这样做，但是为每个访问方法添加一个环境参数会显得有点繁琐和冗长。为了让本书更简单一些，我选择了可变的字段的方式。</p>
 </aside>
-<p>Surprisingly, that&rsquo;s all we need to do in order to fully support local
-variables, nesting, and shadowing. Go ahead and try this out:</p>
+<p>出人意料的是，这就是我们需要做的一切，以完全支持局部变量、嵌套和遮蔽。继续尝试一下吧！</p>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">a</span> = <span class="s">&quot;global a&quot;</span>;
 <span class="k">var</span> <span class="i">b</span> = <span class="s">&quot;global b&quot;</span>;
 <span class="k">var</span> <span class="i">c</span> = <span class="s">&quot;global c&quot;</span>;
@@ -1455,23 +1041,15 @@ variables, nesting, and shadowing. Go ahead and try this out:</p>
 <span class="k">print</span> <span class="i">b</span>;
 <span class="k">print</span> <span class="i">c</span>;
 </pre></div>
-<p>Our little interpreter can remember things now. We are inching closer to
-something resembling a full-featured programming language.</p>
+<p>我们的小解释器现在可以记住东西了，我们距离全功能编程语言又近了一步。</p>
 <div class="challenges">
-<h2><a href="#challenges" id="challenges">Challenges</a></h2>
+<h2><a href="#挑战" id="挑战"><small>8&#8202;.&#8202;6</small>挑战</a></h2>
 <ol>
 <li>
-<p>The REPL no longer supports entering a single expression and automatically
-printing its result value. That&rsquo;s a drag. Add support to the REPL to let
-users type in both statements and expressions. If they enter a statement,
-execute it. If they enter an expression, evaluate it and display the result
-value.</p>
+<p>REPL（交互式解释器）不再支持输入单个表达式并自动打印其结果值。这有点麻烦。在REPL中添加支持，让用户可以输入语句和表达式。如果他们输入了一个语句，执行它。如果他们输入了一个表达式，计算它并显示结果值。</p>
 </li>
 <li>
-<p>Maybe you want Lox to be a little more explicit about variable
-initialization. Instead of implicitly initializing variables to <code>nil</code>, make
-it a runtime error to access a variable that has not been initialized or
-assigned to, as in:</p>
+<p>也许你希望Lox在变量初始化方面更加明确。不再隐式地将变量初始化为<code>nil</code>，而是在访问未初始化或未赋值的变量时引发运行时错误，例如：</p>
 <div class="codehilite"><pre><span class="c">// No initializers.</span>
 <span class="k">var</span> <span class="i">a</span>;
 <span class="k">var</span> <span class="i">b</span>;
@@ -1483,121 +1061,64 @@ assigned to, as in:</p>
 </pre></div>
 </li>
 <li>
-<p>What does the following program do?</p>
+<p>以下程序做了什么？</p>
 <div class="codehilite"><pre><span class="k">var</span> <span class="i">a</span> = <span class="n">1</span>;
 {
   <span class="k">var</span> <span class="i">a</span> = <span class="i">a</span> + <span class="n">2</span>;
   <span class="k">print</span> <span class="i">a</span>;
 }
 </pre></div>
-<p>What did you <em>expect</em> it to do? Is it what you think it should do? What
-does analogous code in other languages you are familiar with do? What do
-you think users will expect this to do?</p>
+<p>你<em>希望</em>它做什么？它是否符合你的预期？在你熟悉的其他编程语言中，类似的代码会做什么？你认为用户会对此有什么期望？</p>
 </li>
 </ol>
 </div>
 <div class="design-note">
-<h2><a href="#design-note" id="design-note">Design Note: Implicit Variable Declaration</a></h2>
-<p>Lox has distinct syntax for declaring a new variable and assigning to an
-existing one. Some languages collapse those to only assignment syntax. Assigning
-to a non-existent variable automatically brings it into being. This is called
-<strong>implicit variable declaration</strong> and exists in Python, Ruby, and CoffeeScript,
-among others. JavaScript has an explicit syntax to declare variables, but can
-also create new variables on assignment. Visual Basic has <a href="https://msdn.microsoft.com/en-us/library/xe53dz5w(v=vs.100).aspx">an option to enable
-or disable implicit variables</a>.</p>
-<p>When the same syntax can assign or create a variable, each language must decide
-what happens when it isn&rsquo;t clear about which behavior the user intends. In
-particular, each language must choose how implicit declaration interacts with
-shadowing, and which scope an implicitly declared variable goes into.</p>
+<h2><a href="#设计须知-隐式变量声明" id="设计须知-隐式变量声明"><small>8&#8202;.&#8202;7</small>设计须知: 隐式变量声明</a></h2>
+<p>在Lox中，声明新变量和给已存在的变量赋值有不同的语法。有些编程语言只使用赋值语法来完成这两个操作。如果给一个不存在的变量赋值，它会自动被创建出来。这就是所谓的<strong>隐式变量声明</strong>，在Python、Ruby和CoffeeScript等编程语言中都有这个特性。JavaScript在声明变量时有明确的语法，但也可以在赋值时创建新变量。而Visual Basic则提供了一个<a href="https://msdn.microsoft.com/en-us/library/xe53dz5w(v=vs.100).aspx">选项</a>来控制是否允许隐式变量声明。</p>
+<p>当同样的语法既可以赋值也可以创建变量时，每种编程语言都必须决定当无法确定用户意图时会发生什么。特别是，每种语言必须选择隐式声明如何与变量遮蔽（shadowing）交互，以及隐式声明的变量进入哪个作用域。</p>
 <ul>
 <li>
-<p>In Python, assignment always creates a variable in the current function&rsquo;s
-scope, even if there is a variable with the same name declared outside of
-the function.</p>
+<p>在Python中，赋值操作总是在当前函数的作用域内创建一个变量，即使在函数外部已经声明了同名的变量。</p>
 </li>
 <li>
-<p>Ruby avoids some ambiguity by having different naming rules for local and
-global variables. However, blocks in Ruby (which are more like closures than
-like &ldquo;blocks&rdquo; in C) have their own scope, so it still has the problem.
-Assignment in Ruby assigns to an existing variable outside of the current
-block if there is one with the same name. Otherwise, it creates a new
-variable in the current block&rsquo;s scope.</p>
+<p>Ruby通过为局部变量和全局变量设置不同的命名规则来避免一些歧义。然而，在Ruby中，块（block）（更像是闭包而不是C语言中的“块”）有自己的作用域，因此它仍然存在这个问题。在Ruby中，如果存在与当前块中同名的变量，则赋值操作会将值赋给当前块外部已存在的变量。否则，它会在当前块的作用域中创建一个新的变量。</p>
 </li>
 <li>
-<p>CoffeeScript, which takes after Ruby in many ways, is similar. It explicitly
-disallows shadowing by saying that assignment always assigns to a variable
-in an outer scope if there is one, all the way up to the outermost global
-scope. Otherwise, it creates the variable in the current function scope.</p>
+<p>CoffeeScript在许多方面都借鉴了Ruby的特点，因此它也是类似的。它明确禁止变量屏蔽（shadowing），即赋值操作总是会将值赋给外部作用域中的变量，一直到最外层的全局作用域。如果没有外部作用域中同名的变量，则在当前函数作用域中创建该变量。</p>
 </li>
 <li>
-<p>In JavaScript, assignment modifies an existing variable in any enclosing
-scope, if found. If not, it implicitly creates a new variable in the
-<em>global</em> scope.</p>
+<p>在JavaScript中，赋值操作会修改任何包含它的作用域中已存在的变量。如果找不到已存在的变量，则会隐式地在<em>全局</em>作用域中创建一个新的变量。</p>
 </li>
 </ul>
-<p>The main advantage to implicit declaration is simplicity. There&rsquo;s less syntax
-and no &ldquo;declaration&rdquo; concept to learn. Users can just start assigning stuff and
-the language figures it out.</p>
-<p>Older, statically typed languages like C benefit from explicit declaration
-because they give the user a place to tell the compiler what type each variable
-has and how much storage to allocate for it. In a dynamically typed,
-garbage-collected language, that isn&rsquo;t really necessary, so you can get away
-with making declarations implicit. It feels a little more &ldquo;scripty&rdquo;, more &ldquo;you
-know what I mean&rdquo;.</p>
-<p>But is that a good idea? Implicit declaration has some problems.</p>
+<p>隐式声明的主要优点是简单。语法较少，无需学习“声明”概念。你可以直接开始赋值，语言会自动帮你处理其它问题。</p>
+<p>像C这样较早的静态类型语言受益于显式声明，因为它可以告诉编译器每个变量的类型和需要分配多少存储空间。但在有动态类型、垃圾回收的语言中，这些并不是必需的，所以可以将声明隐式化。这让代码感觉更 &ldquo;脚本化&ldquo;，更像是 &ldquo;你懂我的意思吧&ldquo;。</p>
+<p>但这是就个好主意吗？隐式声明还存在一些问题。</p>
 <ul>
 <li>
-<p>A user may intend to assign to an existing variable, but may have misspelled
-it. The interpreter doesn&rsquo;t know that, so it goes ahead and silently creates
-some new variable and the variable the user wanted to assign to still has
-its old value. This is particularly heinous in JavaScript where a typo will
-create a <em>global</em> variable, which may in turn interfere with other code.</p>
+<p>用户可能打算为现有变量赋值，但可能拼写错了。解释器不知道这一点，所以它会默默地创建一个新的变量，而用户想要赋值的变量仍然保持着它的旧值。这在JavaScript中尤为严重，因为拼写错误会创建一个<em>全局</em>变量，这可能会干扰其他代码。</p>
 </li>
 <li>
-<p>JS, Ruby, and CoffeeScript use the presence of an existing variable with the
-same name<span class="em">&mdash;</span>even in an outer scope<span class="em">&mdash;</span>to determine whether or not an
-assignment creates a new variable or assigns to an existing one. That means
-adding a new variable in a surrounding scope can change the meaning of
-existing code. What was once a local variable may silently turn into an
-assignment to that new outer variable.</p>
+<p>JS、Ruby和CoffeeScript使用同名的已存在变量（即使在外部作用域中）来确定赋值操作是创建一个新变量还是给已存在的变量赋值。这意味着在外围作用域中添加一个新变量可能会改变现有代码的含义。曾经是局部变量的东西可能会悄悄地变成对新的外部变量的赋值。</p>
 </li>
 <li>
-<p>In Python, you may <em>want</em> to assign to some variable outside of the current
-function instead of creating a new variable in the current one, but you
-can&rsquo;t.</p>
+<p>在Python中，你可能<em>想</em>要赋值给当前函数之外的某个变量，而不是在当前函数中创建一个新变量，但是你做不到。</p>
 </li>
 </ul>
-<p>Over time, the languages I know with implicit variable declaration ended up
-adding more features and complexity to deal with these problems.</p>
+<p>随着时间的推移，我所了解的具有隐式变量声明的语言逐渐增加了更多的功能和复杂性来处理这些问题。</p>
 <ul>
 <li>
-<p>Implicit declaration of global variables in JavaScript is universally
-considered a mistake today. &ldquo;Strict mode&rdquo; disables it and makes it a compile
-error.</p>
+<p>在JavaScript中，隐式声明全局变量现在被普遍认为是一个错误。&ldquo;Strict mode&rdquo;可以禁用它，并将其作为一个编译错误。</p>
 </li>
 <li>
-<p>Python added a <code>global</code> statement to let you explicitly assign to a global
-variable from within a function. Later, as functional programming and nested
-functions became more popular, they added a similar <code>nonlocal</code> statement to
-assign to variables in enclosing functions.</p>
+<p>Python添加了一个<code>global</code>语句，允许你在函数内部显式地给全局变量赋值。后来，随着函数式编程和嵌套函数变得更加流行，他们添加了一个类似的<code>nonlocal</code>语句，用于给封闭函数中的变量赋值。</p>
 </li>
 <li>
-<p>Ruby extended its block syntax to allow declaring certain variables to be
-explicitly local to the block even if the same name exists in an outer
-scope.</p>
+<p>Ruby扩展了其块语法，允许在块中显式地声明某些变量为局部变量，即使在外部作用域中存在同名的变量。</p>
 </li>
 </ul>
-<p>Given those, I think the simplicity argument is mostly lost. There is an
-argument that implicit declaration is the right <em>default</em> but I personally find
-that less compelling.</p>
-<p>My opinion is that implicit declaration made sense in years past when most
-scripting languages were heavily imperative and code was pretty flat. As
-programmers have gotten more comfortable with deep nesting, functional
-programming, and closures, it&rsquo;s become much more common to want access to
-variables in outer scopes. That makes it more likely that users will run into
-the tricky cases where it&rsquo;s not clear whether they intend their assignment to
-create a new variable or reuse a surrounding one.</p>
-<p>So I prefer explicitly declaring variables, which is why Lox requires it.</p>
+<p>考虑到这些，我认为简单性的论点已经失去了意义。有一种观点认为隐式声明是正确的默认选项，但我个人认为这种说法不太有说服力。</p>
+<p>我的观点是，在过去的几年中，大多数脚本语言都是以命令式为主，代码相对简单。随着程序员对深层嵌套、函数式编程和闭包的熟悉程度越来越高，更多的人希望能够访问外部作用域中的变量。这使得用户更有可能遇到棘手的情况，即不清楚他们的赋值是要创建一个新变量还是重用外围的已有变量。</p>
+<p>因此，我更喜欢显式声明变量，这也是为什么Lox要这样做的原因。</p>
 </div>
 
 <footer>

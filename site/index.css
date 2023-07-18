@@ -1,4 +1,8 @@
 @font-face {
+  font-family: "MiSans";
+  src: url("font/MiSans-Regular.woff") format("woff");
+}
+@font-face {
   font-family: "LXGWBrightGB";
   src: url("font/LXGWBrightGB-Regular.woff") format("woff");
 }
@@ -65,7 +69,7 @@ body {
 }
 .sign-up input {
   padding: 4px;
-  font: 16px "Source Sans Pro", sans-serif;
+  font: 16px "MiSans", sans-serif;
   outline: none;
   border-radius: 3px;
   border: solid 2px #ffd580;
@@ -80,7 +84,7 @@ body {
 .sign-up input.button {
   margin-left: 8px;
   padding: 4px 8px;
-  font: 600 13px "Source Sans Pro", sans-serif;
+  font: 600 13px "MiSans", sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px;
   background: #ffbb33;
@@ -170,12 +174,12 @@ p + p {
   background-position: left;
   color: #444;
   border-radius: 3px;
-  font: normal 16px/24px "Source Sans Pro", sans-serif;
+  font: normal 16px/24px "MiSans", sans-serif;
 }
 .format h3 {
   margin: 0;
   padding: 0 0 4px 0;
-  font: 600 16px/24px "Source Sans Pro", sans-serif;
+  font: 600 16px/24px "MiSans", sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -225,7 +229,7 @@ a.action {
   border-radius: 3px;
   background: #1481b8;
   transition: background-color 0.2s ease, color 0.2s ease;
-  font: 400 17px/24px "Source Sans Pro", sans-serif;
+  font: 400 17px/24px "MiSans", sans-serif;
   color: white;
 }
 a.action small {
@@ -265,7 +269,7 @@ footer {
   position: relative;
   border-top: solid 1px #dee9ed;
   color: #7aa0b8;
-  font: 400 15px "Source Sans Pro", sans-serif;
+  font: 400 15px "MiSans", sans-serif;
   text-align: center;
   margin: 12px 0 36px 0;
   padding-top: 48px;
