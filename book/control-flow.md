@@ -254,8 +254,6 @@ print nil or "yes"; // "yes".
 
 ## While 循环
 
-Lox features two looping control flow statements, `while` and `for`. The `while`
-loop is the simpler one, so we'll start there. Its grammar is the same as in C.
 Lox有两种类型的循环控制流语句，分别是while和for。while循环更简单一点，我们先从它开始。它的语法与C语言相同。
 
 

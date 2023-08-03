@@ -342,9 +342,7 @@ add after <em>visitLiteralExpr</em>()</div>
 <p>在第一行，<code>"hi"</code>是一个有值的字符串，被认为是真值，所以<code>or</code>运算符会短路并返回它。在第二行，<code>nil</code> 是一个空值，被认为是假值，所以它会继续计算并返回第二个操作数，即<code>"yes"</code>。</p>
 <p>这就涵盖了Lox中所有的分支原语。我们准备<em>跳到</em>循环部分。你看出我刚才的技巧了吗？<em>跳到</em>。懂了吗？嗯，就像一个引用<span class="ellipse">&thinsp;.&thinsp;.&thinsp;.&nbsp;</span>哦，算了。</p>
 <h2><a href="#while-循环" id="while-循环"><small>9&#8202;.&#8202;4</small>While 循环</a></h2>
-<p>Lox features two looping control flow statements, <code>while</code> and <code>for</code>. The <code>while</code>
-loop is the simpler one, so we&rsquo;ll start there. Its grammar is the same as in C.
-Lox有两种类型的循环控制流语句，分别是while和for。while循环更简单一点，我们先从它开始。它的语法与C语言相同。</p>
+<p>Lox有两种类型的循环控制流语句，分别是while和for。while循环更简单一点，我们先从它开始。它的语法与C语言相同。</p>
 <div class="codehilite"><pre><span class="i">statement</span>      → <span class="i">exprStmt</span>
                | <span class="i">ifStmt</span>
                | <span class="i">printStmt</span>
