@@ -47,8 +47,9 @@
     <li><a href="#函数"><small>3.8</small> 函数</a></li>
     <li><a href="#类"><small>3.9</small> 类</a></li>
     <li><a href="#标准库"><small>3.10</small> 标准库</a></li>
-    <li><a href="#挑战"><small>3.11</small> 挑战</a></li>
-    <li><a href="#设计须知表达式和语句"><small>3.12</small> 设计须知:表达式和语句</a></li>
+    <li class="divider"></li>
+    <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small>表达式和语句</a></li>
 </ul>
 
 
@@ -83,8 +84,9 @@
     <li><a href="#函数"><small>3.8</small> 函数</a></li>
     <li><a href="#类"><small>3.9</small> 类</a></li>
     <li><a href="#标准库"><small>3.10</small> 标准库</a></li>
-    <li><a href="#挑战"><small>3.11</small> 挑战</a></li>
-    <li><a href="#设计须知表达式和语句"><small>3.12</small> 设计须知:表达式和语句</a></li>
+    <li class="divider"></li>
+    <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small>表达式和语句</a></li>
 </ul>
 
 
@@ -521,7 +523,7 @@ name="closure"><strong>closures</strong> 闭包</span>。现在，这个术语�
 <p>如果你想把Lox变成一门实际可用的语言，你应该做的第一件事就是充实这个。字符串操作、三角函数、文件输入/输出、网络，甚至是读取用户的输入都会有帮助。但是我们在这本书中不需要这些东西，而且添加这些东西也不会教你任何有趣的东西，所以我把它省略了。</p>
 <p>别担心，这门语言本身就有很多令人兴奋的东西让我们忙个不停。</p>
 <div class="challenges">
-<h2><a href="#挑战" id="挑战"><small>3&#8202;.&#8202;11</small>挑战</a></h2>
+<h2><a href="#challenges" id="challenges">Challenges</a></h2>
 <ol>
 <li>
 <p>编写一些 Lox 程序并运行它们（你可以使用<a href="https://github.com/munificent/craftinginterpreters">my repository</a>中的Lox的实现）。试着想出我在这里没有说明的边界情况。它能做到你所期望的吗？为什么？</p>
@@ -535,7 +537,7 @@ name="closure"><strong>closures</strong> 闭包</span>。现在，这个术语�
 </ol>
 </div>
 <div class="design-note">
-<h2><a href="#设计须知表达式和语句" id="设计须知表达式和语句"><small>3&#8202;.&#8202;12</small>设计须知:表达式和语句</a></h2>
+<h2><a href="#design-note" id="design-note">Design Note: 表达式和语句</a></h2>
 <p>Lox既有表达式也有语句。有些语言省略了后者。相反，它们也将声明和控制流结构视为表达式。这些“一切都是表达式”语言往往具有函数式的血统，包括大多数Lisp、SML、Haskell、Ruby和CoffeeScript。</p>
 <p>为此，对于语言中的每个“类似语句”的构造，您需要确定其计算值。其中一些很简单</p>
 <ul>

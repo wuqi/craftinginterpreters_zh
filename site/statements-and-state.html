@@ -42,8 +42,9 @@
     <li><a href="#环境"><small>8.3</small> 环境</a></li>
     <li><a href="#赋值"><small>8.4</small> 赋值</a></li>
     <li><a href="#作用域"><small>8.5</small> 作用域</a></li>
-    <li><a href="#挑战"><small>8.6</small> 挑战</a></li>
-    <li><a href="#设计须知-隐式变量声明"><small>8.7</small> 设计须知: 隐式变量声明</a></li>
+    <li class="divider"></li>
+    <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small>隐式变量声明</a></li>
 </ul>
 
 
@@ -73,8 +74,9 @@
     <li><a href="#环境"><small>8.3</small> 环境</a></li>
     <li><a href="#赋值"><small>8.4</small> 赋值</a></li>
     <li><a href="#作用域"><small>8.5</small> 作用域</a></li>
-    <li><a href="#挑战"><small>8.6</small> 挑战</a></li>
-    <li><a href="#设计须知-隐式变量声明"><small>8.7</small> 设计须知: 隐式变量声明</a></li>
+    <li class="divider"></li>
+    <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small>隐式变量声明</a></li>
 </ul>
 
 
@@ -1043,7 +1045,7 @@ add after <em>execute</em>()</div>
 </pre></div>
 <p>我们的小解释器现在可以记住东西了，我们距离全功能编程语言又近了一步。</p>
 <div class="challenges">
-<h2><a href="#挑战" id="挑战"><small>8&#8202;.&#8202;6</small>挑战</a></h2>
+<h2><a href="#challenges" id="challenges">Challenges</a></h2>
 <ol>
 <li>
 <p>REPL（交互式解释器）不再支持输入单个表达式并自动打印其结果值。这有点麻烦。在REPL中添加支持，让用户可以输入语句和表达式。如果他们输入了一个语句，执行它。如果他们输入了一个表达式，计算它并显示结果值。</p>
@@ -1073,7 +1075,7 @@ add after <em>execute</em>()</div>
 </ol>
 </div>
 <div class="design-note">
-<h2><a href="#设计须知-隐式变量声明" id="设计须知-隐式变量声明"><small>8&#8202;.&#8202;7</small>设计须知: 隐式变量声明</a></h2>
+<h2><a href="#design-note" id="design-note">Design Note: 隐式变量声明</a></h2>
 <p>在Lox中，声明新变量和给已存在的变量赋值有不同的语法。有些编程语言只使用赋值语法来完成这两个操作。如果给一个不存在的变量赋值，它会自动被创建出来。这就是所谓的<strong>隐式变量声明</strong>，在Python、Ruby和CoffeeScript等编程语言中都有这个特性。JavaScript在声明变量时有明确的语法，但也可以在赋值时创建新变量。而Visual Basic则提供了一个<a href="https://msdn.microsoft.com/en-us/library/xe53dz5w(v=vs.100).aspx">选项</a>来控制是否允许隐式变量声明。</p>
 <p>当同样的语法既可以赋值也可以创建变量时，每种编程语言都必须决定当无法确定用户意图时会发生什么。特别是，每种语言必须选择隐式声明如何与变量遮蔽（shadowing）交互，以及隐式声明的变量进入哪个作用域。</p>
 <ul>

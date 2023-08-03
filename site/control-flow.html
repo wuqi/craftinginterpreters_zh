@@ -37,8 +37,8 @@
 <h3><a href="#top">Control Flow<small>9</small></a></h3>
 
 <ul>
-    <li><a href="#turing-machines-briefly"><small>9.1</small> Turing Machines (Briefly)</a></li>
-    <li><a href="#conditional-execution"><small>9.2</small> Conditional Execution</a></li>
+    <li><a href="#图灵机-简介"><small>9.1</small> 图灵机 (简介)</a></li>
+    <li><a href="#条件执行"><small>9.2</small> 条件执行</a></li>
     <li><a href="#logical-operators"><small>9.3</small> Logical Operators</a></li>
     <li><a href="#while-loops"><small>9.4</small> While Loops</a></li>
     <li><a href="#for-loops"><small>9.5</small> For Loops</a></li>
@@ -69,8 +69,8 @@
 <h3><a href="#top">Control Flow<small>9</small></a></h3>
 
 <ul>
-    <li><a href="#turing-machines-briefly"><small>9.1</small> Turing Machines (Briefly)</a></li>
-    <li><a href="#conditional-execution"><small>9.2</small> Conditional Execution</a></li>
+    <li><a href="#图灵机-简介"><small>9.1</small> 图灵机 (简介)</a></li>
+    <li><a href="#条件执行"><small>9.2</small> 条件执行</a></li>
     <li><a href="#logical-operators"><small>9.3</small> Logical Operators</a></li>
     <li><a href="#while-loops"><small>9.4</small> While Loops</a></li>
     <li><a href="#for-loops"><small>9.5</small> For Loops</a></li>
@@ -95,111 +95,49 @@
   <h1>Control Flow</h1>
 
 <blockquote>
-<p>Logic, like whiskey, loses its beneficial effect when taken in too large
-quantities.</p>
-<p><cite>Edward John Moreton Drax Plunkett, Lord Dunsany</cite></p>
+<p>逻辑，犹如威士忌，当过度饮用时，其益处便难以显现。</p>
+<p><cite>爱德华·约翰·莫顿·德拉克斯·普兰克特，邓桑尼勋爵</cite></p>
 </blockquote>
-<p>Compared to <a href="statements-and-state.html">last chapter&rsquo;s</a> grueling marathon, today is a
-lighthearted frolic through a daisy meadow. But while the work is easy, the
-reward is surprisingly large.</p>
-<p>Right now, our interpreter is little more than a calculator. A Lox program can
-only do a fixed amount of work before completing. To make it run twice as long
-you have to make the source code twice as lengthy. We&rsquo;re about to fix that. In
-this chapter, our interpreter takes a big step towards the programming
-language major leagues: <em>Turing-completeness</em>.</p>
-<h2><a href="#turing-machines-briefly" id="turing-machines-briefly"><small>9&#8202;.&#8202;1</small>Turing Machines (Briefly)</a></h2>
-<p>In the early part of last century, mathematicians stumbled into a series of
-confusing <span name="paradox">paradoxes</span> that led them to doubt the
-stability of the foundation they had built their work upon. To address that
-<a href="https://en.wikipedia.org/wiki/Foundations_of_mathematics#Foundational_crisis">crisis</a>, they went back to square one. Starting from a handful of axioms,
-logic, and set theory, they hoped to rebuild mathematics on top of an
-impervious foundation.</p>
+<p>与<a href="statements-and-state.html">上一章</a>艰苦的马拉松相比，本章就像在雏菊草地上轻快地嬉戏。虽然工作轻松，但回报却出乎意料地丰厚。</p>
+<p>眼下，我们的解释器仅仅是一个简单的计算器而已。Lox程序在完成前只能执行有限的任务。要使其运行时间加倍，就必须让源代码变得更长。然而，我们即将改变这一现状。在本章中，我们的解释器将向编程语言的顶级联赛迈出重要一步：<em>图灵完备性</em>。</p>
+<h2><a href="#图灵机-简介" id="图灵机-简介"><small>9&#8202;.&#8202;1</small>图灵机 (简介)</a></h2>
+<p>在上个世纪初的早期，数学家们陷入了一系列令人困惑的<span name="paradox">悖论</span> 中，这使他们对自己建立工作基础的稳定性产生了怀疑。为了解决这一<a href="https://en.wikipedia.org/wiki/Foundations_of_mathematics#Foundational_crisis">危机</a>，他们回到了原点。他们从少数必要的基本原理、逻辑和集合论出发，希望在坚不可摧的基础上重建数学。</p>
 <aside name="paradox">
-<p>The most famous is <a href="https://en.wikipedia.org/wiki/Russell%27s_paradox"><strong>Russell&rsquo;s paradox</strong></a>. Initially, set theory
-allowed you to define any sort of set. If you could describe it in English, it
-was valid. Naturally, given mathematicians&rsquo; predilection for self-reference,
-sets can contain other sets. So Russell, rascal that he was, came up with:</p>
-<p><em>R is the set of all sets that do not contain themselves.</em></p>
-<p>Does R contain itself? If it doesn&rsquo;t, then according to the second half of the
-definition it should. But if it does, then it no longer meets the definition.
-Cue mind exploding.</p>
+<p>最有名的就是<a href="https://en.wikipedia.org/wiki/Russell%27s_paradox"><strong>罗素悖论</strong></a>了。一开始，集合论允许你定义任何类型的集合。只要你用英语描述出来，那就是有效的。因为数学家们喜欢自我引用，所以集合可以包含其他集合。于是，淘气的罗素提出了这个问题：</p>
+<p><em>R是所有不包含自己的集合的集合。</em></p>
+<p>R是不是包含自己呢？如果不包含自己，根据定义的后半部分，它应该包含自己。但如果它包含自己，那它就不再符合定义了。这个问题会让你的脑袋崩溃。</p>
 </aside>
-<p>They wanted to rigorously answer questions like, &ldquo;Can all true statements be
-proven?&rdquo;, &ldquo;Can we <a href="https://en.wikipedia.org/wiki/Computable_function">compute</a> all functions that we can define?&rdquo;, or even the
-more general question, &ldquo;What do we mean when we claim a function is
-&lsquo;computable&rsquo;?&rdquo;</p>
-<p>They presumed the answer to the first two questions would be &ldquo;yes&rdquo;. All that
-remained was to prove it. It turns out that the answer to both is &ldquo;no&rdquo;, and
-astonishingly, the two questions are deeply intertwined. This is a fascinating
-corner of mathematics that touches fundamental questions about what brains are
-able to do and how the universe works. I can&rsquo;t do it justice here.</p>
-<p>What I do want to note is that in the process of proving that the answer to the
-first two questions is &ldquo;no&rdquo;, Alan Turing and Alonzo Church devised a precise
-answer to the last question<span class="em">&mdash;</span>a definition of what kinds of functions are <span
-name="uncomputable">computable</span>. They each crafted a tiny system with a
-minimum set of machinery that is still powerful enough to compute any of a
-(very) large class of functions.</p>
+<p>他们想要严谨地回答这样的问题：&ldquo;所有真实的陈述都能被证明吗？&ldquo;，&ldquo;我们能<a href="https://en.wikipedia.org/wiki/Computable_function">计算</a>出我们可以定义的所有函数吗？&ldquo;，甚至更普适的问题：&ldquo;当我们声称一个函数是&rsquo;可计算的&rsquo;时，代表什么意思？&ldquo;</p>
+<p>他们假设前两个问题的答案是&ldquo;是&ldquo;。剩下的就是证明它。但事实证明，这两个问题的答案都是&ldquo;否&ldquo;，而且令人惊讶的是，这两个问题是深度交织在一起的。这是数学中一个迷人的角落，涉及到关于大脑能够做什么以及宇宙如何运作的基本问题。在这里，我无法充分地解释这个问题。</p>
+<p>我想要指出的是，在证明前两个问题的答案是&ldquo;不是&ldquo;的过程中，艾伦·图灵和阿隆佐·邱奇提出了一个精确的答案来回答最后一个问题——什么样的函数是<span name="uncomputable">可计算的</span>。他们各自设计了一个简单的系统，只用了最基本的工具，但仍然足够强大，可以计算出任意超大类函数。</p>
 <aside name="uncomputable">
-<p>They proved the answer to the first question is &ldquo;no&rdquo; by showing that the
-function that returns the truth value of a given statement is <em>not</em> a computable
-one.</p>
+<p>他们通过展示一个返回给定语句真值的函数<em>不是</em>可计算函数来证明第一个问题的答案是&ldquo;否&ldquo;。</p>
 </aside>
-<p>These are now considered the &ldquo;computable functions&rdquo;. Turing&rsquo;s system is called a
-<span name="turing"><strong>Turing machine</strong></span>. Church&rsquo;s is the <strong>lambda
-calculus</strong>. Both are still widely used as the basis for models of computation
-and, in fact, many modern functional programming languages use the lambda
-calculus at their core.</p>
+<p>这些现在被称为&ldquo;可计算函数&ldquo;。图灵的系统被称为<span name="turing"><strong>图灵机</strong></span>。邱奇的系统被称为<strong>λ演算</strong>。这两种系统仍然被广泛用作计算模型的基础，实际上，许多现代的函数式编程语言都以λ演算为核心。</p>
 <aside name="turing">
-<p>Turing called his inventions &ldquo;a-machines&rdquo; for &ldquo;automatic&rdquo;. He wasn&rsquo;t so
-self-aggrandizing as to put his <em>own</em> name on them. Later mathematicians did
-that for him. That&rsquo;s how you get famous while still retaining some modesty.</p>
+<p>图灵称他的发明为&ldquo;a-machines&rdquo;，意为&ldquo;自动的&ldquo;(automatic)。他并没有过分自夸地将<em>自己的</em>名字放在这些发明上。后来的数学家们替他做了这件事。这就是如何在保持一些谦逊的同时获得名声的方法。</p>
 </aside><img src="image/control-flow/turing-machine.png" alt="A Turing machine." />
-<p>Turing machines have better name recognition<span class="em">&mdash;</span>there&rsquo;s no Hollywood film about
-Alonzo Church yet<span class="em">&mdash;</span>but the two formalisms are <a href="https://en.wikipedia.org/wiki/Church%E2%80%93Turing_thesis">equivalent in power</a>.
-In fact, any programming language with some minimal level of expressiveness is
-powerful enough to compute <em>any</em> computable function.</p>
-<p>You can prove that by writing a simulator for a Turing machine in your language.
-Since Turing proved his machine can compute any computable function, by
-extension, that means your language can too. All you need to do is translate the
-function into a Turing machine, and then run that on your simulator.</p>
-<p>If your language is expressive enough to do that, it&rsquo;s considered
-<strong>Turing-complete</strong>. Turing machines are pretty dang simple, so it doesn&rsquo;t take
-much power to do this. You basically need arithmetic, a little control flow,
-and the ability to allocate and use (theoretically) arbitrary amounts of memory.
-We&rsquo;ve got the first. By the end of this chapter, we&rsquo;ll have the <span
-name="memory">second</span>.</p>
+<p>图灵机在名字上更有知名度——毕竟至今还没有关于阿隆佐·邱奇的好莱坞电影——但这两种形式化方法在能力上是<a href="https://en.wikipedia.org/wiki/Church%E2%80%93Turing_thesis">等效的</a>。实际上，任何具有一定表达能力的编程语言都足够强大，可以计算任何可<em>计算</em>函数。</p>
+<p>你可以通过在你的编程语言中编写一个图灵机模拟器来证明这一点。由于图灵证明了他的机器可以计算任何可计算函数，因此可以推断出，你的编程语言也可以。你只需要将函数转换为图灵机，然后在模拟器上运行即可。</p>
+<p>如果你的编程语言足够表达力，它被认为是<strong>图灵完备</strong>的。图灵机非常简单，所以并不需要太多的能力来实现这一点。基本上，你只需要算术运算、一些控制流程以及分配和使用（理论上）任意数量的内存的能力。我们已经具备了第一个条件。在本章结束时，我们将具备<span name="memory">第二个条件</span>。</p>
 <aside name="memory">
-<p>We <em>almost</em> have the third too. You can create and concatenate strings of
-arbitrary size, so you can <em>store</em> unbounded memory. But we don&rsquo;t have any way
-to access parts of a string.</p>
+<p>我们<em>几乎</em>也满足了第三个条件。你可以创建和连接任意大小的字符串，因此你可以<em>存储</em>无限的内存。但我们还无法访问字符串的各个部分。</p>
 </aside>
-<h2><a href="#conditional-execution" id="conditional-execution"><small>9&#8202;.&#8202;2</small>Conditional Execution</a></h2>
-<p>Enough history, let&rsquo;s jazz up our language. We can divide control flow roughly
-into two kinds:</p>
+<h2><a href="#条件执行" id="条件执行"><small>9&#8202;.&#8202;2</small>条件执行</a></h2>
+<p>不再啰嗦历史了，让我们给我们的语言加点料吧。控制流可以大致分为两种类型：</p>
 <ul>
 <li>
-<p><strong>Conditional</strong> or <strong>branching control flow</strong> is used to <em>not</em> execute
-some piece of code. Imperatively, you can think of it as jumping <em>ahead</em>
-over a region of code.</p>
+<p><strong>条件</strong>或<strong>分支控制流</strong>用于<em>不</em>执行某段代码。从命令式的角度来看，你可以将其视为<em>跳过</em>一段代码的执行。</p>
 </li>
 <li>
-<p><strong>Looping control flow</strong> executes a chunk of code more than once. It jumps
-<em>back</em> so that you can do something again. Since you don&rsquo;t usually want
-<em>infinite</em> loops, it typically has some conditional logic to know when to
-stop looping as well.</p>
+<p><strong>循环控制流</strong>用于多次执行一段代码。它会跳回到某个位置，以便再次执行相同的操作。由于通常不希望出现<em>无限</em>循环，循环控制流通常会包含一些条件逻辑，以确定何时停止循环。</p>
 </li>
 </ul>
-<p>Branching is simpler, so we&rsquo;ll start there. C-derived languages have two main
-conditional execution features, the <code>if</code> statement and the perspicaciously named
-&ldquo;conditional&rdquo; <span name="ternary">operator</span> (<code>?:</code>). An <code>if</code> statement
-lets you conditionally execute statements and the conditional operator lets you
-conditionally execute expressions.</p>
+<p>分支控制流比较简单，所以我们先从这里开始讲解。C语言衍生的语言有两个主要的条件执行特性，<code>if</code> 语句和“条件”<span name="ternary">运算符</span> （<code>?:</code>）。<code>if</code>语句允许您有条件地执行语句，而条件运算符允许您有条件地执行表达式。</p>
 <aside name="ternary">
-<p>The conditional operator is also called the &ldquo;ternary&rdquo; operator because it&rsquo;s the
-only operator in C that takes three operands.</p>
+<p>条件运算符也被称为“三元”运算符，因为它是C语言中唯一接受三个操作数的运算符。</p>
 </aside>
-<p>For simplicity&rsquo;s sake, Lox doesn&rsquo;t have a conditional operator, so let&rsquo;s get our
-<code>if</code> statement on. Our statement grammar gets a new production.</p>
+<p>为了简单起见，Lox没有条件运算符，所以让我们直接开始<code>if</code>语句吧。我们的语句语法需要一个新的生成式。</p>
 <p><span name="semicolon"></span></p>
 <div class="codehilite"><pre><span class="i">statement</span>      → <span class="i">exprStmt</span>
                | <span class="i">ifStmt</span>

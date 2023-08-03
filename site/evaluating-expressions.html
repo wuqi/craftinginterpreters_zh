@@ -41,9 +41,9 @@
     <li><a href="#表达式求值"><small>7.2</small> 表达式求值</a></li>
     <li><a href="#运行时错误"><small>7.3</small> 运行时错误</a></li>
     <li><a href="#连接解释器"><small>7.4</small> 连接解释器</a></li>
-    <li><a href="#设计笔记：静态类型和动态类型"><small>7.6</small> 设计笔记：静态类型和动态类型</a></li>
     <li class="divider"></li>
     <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small> 静态类型和动态类型</a></li>
 </ul>
 
 
@@ -72,9 +72,9 @@
     <li><a href="#表达式求值"><small>7.2</small> 表达式求值</a></li>
     <li><a href="#运行时错误"><small>7.3</small> 运行时错误</a></li>
     <li><a href="#连接解释器"><small>7.4</small> 连接解释器</a></li>
-    <li><a href="#设计笔记：静态类型和动态类型"><small>7.6</small> 设计笔记：静态类型和动态类型</a></li>
     <li class="divider"></li>
     <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small> 静态类型和动态类型</a></li>
 </ul>
 
 
@@ -645,8 +645,9 @@ replace 1 line</div>
 </ol>
 </div>
 <div class="design-note">
-<h2><a href="#设计笔记：静态类型和动态类型" id="设计笔记：静态类型和动态类型"><small>7&#8202;.&#8202;6</small>设计笔记：静态类型和动态类型</a></h2>
-<p>有些语言，如Java，是静态类型的，这意味着在任何代码运行之前，会在编译时检测和报告类型错误。其他语言，如Lox，是动态类型的，将类型错误的检查推迟到运行时尝试执行具体操作之前。我们倾向于认为这是一个非黑即白的选择，但实际上它们之间是连续统一的。</p>
+<h2><a href="#design-note" id="design-note">Design Note:  静态类型和动态类型</a></h2>
+<p>0
+有些语言，如Java，是静态类型的，这意味着在任何代码运行之前，会在编译时检测和报告类型错误。其他语言，如Lox，是动态类型的，将类型错误的检查推迟到运行时尝试执行具体操作之前。我们倾向于认为这是一个非黑即白的选择，但实际上它们之间是连续统一的。</p>
 <p>事实证明，大多数静态类型的语言也会在运行时进行<em>一些</em>类型检查。类型系统会静态地检查多数类型规则，但在生成的代码中插入了运行时检查以支持其它操作。</p>
 <p>例如，在Java中，<em>静态</em>类型系统会假定强制转换表达式总是能安全地成功执行。在转换某个值之后，可以将其静态地视为目标类型，而不会出现任何编译错误。但向下转换显然会失败。静态检查器之所以能够在不违反语言的合理性保证的情况下假定转换总是成功的，唯一原因是，强制转换操作会在<em>运行时</em>进行类型检查，并在失败时抛出异常。</p>
 <p>一个更微妙的例子是Java和c#中的<a href="https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)#Covariant_arrays_in_Java_and_C.23">协变数组</a>。数组的静态子类型规则允许不健全的操作。考虑以下代码：</p>

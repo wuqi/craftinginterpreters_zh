@@ -41,8 +41,9 @@
     <li><a href="#递归下降解析"><small>6.2</small> 递归下降解析</a></li>
     <li><a href="#语法错误"><small>6.3</small> 语法错误</a></li>
     <li><a href="#接通解析器"><small>6.4</small> 接通解析器</a></li>
-    <li><a href="#挑战"><small>6.5</small> 挑战</a></li>
-    <li><a href="#设计笔记逻辑与历史"><small>6.6</small> 设计笔记:逻辑与历史</a></li>
+    <li class="divider"></li>
+    <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small>逻辑与历史</a></li>
 </ul>
 
 
@@ -71,8 +72,9 @@
     <li><a href="#递归下降解析"><small>6.2</small> 递归下降解析</a></li>
     <li><a href="#语法错误"><small>6.3</small> 语法错误</a></li>
     <li><a href="#接通解析器"><small>6.4</small> 接通解析器</a></li>
-    <li><a href="#挑战"><small>6.5</small> 挑战</a></li>
-    <li><a href="#设计笔记逻辑与历史"><small>6.6</small> 设计笔记:逻辑与历史</a></li>
+    <li class="divider"></li>
+    <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small>逻辑与历史</a></li>
 </ul>
 
 
@@ -714,7 +716,7 @@ replace 5 lines</div>
 </aside>
 <p>启动解释器并输入一些表达式。查看它是如何正确处理优先级和结合性的?这对于不到200行代码来说已经很不错了。</p>
 <div class="challenges">
-<h2><a href="#挑战" id="挑战"><small>6&#8202;.&#8202;5</small>挑战</a></h2>
+<h2><a href="#challenges" id="challenges">Challenges</a></h2>
 <ol>
 <li>
 <p>在C语言中，块是一种语句形式，它允许你把一系列的语句打包作为一个语句来使用。<a href="https://en.wikipedia.org/wiki/Comma_operator">逗号运算符</a>是表达式的类似语法。可以在需要单个表达式的地方给出以逗号分隔的表达式序列(函数调用的参数列表除外)。在运行时，逗号操作符计算左操作数并丢弃结果。然后计算并返回右操作数。</p>
@@ -729,7 +731,7 @@ replace 5 lines</div>
 </ol>
 </div>
 <div class="design-note">
-<h2><a href="#设计笔记逻辑与历史" id="设计笔记逻辑与历史"><small>6&#8202;.&#8202;6</small>设计笔记:逻辑与历史</a></h2>
+<h2><a href="#design-note" id="design-note">Design Note: 逻辑与历史</a></h2>
 <p>假设我们决定在Lox中添加位元<code>&amp;</code>和<code>|</code>运算符。我们应该将它们放在优先级层次结构的哪个位置？ C（以及大多数跟随C语言步伐的语言）将它们放在<code>==</code>之下。 目前普遍认为这是一个错误，因为这意味着检测标志位等常用操作都需要加括号。</p>
 <div class="codehilite"><pre><span class="k">if</span> (<span class="i">flags</span> &amp; <span class="a">FLAG_MASK</span> == <span class="a">SOME_FLAG</span>) { ... } <span class="c">// Wrong.</span>
 <span class="k">if</span> ((<span class="i">flags</span> &amp; <span class="a">FLAG_MASK</span>) == <span class="a">SOME_FLAG</span>) { ... } <span class="c">// Right.</span>

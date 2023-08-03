@@ -44,8 +44,9 @@
     <li><a href="#识别词素"><small>4.5</small> 识别词素</a></li>
     <li><a href="#更长的词素"><small>4.6</small> 更长的词素</a></li>
     <li><a href="#保留字和标识符"><small>4.7</small> 保留字和标识符</a></li>
-    <li><a href="#挑战"><small>4.8</small> 挑战</a></li>
-    <li><a href="#设计须知-隐式分号"><small>4.9</small> 设计须知: 隐式分号</a></li>
+    <li class="divider"></li>
+    <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small>隐式分号</a></li>
 </ul>
 
 
@@ -77,8 +78,9 @@
     <li><a href="#识别词素"><small>4.5</small> 识别词素</a></li>
     <li><a href="#更长的词素"><small>4.6</small> 更长的词素</a></li>
     <li><a href="#保留字和标识符"><small>4.7</small> 保留字和标识符</a></li>
-    <li><a href="#挑战"><small>4.8</small> 挑战</a></li>
-    <li><a href="#设计须知-隐式分号"><small>4.9</small> 设计须知: 隐式分号</a></li>
+    <li class="divider"></li>
+    <li class="end-part"><a href="#challenges">Challenges</a></li>
+    <li class="end-part"><a href="#design-note"><small>note</small>隐式分号</a></li>
 </ul>
 
 
@@ -819,7 +821,7 @@ replace 1 line</div>
 <p>如果匹配,我们就是用该关键字的标记类型。否则，他就是一个普通的用户定义的标识符。</p>
 <p>至此，我们现在有了一个完整的Lox词法扫描器。启动 REPL ，输入一些有效和无效的代码。它是否产生您期望的标记？试着想出一些有趣的边界情况，看看它是否能够正确处理它们。</p>
 <div class="challenges">
-<h2><a href="#挑战" id="挑战"><small>4&#8202;.&#8202;8</small>挑战</a></h2>
+<h2><a href="#challenges" id="challenges">Challenges</a></h2>
 <ol>
 <li>
 <p>Python 和 Haskell 的词法是非 <em>正则</em> 的。这是什么意思，为什么它们不是呢？</p>
@@ -837,7 +839,7 @@ replace 1 line</div>
 </ol>
 </div>
 <div class="design-note">
-<h2><a href="#设计须知-隐式分号" id="设计须知-隐式分号"><small>4&#8202;.&#8202;9</small>设计须知: 隐式分号</a></h2>
+<h2><a href="#design-note" id="design-note">Design Note: 隐式分号</a></h2>
 <p>现在的程序员已经被越来越多的语言选择宠坏了，对语法也变得挑剔起来。他们希望自己的语言看起来干净、现代化。几乎每一种新语言都会放弃这个小的语法点（有些古老的语言如BASIC从来没有过），那就是 <code>;</code> 作为一个显式的语句终止符。</p>
 <p>相对地，它们将“有意义的”换行符看作是语句结束符。&ldquo;有意义的地方 &ldquo;这部分是具有挑战性的。尽管<em>大多数的</em>语句都是在同一行，但有时你需要将一条语句扩展到多行。这些混杂的换行符不应该被当作终止符来处理。</p>
 <p>大多数明显应该忽略换行的情况都很容易发现，但也有一些讨厌的情况。</p>

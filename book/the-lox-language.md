@@ -722,7 +722,7 @@ class Brunch < Breakfast {
 
 <div class="challenges">
 
-## 挑战
+## Challenges
 
 1. 编写一些 Lox 程序并运行它们（你可以使用[my repository][repo]中的Lox的实现）。试着想出我在这里没有说明的边界情况。它能做到你所期望的吗？为什么？
 
@@ -734,7 +734,7 @@ class Brunch < Breakfast {
 
 <div class="design-note">
 
-## 设计须知:表达式和语句
+## Design Note: 表达式和语句
 
 Lox既有表达式也有语句。有些语言省略了后者。相反，它们也将声明和控制流结构视为表达式。这些“一切都是表达式”语言往往具有函数式的血统，包括大多数Lisp、SML、Haskell、Ruby和CoffeeScript。
 

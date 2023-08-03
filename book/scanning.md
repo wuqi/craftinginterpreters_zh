@@ -502,7 +502,7 @@ that `<=` should be scanned as a single `<=` token and not `<` followed by `=`.
 
 <div class="challenges">
 
-## 挑战
+## Challenges
 
 1.  Python 和 Haskell 的词法是非 *正则* 的。这是什么意思，为什么它们不是呢？
 
@@ -518,7 +518,7 @@ that `<=` should be scanned as a single `<=` token and not `<` followed by `=`.
 
 <div class="design-note">
 
-## 设计须知: 隐式分号
+## Design Note: 隐式分号
 
 现在的程序员已经被越来越多的语言选择宠坏了，对语法也变得挑剔起来。他们希望自己的语言看起来干净、现代化。几乎每一种新语言都会放弃这个小的语法点（有些古老的语言如BASIC从来没有过），那就是 `;` 作为一个显式的语句终止符。
 
