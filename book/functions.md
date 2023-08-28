@@ -1,16 +1,8 @@
-> And that is also the way the human mind works -- by the compounding of old
-> ideas into new structures that become new ideas that can themselves be used in
-> compounds, and round and round endlessly, growing ever more remote from the
-> basic earthbound imagery that is each language's soil.
+> 这也是人类思维的方式——通过将旧的思想结合成新的结构，形成新的思想，这些新的思想又可以用于组合，如此循环往复，越来越远离每种语言的基本地球意象作为土壤。
 >
-> <cite>Douglas R. Hofstadter, <em>I Am a Strange Loop</em></cite>
+> <cite>侯世达, <em>我是个怪圈</em></cite>
 
-This chapter marks the culmination of a lot of hard work. The previous chapters
-add useful functionality in their own right, but each also supplies a piece of a
-<span name="lambda">puzzle</span>. We'll take those pieces -- expressions,
-statements, variables, control flow, and lexical scope -- add a couple more, and
-assemble them all into support for real user-defined functions and function
-calls.
+这一章是我们辛勤工作的巅峰。前面的章节分别提供了有用的功能，但同时也像是一个个<span name="lambda">拼图</span>，为我们准备了一些必要的元素。现在，我们将把这些元素——表达式、语句、变量、控制流和词法作用域——再加上一些其他的，像是把拼图拼凑在一起一样，最终构建出支持真正的用户自定义函数和函数调用的功能。
 
 <aside name="lambda">
 
@@ -18,25 +10,19 @@ calls.
 
 </aside>
 
-## Function Calls
+## 函数调用
 
-You're certainly familiar with C-style function call syntax, but the grammar is
-more subtle than you may realize. Calls are typically to named functions like:
+你对C风格的函数调用语法肯定非常熟悉，但是实际上，它的语法比你所意识到的要更加微妙。函数调用通常是针对具名函数的，例如：
 
 ```lox
 average(1, 2);
 ```
 
-But the <span name="pascal">name</span> of the function being called isn't
-actually part of the call syntax. The thing being called -- the **callee** --
-can be any expression that evaluates to a function. (Well, it does have to be a
-pretty *high precedence* expression, but parentheses take care of that.) For
-example:
+然而，被调用的函数的<span name="pascal">名称</span>实际上并不是调用语法的一部分。被调用的对象，也就是**被调用者**（**callee**），可以是任何能够产生函数的表达式。（当然，它必须是一个*优先级相当高*的表达式，但是这个问题可以通过括号来解决。）举个例子：
 
 <aside name="pascal">
 
-The name *is* part of the call syntax in Pascal. You can call only named
-functions or functions stored directly in variables.
+在Pascal中，函数的名称*确实是*调用语法的一部分。你只能调用具有名称的函数或直接存储在变量中的函数。
 
 </aside>
 
@@ -44,15 +30,9 @@ functions or functions stored directly in variables.
 getCallback()();
 ```
 
-There are two call expressions here. The first pair of parentheses has
-`getCallback` as its callee. But the second call has the entire `getCallback()`
-expression as its callee. It is the parentheses following an expression that
-indicate a function call. You can think of a call as sort of like a postfix
-operator that starts with `(`.
+这里有两个调用表达式。第一对括号中的被调用者是`getCallback`函数。而第二个调用中，整个 `getCallback()` 表达式都作为了被调用者。在一个表达式后面的括号表示函数的调用。可以将调用看作是一种类似以`(`括号开头的后缀运算符操作。
 
-This "operator" has higher precedence than any other operator, even the unary
-ones. So we slot it into the grammar by having the `unary` rule bubble up to a
-new `call` rule.
+这个“运算符”比其他任何运算符都具有更高的优先级，甚至比一元运算符还要高。所以我们通过一个新的 `call` 规则，把一元运算符`unary`的规则提升了一下，将其纳入语法中。
 
 <span name="curry"></span>
 
@@ -61,24 +41,14 @@ unary          → ( "!" | "-" ) unary | call ;
 call           → primary ( "(" arguments? ")" )* ;
 ```
 
-This rule matches a primary expression followed by zero or more function calls.
-If there are no parentheses, this parses a bare primary expression. Otherwise,
-each call is recognized by a pair of parentheses with an optional list of
-arguments inside. The argument list grammar is:
+该规则匹配一个基本表达式，后面跟着0个或多个函数调用。如果没有括号，则解析一个简单的基本表达式。否则，每一对圆括号都表示一个函数调用，圆括号内有一个可选的参数列表。参数列表语法是：
+
 
 <aside name="curry">
 
-The rule uses `*` to allow matching a series of calls like `fn(1)(2)(3)`. Code
-like that isn't common in C-style languages, but it is in the family of
-languages derived from ML. There, the normal way of defining a function that
-takes multiple arguments is as a series of nested functions. Each function takes
-one argument and returns a new function. That function consumes the next
-argument, returns yet another function, and so on. Eventually, once all of the
-arguments are consumed, the last function completes the operation.
+该规则使用 `*` 来匹配一系列类似 `fn(1)(2)(3)` 的调用。在C风格的语言中，这种代码并不常见，但在从ML演变而来的语言系列中却很常见。在那里，定义一个接受多个参数的函数的常规方式是一系列嵌套函数。每个函数接收一个参数并返回一个新的函数。那个函数消耗下一个参数，再返回另一个函数，依此类推。最终，当所有参数都被消耗完时，最后一个函数完成操作。
 
-This style, called **currying**, after Haskell Curry (the same guy whose first
-name graces that *other* well-known functional language), is baked directly into
-the language syntax so it's not as weird looking as it would be here.
+这种风格被称为**柯里化**，以Haskell Curry命名（他也是那个*另一个*知名函数式语言的名字的来源）。在这种语言中，柯里化被直接嵌入到语法中，所以它看起来并不像在这里一样奇怪。
 
 </aside>
 
@@ -86,184 +56,119 @@ the language syntax so it's not as weird looking as it would be here.
 arguments      → expression ( "," expression )* ;
 ```
 
-This rule requires at least one argument expression, followed by zero or more
-other expressions, each preceded by a comma. To handle zero-argument calls, the
-`call` rule itself considers the entire `arguments` production to be optional.
+这个规则要求至少一个参数表达式，后面可以跟着零个或多个其他表达式，每个表达式之间用逗号分隔。为了处理零参数调用，`call`规则本身将整个`arguments`参数生成式部分视为可选。
 
-I admit, this seems more grammatically awkward than you'd expect for the
-incredibly common "zero or more comma-separated things" pattern. There are some
-sophisticated metasyntaxes that handle this better, but in our BNF and in many
-language specs I've seen, it is this cumbersome.
+我承认，这个句子在语法上似乎比预期中的“零个或多个用逗号分隔的事物”模式更显得笨拙。虽然有一些复杂的元语法可以更好地处理这个问题，但在我们的BNF和我看过的许多语言规范中，它确实显得有些繁琐。
 
-Over in our syntax tree generator, we add a <span name="call-ast">new
-node</span>.
+在我们的语法树生成器中，我们添加一个<span name="call-ast">新节点</span>。
 
 ^code call-expr (1 before, 1 after)
 
 <aside name="call-ast">
 
-The generated code for the new node is in [Appendix II][appendix-call].
+新节点的生成代码在[Appendix II][appendix-call].
 
 [appendix-call]: appendix-ii.html#call-expression
 
 </aside>
 
-It stores the callee expression and a list of expressions for the arguments. It
-also stores the token for the closing parenthesis. We'll use that token's
-location when we report a runtime error caused by a function call.
+它存储了被调用的表达式以及参数表达式的列表。同时，它还保存了右括号的标记。当我们报告由函数调用引起的运行时错误时，我们将使用该标记的位置。
 
 Crack open the parser. Where `unary()` used to jump straight to `primary()`,
 change it to call, well, `call()`.
+打开解析器。在 `unary()` 函数中，原本直接跳转到 `primary()` 函数的地方，将其改为调用`call()`函数。
 
 ^code unary-call (3 before, 1 after)
 
-Its definition is:
+该方法定义为:
 
 ^code call
 
-The code here doesn't quite line up with the grammar rules. I moved a few things
-around to make the code cleaner -- one of the luxuries we have with a
-handwritten parser. But it's roughly similar to how we parse infix operators.
-First, we parse a primary expression, the "left operand" to the call. Then, each
-time we see a `(`, we call `finishCall()` to parse the call expression using the
-previously parsed expression as the callee. The returned expression becomes the
-new `expr` and we loop to see if the result is itself called.
+这段代码与语法规则不完全一致。为了使代码更加清晰，我对其中的一些内容进行了调整，这是手写解析器的一个优势。但它大致与我们解析中缀运算符的方式相似。首先，我们解析一个主表达式，即调用的“左操作数”。然后，每次遇到一个左括号 `(`，我们调用 `finishCall()` 函数来解析调用表达式，使用先前解析的表达式作为被调用者。返回的表达式成为新的 `expr`，然后我们循环判断结果是否被再次调用。
 
 <aside name="while-true">
 
-This code would be simpler as `while (match(LEFT_PAREN))` instead of the silly
-`while (true)` and `break`. Don't worry, it will make sense when we expand the
-parser later to handle properties on objects.
+如果我们将代码改为 `while (match(LEFT_PAREN))`，而不是使用 `while (true)`和 `break`，那么这段代码会更简单。不用担心，当我们稍后扩展解析器以处理对象的属性时，这样的写法会变得更有意义。
 
 </aside>
 
-The code to parse the argument list is in this helper:
+解析参数列表的代码在下面的工具方法中:
 
 ^code finish-call
 
-This is more or less the `arguments` grammar rule translated to code, except
-that we also handle the zero-argument case. We check for that case first by
-seeing if the next token is `)`. If it is, we don't try to parse any arguments.
+这段代码基本上只是将参数`arguments`语法规则转化为代码，不过我们还处理了零参数的情况。我们首先通过检查下一个标记是否为右括号 `)` 来判断是否为零参数的情况。如果是，我们就不尝试解析任何参数。
 
-Otherwise, we parse an expression, then look for a comma indicating that there
-is another argument after that. We keep doing that as long as we find commas
-after each expression. When we don't find a comma, then the argument list must
-be done and we consume the expected closing parenthesis. Finally, we wrap the
-callee and those arguments up into a call AST node.
+否则，我们会解析一个表达式，并查找逗号，以确定该表达式之后是否还有其他参数。只要在每个表达式之后找到逗号，我们就会继续解析下一个参数。当我们找不到逗号时，说明参数列表已经解析完毕，然后我们会消耗掉预期的右括号。最后，我们将被调用者和这些参数封装成一个调用的AST节点。
 
-### Maximum argument counts
 
-Right now, the loop where we parse arguments has no bound. If you want to call a
-function and pass a million arguments to it, the parser would have no problem
-with it. Do we want to limit that?
+### 最大参数数量
 
-Other languages have various approaches. The C standard says a conforming
-implementation has to support *at least* 127 arguments to a function, but
-doesn't say there's any upper limit. The Java specification says a method can
-accept *no more than* <span name="254">255</span> arguments.
+目前，我们解析参数的循环没有设定上限。如果您想调用一个函数并传递一百万个参数，解析器都能处理。我们是否需要对此进行限制？
+
+其他编程语言采取了不同的策略。C语言标准规定，符合规范的实现*至少*要支持将127个参数传递给一个函数，但并未规定上限。而Java规范规定，一个方法*最多*可以接受<span name="254">255</span>个参数。
 
 <aside name="254">
 
-The limit is 25*4* arguments if the method is an instance method. That's because
-`this` -- the receiver of the method -- works like an argument that is
-implicitly passed to the method, so it claims one of the slots.
-
+如果方法是实例方法，参数限制为25*4*个。这是因为方法的接收者（即`this`关键字）类似于隐式传递给方法的参数，因此它占用了一个参数槽。因此，实例方法最多只能接受254个额外的参数。
 </aside>
 
-Our Java interpreter for Lox doesn't really need a limit, but having a maximum
-number of arguments will simplify our bytecode interpreter in [Part III][]. We
-want our two interpreters to be compatible with each other, even in weird corner
-cases like this, so we'll add the same limit to jlox.
+对于我们的Lox语言的Java解释器来说，实际上并不需要设置限制，但是在[第三部分][Part III]中，为了简化字节码解释器，我们将为其设置一个最大参数数量。我们希望我们的两个解释器能够相互兼容，即使在一些特殊情况下也能如此，因此我们将在jlox中添加相同的限制。
 
 [part iii]: a-bytecode-virtual-machine.html
 
 ^code check-max-arity (1 before, 1 after)
 
-Note that the code here *reports* an error if it encounters too many arguments,
-but it doesn't *throw* the error. Throwing is how we kick into panic mode which
-is what we want if the parser is in a confused state and doesn't know where it
-is in the grammar anymore. But here, the parser is still in a perfectly valid
-state -- it just found too many arguments. So it reports the error and keeps on
-keepin' on.
+请注意，这段代码在遇到过多的参数时会*报告*错误，但不会*抛出*异常。我们使用抛出异常的方式来进入紧急模式，这在解析器处于混乱状态且无法确定自身在语法中的位置时非常有用。但在这里，解析器仍然处于完全有效的状态，只是发现了太多的参数。因此，它会报告错误并继续执行。
 
-### Interpreting function calls
+### 解释函数调用
 
-We don't have any functions we can call, so it seems weird to start implementing
-calls first, but we'll worry about that when we get there. First, our
-interpreter needs a new import.
+我们目前没有可调用的函数，因此在实现函数调用之前似乎有些奇怪，但我们将在那时再考虑这个问题。首先，我们的解释器需要引入新依赖。
 
 ^code import-array-list (1 after)
 
-As always, interpretation starts with a new visit method for our new call
-expression node.
+跟之前一样，解释工作从新的调用表达式节点对应的新的visit方法开始。
 
 ^code visit-call
 
-First, we evaluate the expression for the callee. Typically, this expression is
-just an identifier that looks up the function by its name, but it could be
-anything. Then we evaluate each of the argument expressions in order and store
-the resulting values in a list.
+首先，我们对被调用者的表达式进行求值。通常情况下，这个表达式只是一个通过名称查找函数的标识符，但也可以是其他类型的表达式。然后，我们按顺序对每个参数表达式进行求值，并将结果值存储在一个列表中。
 
 <aside name="in-order">
 
-This is another one of those subtle semantic choices. Since argument expressions
-may have side effects, the order they are evaluated could be user visible. Even
-so, some languages like Scheme and C don't specify an order. This gives
-compilers freedom to reorder them for efficiency, but means users may be
-unpleasantly surprised if arguments aren't evaluated in the order they expect.
+这是另一个微妙的语义选择。由于参数表达式可能具有副作用，它们的求值顺序可能对用户可见。尽管如此，一些语言（如Scheme和C）并没有规定求值顺序。这给了编译器在效率上重新排序的自由，但也意味着如果参数的求值顺序与用户期望的不一致，用户可能会感到不愉快。
 
 </aside>
 
-Once we've got the callee and the arguments ready, all that remains is to
-perform the call. We do that by casting the callee to a <span
-name="callable">LoxCallable</span> and then invoking a `call()` method on it.
-The Java representation of any Lox object that can be called like a function
-will implement this interface. That includes user-defined functions, naturally,
-but also class objects since classes are "called" to construct new instances.
-We'll also use it for one more purpose shortly.
+一旦我们准备好了被调用者和参数，剩下的就是执行调用操作。我们通过将被调用者转换为<span name="callable">LoxCallable</span>类型，并在其上调用`call()`方法来实现这一操作。在Java中，任何可以像函数一样被调用的Lox对象都会实现这个接口。这包括用户定义的函数，当然也包括类对象，因为类被“调用”来构造新的实例。不久之后，我们还将使用它来完成另一个目的。
 
 <aside name="callable">
 
-I stuck "Lox" before the name to distinguish it from the Java standard library's
-own Callable interface. Alas, all the good simple names are already taken.
+我在名称前面加上了"Lox"以区分它与Java标准库自己的Callable接口。然而，很遗憾，所有好用简单名称都已经被占用了。
 
 </aside>
 
-There isn't too much to this new interface.
+这个新接口中没有太多内容。
 
 ^code callable
 
-We pass in the interpreter in case the class implementing `call()` needs it. We
-also give it the list of evaluated argument values. The implementer's job is
-then to return the value that the call expression produces.
+为了满足实现`call()`方法的类的需求，我们将解释器作为参数传入。同时，我们还将已求值的参数值列表传递给它。实现者的任务是返回调用表达式的结果值。
 
-### Call type errors
+### 调用类型错误
 
-Before we get to implementing LoxCallable, we need to make the visit method a
-little more robust. It currently ignores a couple of failure modes that we can't
-pretend won't occur. First, what happens if the callee isn't actually something
-you can call? What if you try to do this:
+在开始实现LoxCallable之前，我们需要让visit方法更加健壮。目前，它忽略了一些不可忽视的失败情况。首先，如果被调用者实际上不是可调用的对象，会发生什么？如果你尝试这样做：
 
 ```lox
 "totally not a function"();
 ```
 
-Strings aren't callable in Lox. The runtime representation of a Lox string is a
-Java string, so when we cast that to LoxCallable, the JVM will throw a
-ClassCastException. We don't want our interpreter to vomit out some nasty Java
-stack trace and die. Instead, we need to check the type ourselves first.
+在Lox中，字符串是不可调用的。Lox字符串在运行时被表示为Java字符串，因此当我们将其强制转换为LoxCallable时，JVM会抛出ClassCastException。我们不希望我们的解释器输出一些恶心的Java堆栈跟踪信息并终止运行。因此，我们需要先自己检查类型。
 
 ^code check-is-callable (2 before, 1 after)
 
-We still throw an exception, but now we're throwing our own exception type, one
-that the interpreter knows to catch and report gracefully.
+我们仍然会抛出异常，但现在我们抛出的是我们自己定义的异常类型，解释器知道如何捕获并进行优雅的报告。
 
-### Checking arity
+### 检查参数个数
 
-The other problem relates to the function's **arity**. Arity is the fancy term
-for the number of arguments a function or operation expects. Unary operators
-have arity one, binary operators two, etc. With functions, the arity is
-determined by the number of parameters it declares.
+另一个问题与函数的**arity**（参数个数）有关。Arity是指函数或操作所期望的参数个数的术语。一元操作符的arity为1，二元操作符为2，依此类推。对于函数来说，arity由其声明的参数个数决定。
 
 ```lox
 fun add(a, b, c) {
@@ -271,179 +176,93 @@ fun add(a, b, c) {
 }
 ```
 
-This function defines three parameters, `a`, `b`, and `c`, so its arity is
-three and it expects three arguments. So what if you try to call it like this:
+这个函数定义了三个参数，分别是`a`, `b`和`c`，因此它的arity（参数个数）为三，期望接收三个参数。那么如果你尝试像这样调用它：
 
 ```lox
 add(1, 2, 3, 4); // Too many.
 add(1, 2);       // Too few.
 ```
 
-Different languages take different approaches to this problem. Of course, most
-statically typed languages check this at compile time and refuse to compile the
-code if the argument count doesn't match the function's arity. JavaScript
-discards any extra arguments you pass. If you don't pass enough, it fills in the
-missing parameters with the magic sort-of-like-null-but-not-really value
-`undefined`. Python is stricter. It raises a runtime error if the argument list
-is too short or too long.
+不同的编程语言对这个问题采取不同的方法。当然，大多数静态类型的语言在编译时会检查参数个数是否与函数的arity相匹配，如果不匹配，就会拒绝编译代码。JavaScript会丢弃你传递的任何额外参数。如果你没有传递足够的参数，它会用一种类似于`null`但又不完全相同的特殊值`undefined`来填充缺失的参数。Python则更为严格，如果参数列表过短或过长，它会引发运行时错误。
 
-I think the latter is a better approach. Passing the wrong number of arguments
-is almost always a bug, and it's a mistake I do make in practice. Given that,
-the sooner the implementation draws my attention to it, the better. So for Lox,
-we'll take Python's approach. Before invoking the callable, we check to see if
-the argument list's length matches the callable's arity.
+我认为后者是一个更好的方法。传递错误数量的参数几乎总是一个bug，而且在实践中我确实会犯这个错误。鉴于此，实现能够尽早引起我的注意是更好的。因此，对于Lox，我们将采用Python的方法，在调用可调用对象之前，我们会检查参数列表的长度是否与可调用对象的arity相匹配。
 
 ^code check-arity (1 before, 1 after)
 
-That requires a new method on the LoxCallable interface to ask it its arity.
+这需要在LoxCallable接口上添加一个新的方法来查询它的arity。
 
 ^code callable-arity (1 before, 1 after)
 
-We *could* push the arity checking into the concrete implementation of `call()`.
-But, since we'll have multiple classes implementing LoxCallable, that would end
-up with redundant validation spread across a few classes. Hoisting it up into
-the visit method lets us do it in one place.
+我们*可以*将arity检查推入到`call()`的具体实现中。然而，由于我们将有多个类实现LoxCallable接口，这将导致冗余的验证分散在几个类中。将其提升到`visit`方法中可以让我们在一个地方完成。
 
-## Native Functions
+## 原生函数
 
-We can theoretically call functions, but we have no functions to call yet.
-Before we get to user-defined functions, now is a good time to introduce a vital
-but often overlooked facet of language implementations -- <span
-name="native">**native functions**</span>. These are functions that the
-interpreter exposes to user code but that are implemented in the host language
-(in our case Java), not the language being implemented (Lox).
+理论上，我们可以调用函数，但是目前还没有可供调用的函数。在我们开始使用用户定义的函数之前，现在是介绍语言实现中一个重要但经常被忽视的方面的好时机——<span name="native">**原生函数**</span>。这些函数是解释器向用户代码公开的，但是它们是在宿主语言（在我们的例子中是Java），而不是正在实现的语言（Lox）中实现的。
 
-Sometimes these are called **primitives**, **external functions**, or **foreign
-functions**. Since these functions can be called while the user's program is
-running, they form part of the implementation's runtime. A lot of programming
-language books gloss over these because they aren't conceptually interesting.
-They're mostly grunt work.
+有时候这些被称为**原语**、**外部函数**或**外来函数**(**primitives**, **external functions**,  **foreign functions**)。由于这些函数可以在用户程序运行时调用，它们是实现的运行时的一部分。很多编程语言书籍对这些内容只是简单带过，因为它们在概念上很无聊。它们主要是一些苦力活。
 
 <aside name="native">
 
-Curiously, two names for these functions -- "native" and "foreign" -- are
-antonyms. Maybe it depends on the perspective of the person choosing the term.
-If you think of yourself as "living" within the runtime's implementation (in our
-case, Java) then functions written in that are "native". But if you have the
-mindset of a *user* of your language, then the runtime is implemented in some
-other "foreign" language.
+有趣的是，对于这些函数有两个名称——“native”和“foreign”，它们是反义词。也许这取决于选择术语的人的观点。如果你将自己视为运行时实现中的“居民”（在我们的例子中是Java），那么在该实现中编写的函数就是“native”的。但是，如果你以使用你的语言的*用户*的心态来看，那么运行时是用其他一种“foreign”语言实现的。
 
-Or it may be that "native" refers to the machine code language of the underlying
-hardware. In Java, "native" methods are ones implemented in C or C++ and
-compiled to native machine code.
+或者，"native"可能指的是底层硬件的机器码语言。在Java中，"native"方法是指用C或C++实现并编译为本机机器码的方法。
 
 <img src="image/functions/foreign.png" class="above" alt="All a matter of perspective." />
 
 </aside>
 
-But when it comes to making your language actually good at doing useful stuff,
-the native functions your implementation provides are key. They provide access
-to the fundamental services that all programs are defined in terms of. If you
-don't provide native functions to access the file system, a user's going to have
-a hell of a time writing a program that reads and <span
-name="print">displays</span> a file.
+然而，要使你的语言在执行有用的任务方面表现出色，你的实现所提供的原生函数至关重要。它们提供了访问所有程序所依赖的基本服务的能力。如果你没有提供原生函数来访问文件系统，用户将会在编写一个读取和<span name="print">显示</span>文件的程序时遇到很多困难。
 
 <aside name="print">
 
-A classic native function almost every language provides is one to print text to
-stdout. In Lox, I made `print` a built-in statement so that we could get stuff
-on screen in the chapters before this one.
+几乎每种编程语言都提供了一个经典的原生函数，用于将文本打印到标准输出(stdout)。在Lox语言中，我将`print`作为一个内置语句，这样我们就可以在之前的章节中将内容显示在屏幕上。
 
-Once we have functions, we could simplify the language by tearing out the old
-print syntax and replacing it with a native function. But that would mean that
-examples early in the book wouldn't run on the interpreter from later chapters
-and vice versa. So, for the book, I'll leave it alone.
+一旦我们有了函数，通过用原生函数替换旧的打印语法，我们可以简化语言。但这意味着本书早期的示例无法在后面章节的解释器上运行，反之亦然。因此，为了本书的连贯性，我将保持原样，不对打印语法进行修改。
 
-If you're building an interpreter for your *own* language, though, you may want
-to consider it.
-
+如果您正在构建*自己的*语言解释器，那么您可能需要考虑这一点。
 </aside>
 
-Many languages also allow users to provide their own native functions. The
-mechanism for doing so is called a **foreign function interface** (**FFI**),
-**native extension**, **native interface**, or something along those lines.
-These are nice because they free the language implementer from providing access
-to every single capability the underlying platform supports. We won't define an
-FFI for jlox, but we will add one native function to give you an idea of what it
-looks like.
+许多编程语言还提供了自定义本地函数的功能。这种机制被称为外部函数接口（FFI）、本机扩展、本机接口（**foreign function interface** (**FFI**),**native extension**, **native interface**）或类似的名称。这些机制非常有用，因为它们使语言的实现者无需为底层平台所支持的每个功能都提供访问接口。虽然在jlox中我们不会定义一个FFI，但我们会添加一个本地函数，以便让您了解其使用方式。
 
-### Telling time
+### 计时
 
-When we get to [Part III][] and start working on a much more efficient
-implementation of Lox, we're going to care deeply about performance. Performance
-work requires measurement, and that in turn means **benchmarks**. These are
-programs that measure the time it takes to exercise some corner of the
-interpreter.
+当我们进入[第三部分][Part III]并开始对Lox进行更高效的实现时，我们将非常关注性能。性能优化需要进行测量，而测量则需要使用**基准测试**。基准测试是用来测量解释器在执行某个特定部分时所需的时间的程序。
 
-We could measure the time it takes to start up the interpreter, run the
-benchmark, and exit, but that adds a lot of overhead -- JVM startup time, OS
-shenanigans, etc. That stuff does matter, of course, but if you're just trying
-to validate an optimization to some piece of the interpreter, you don't want
-that overhead obscuring your results.
+我们可以测量启动解释器、运行基准测试和退出所需的时间，但这会增加很多开销，例如JVM启动时间和操作系统的干扰等。当然，这些都是重要的因素，但如果你只是想验证对解释器某个部分的优化效果，你不希望这些开销模糊了你的结果。
 
-A nicer solution is to have the benchmark script itself measure the time elapsed
-between two points in the code. To do that, a Lox program needs to be able to
-tell time. There's no way to do that now -- you can't implement a useful clock
-"from scratch" without access to the underlying clock on the computer.
+一个更好的解决方案是让基准测试脚本自己来测量代码中两个时间点之间的经过时间。为了实现这一点，Lox程序需要能够获取时间。目前没有办法做到这一点-在没有访问计算机底层时钟的情况下，你无法“从头开始”实现一个有用的时钟。
 
-So we'll add `clock()`, a native function that returns the number of seconds
-that have passed since some fixed point in time. The difference between two
-successive invocations tells you how much time elapsed between the two calls.
-This function is defined in the global scope, so let's ensure the interpreter
-has access to that.
+因此，我们将添加一个名为 `clock()` 的本地函数，它返回自某个固定时间点以来经过的秒数。连续两次调用之间的差值告诉您两次调用之间经过的时间。这个函数被定义在全局作用域内，以确保解释器能够访问这个函数。
 
 ^code global-environment (2 before, 2 after)
 
-The `environment` field in the interpreter changes as we enter and exit local
-scopes. It tracks the *current* environment. This new `globals` field holds a
-fixed reference to the outermost global environment.
+随着我们进入和退出局部作用域，解释器中的`environment`字段会发生变化。它用于跟踪*当前的*环境。而新加的`globals`字段则持有对最外层全局环境的固定引用。
 
-When we instantiate an Interpreter, we stuff the native function in that global
-scope.
+当我们实例化一个解释器时，我们将本地函数放入该全局作用域中。
 
 ^code interpreter-constructor (2 before, 1 after)
 
-This defines a <span name="lisp-1">variable</span> named "clock". Its value is a
-Java anonymous class that implements LoxCallable. The `clock()` function takes
-no arguments, so its arity is zero. The implementation of `call()` calls the
-corresponding Java function and converts the result to a double value in
-seconds.
+以下代码段定义了一个名为"clock"的<span name="lisp-1">变量</span>。它的值是一个实现了LoxCallable接口的Java匿名类。 `clock()`函数没有任何参数，因此它的参数个数为零。在`call()`方法的实现中，调用了相应的Java函数，并将结果转换为以秒为单位的double值。
 
 <aside name="lisp-1">
 
-In Lox, functions and variables occupy the same namespace. In Common Lisp, the
-two live in their own worlds. A function and variable with the same name don't
-collide. If you call the name, it looks up the function. If you refer to it, it
-looks up the variable. This does require jumping through some hoops when you do
-want to refer to a function as a first-class value.
+在Lox中，函数和变量共享同一个命名空间。而在Common Lisp中，它们存在于各自独立的命名空间中，相同名称的函数和变量不会发生冲突。当调用一个名称时，Lox会查找函数，而在Common Lisp中，它会查找变量。当需要将函数作为一等值引用时，在Lox中需要额外的步骤。
 
-Richard P. Gabriel and Kent Pitman coined the terms "Lisp-1" to refer to
-languages like Scheme that put functions and variables in the same namespace,
-and "Lisp-2" for languages like Common Lisp that partition them. Despite being
-totally opaque, those names have since stuck. Lox is a Lisp-1.
+术语"Lisp-1"和"Lisp-2"由Richard P. Gabriel和Kent Pitman创造，用来区分将函数和变量放置在同一命名空间中的语言（如Scheme），以及将它们分开的语言（如Common Lisp）。尽管这些术语有些晦涩，但它们已经被广泛接受。Lox属于Lisp-1语言。
 
 </aside>
 
-If we wanted to add other native functions -- reading input from the user,
-working with files, etc. -- we could add them each as their own anonymous class
-that implements LoxCallable. But for the book, this one is really all we need.
+如果我们想要添加其他的原生函数，例如从用户读取输入、处理文件等，我们可以将它们作为各自的匿名类添加，这些类需要实现LoxCallable接口。然而，在本书中，我们只需要这一个函数就足够了。
 
-Let's get ourselves out of the function-defining business and let our users
-take over...
+让我们从函数定义的事务中解脱出来，由用户来接管吧。
 
-## Function Declarations
+## 函数声明
 
-We finally get to add a new production to the `declaration` rule we introduced
-back when we added variables. Function declarations, like variables, bind a new
-<span name="name">name</span>. That means they are allowed only in places where
-a declaration is permitted.
+我们终于可以在我们添加变量时引入的`declaration`规则中添加一个新的产生式了。函数声明和变量一样，都会绑定一个新的<span name="name">名称</span>。这意味着它们只能在允许声明的地方出现。
 
 <aside name="name">
 
-A named function declaration isn't really a single primitive operation. It's
-syntactic sugar for two distinct steps: (1) creating a new function object, and
-(2) binding a new variable to it. If Lox had syntax for anonymous functions, we
-wouldn't need function declaration statements. You could just do:
+一个命名函数声明并不是一个单一的原始操作。它实际上是两个不同步骤的语法糖：(1) 创建一个新的函数对象，和 (2) 将一个新的变量与之绑定。如果 Lox 有匿名函数的语法，我们就不需要函数声明语句了。你可以直接这样做：
 
 ```lox
 var add = fun (a, b) {
@@ -451,8 +270,7 @@ var add = fun (a, b) {
 };
 ```
 
-However, since named functions are the common case, I went ahead and gave Lox
-nice syntax for them.
+然而，考虑到命名函数是常见情况，我决定为 Lox 提供更友好的语法。
 
 </aside>
 
@@ -462,136 +280,97 @@ declaration    → funDecl
                | statement ;
 ```
 
-The updated `declaration` rule references this new rule:
+更新后的 `declaration` 引用了下面的新规则：
 
 ```ebnf
 funDecl        → "fun" function ;
 function       → IDENTIFIER "(" parameters? ")" block ;
 ```
 
-The main `funDecl` rule uses a separate helper rule `function`. A function
-*declaration statement* is the `fun` keyword followed by the actual function-y
-stuff. When we get to classes, we'll reuse that `function` rule for declaring
-methods. Those look similar to function declarations, but aren't preceded by
-<span name="fun">`fun`</span>.
+主要的 `funDecl` 规则使用了一个单独的辅助规则 `function`。 *函数声明语句*是fun关键字后跟实际的函数体内容。等到我们实现类的时候，将会复用 `function` 规则来声明方法。这些方法与函数声明类似，但是前面没有<span name="fun">`fun`</span>。
 
 <aside name="fun">
 
-Methods are too classy to have fun.
+方法太高雅了，不需要`fun`。
 
 </aside>
 
-The function itself is a name followed by the parenthesized parameter list and
-the body. The body is always a braced block, using the same grammar rule that
-block statements use. The parameter list uses this rule:
+函数本身由名称、带括号的参数列表和函数体组成。函数体始终是一个用大括号括起来的块，使用与块语句相同的语法规则。参数列表遵循以下规则：
 
 ```ebnf
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 ```
 
-It's like the earlier `arguments` rule, except that each parameter is an
-identifier, not an expression. That's a lot of new syntax for the parser to chew
-through, but the resulting AST <span name="fun-ast">node</span> isn't too bad.
+这就类似于前面的 `arguments` 规则，区别在于参数是一个标识符，而不是一个表达式。虽然解析器需要处理很多新的语法，但生成的 AST <span name="fun-ast">节点</span>并不太复杂。 
+
 
 ^code function-ast (1 before, 1 after)
 
 <aside name="fun-ast">
 
-The generated code for the new node is in [Appendix II][appendix-fun].
+新节点生成的代码位于 [Appendix II][appendix-fun].
 
 [appendix-fun]: appendix-ii.html#function-statement
 
 </aside>
 
-A function node has a name, a list of parameters (their names), and then the
-body. We store the body as the list of statements contained inside the curly
-braces.
+函数节点包括名称、参数列表（参数的名称）和函数体。我们将函数体存储为包含在大括号内的语句列表。
 
-Over in the parser, we weave in the new declaration.
+在解析器中，我们把新的声明添加进去。
 
 ^code match-fun (1 before, 1 after)
 
-Like other statements, a function is recognized by the leading keyword. When we
-encounter `fun`, we call `function`. That corresponds to the `function` grammar
-rule since we already matched and consumed the `fun` keyword. We'll build the
-method up a piece at a time, starting with this:
+与其他语句类似，函数通过前导关键字进行识别。当我们遇到`fun`时，我们就调用`function`。这对应于`function`的语法规则，因为我们已经匹配并消耗了`fun`关键字。我们将逐步构建这个方法，首先从这里开始：
 
 ^code parse-function
 
-Right now, it only consumes the identifier token for the function's name. You
-might be wondering about that funny little `kind` parameter. Just like we reuse
-the grammar rule, we'll reuse the `function()` method later to parse methods
-inside classes. When we do that, we'll pass in "method" for `kind` so that the
-error messages are specific to the kind of declaration being parsed.
+目前，它只消耗函数名称的标识符令牌。你可能对那个奇怪的`kind`参数感到好奇。就像我们复用语法规则一样，稍后我们将重用`function()`方法来解析类内的方法。到时候，我们将传入"method"作为`kind`，这样错误消息就可以与正在解析的声明类型相关联了。
 
-Next, we parse the parameter list and the pair of parentheses wrapped around it.
+接下来，我们要解析参数列表和包裹着它们的一对小括号。
+
 
 ^code parse-parameters (1 before, 1 after)
 
-This is like the code for handling arguments in a call, except not split out
-into a helper method. The outer `if` statement handles the zero parameter case,
-and the inner `while` loop parses parameters as long as we find commas to
-separate them. The result is the list of tokens for each parameter's name.
+这段代码的作用类似于处理函数调用中的参数，只是没有将其拆分成一个辅助方法。外部的if语句处理没有参数的情况，而内部的while循环在找到逗号分隔符时解析参数。最终的结果是每个参数名称的令牌列表。
 
-Just like we do with arguments to function calls, we validate at parse time
-that you don't exceed the maximum number of parameters a function is allowed to
-have.
+和我们对函数调用的参数时一样，我们在解析时验证是否超过了函数允许的最大参数数量。
 
-Finally, we parse the body and wrap it all up in a function node.
+最后，我们解析函数体，并将所有内容包装在一个函数节点中。
 
 ^code parse-body (1 before, 1 after)
 
-Note that we consume the `{` at the beginning of the body here before calling
-`block()`. That's because `block()` assumes the brace token has already been
-matched. Consuming it here lets us report a more precise error message if the
-`{` isn't found since we know it's in the context of a function declaration.
+请注意，在调用`block()`方法之前，我们在这里先消耗了函数体开头的 `{` 符号。这是因为`block()`函数假设大括号符号已经匹配。通过在这里消耗它，我们可以在找不到 `{` 符号时提供更精确的错误信息，因为我们知道它是在函数声明的上下文中。
 
-## Function Objects
 
-We've got some syntax parsed so usually we're ready to interpret, but first we
-need to think about how to represent a Lox function in Java. We need to keep
-track of the parameters so that we can bind them to argument values when the
-function is called. And, of course, we need to keep the code for the body of the
-function so that we can execute it.
+## 函数对象
 
-That's basically what the Stmt.Function class is. Could we just use that?
-Almost, but not quite. We also need a class that implements LoxCallable so that
-we can call it. We don't want the runtime phase of the interpreter to bleed into
-the front end's syntax classes so we don't want Stmt.Function itself to
-implement that. Instead, we wrap it in a new class.
+我们已经解析了一些语法，通常情况下我们准备好进行解释了，但首先我们需要考虑如何在Java中表示一个Lox函数。我们需要跟踪形参，以便在函数被调用时可以将形参与实参值进行绑定。当然，我们还需要保留函数体的代码，以便我们可以执行它。
+
+这其实就是Stmt.Function类的作用。我们能不能直接用它呢？差不多，但还不够完美。我们还需要一个类来实现LoxCallable接口，这样我们才能调用它。我们不想让解释器的运行阶段影响到前端的语法类，所以我们不希望Stmt.Function类本身来实现接口。相反，我们会用一个新的类来包装它。
 
 ^code lox-function
 
-We implement the `call()` of LoxCallable like so:
+我们使用如下方式实现LoxCallable的`call()`方法：
 
 ^code function-call
 
-This handful of lines of code is one of the most fundamental, powerful pieces of
-our interpreter. As we saw in [the chapter on statements and <span
-name="env">state</span>][statements], managing name environments is a core part
-of a language implementation. Functions are deeply tied to that.
+这几行代码是我们解释器中最基础、最强大的部分之一。就像我们在关于[语句和状态][statements]<span name="env">的章节</span>中看到的那样，管理变量环境是语言实现的核心部分。函数与此密切相关。
 
 [statements]: statements-and-state.html
 
 <aside name="env">
 
-We'll dig even deeper into environments in the [next chapter][].
+在[下一章][next chapter]中，我们将更深入地讨论环境的细节。
 
 [next chapter]: resolving-and-binding.html
 
 </aside>
 
-Parameters are core to functions, especially the fact that a function
-*encapsulates* its parameters -- no other code outside of the function can see
-them. This means each function gets its own environment where it stores those
-variables.
+参数是函数的核心，尤其是考虑到函数*封装了*其参数——函数外部的其他代码无法访问它们。这意味着每个函数都有自己的环境，用于存储这些变量。
 
-Further, this environment must be created dynamically. Each function *call* gets
-its own environment. Otherwise, recursion would break. If there are multiple
-calls to the same function in play at the same time, each needs its *own*
-environment, even though they are all calls to the same function.
+此外，该环境必须是动态创建的。每次函数*调用*都会有其自己的环境。否则，递归将会中断。如果同时有多个对同一函数的调用，每个调用都需要有*自己的*环境，即使它们都是对同一函数的调用。
 
-For example, here's a convoluted way to count to three:
+举个例子，下面是一个绕弯子的方法来数到三:
 
 ```lox
 fun count(n) {
@@ -602,21 +381,14 @@ fun count(n) {
 count(3);
 ```
 
-Imagine we pause the interpreter right at the point where it's about to print 1
-in the innermost nested call. The outer calls to print 2 and 3 haven't printed
-their values yet, so there must be environments somewhere in memory that still
-store the fact that `n` is bound to 3 in one context, 2 in another, and 1 in the
-innermost, like:
+想象一下，我们在程序执行的过程中，正好在要打印1的时候暂停了。此时，还没有打印2和3，因此在内存中一定有一些地方存储了 `n` 的值。这些值分别对应不同的上下文，最内层的上下文中n的值是1，中间的上下文中n的值是2，最外层的上下文中n的值是3。就像这样：
 
 <img src="image/functions/recursion.png" alt="A separate environment for each recursive call." />
 
-That's why we create a new environment at each *call*, not at the function
-*declaration*. The `call()` method we saw earlier does that. At the beginning of
-the call, it creates a new environment. Then it walks the parameter and argument
-lists in lockstep. For each pair, it creates a new variable with the parameter's
-name and binds it to the argument's value.
+这就是为什么我们在每次*调用*函数时都会创建一个新的环境，而不是在函数*声明*时创建。我们之前提到的`call()`方法就是负责这个任务的。在调用函数之初，它会创建一个全新的环境。然后，它会按照形参和实参的顺序一一对应地遍历它们。对于每一对形参和实参，它都会用形参的名字创建一个新的变量，并将其与实参的值绑定。
 
-So, for a program like this:
+
+所以，对于类似下面这样的代码：
 
 ```lox
 fun add(a, b, c) {
@@ -626,44 +398,27 @@ fun add(a, b, c) {
 add(1, 2, 3);
 ```
 
-At the point of the call to `add()`, the interpreter creates something like
-this:
+在调用`add()`函数的时候，解释器会创建类似于下面这样的东西：
 
 <img src="image/functions/binding.png" alt="Binding arguments to their parameters." />
 
-Then `call()` tells the interpreter to execute the body of the function in this
-new function-local environment. Up until now, the current environment was the
-environment where the function was being called. Now, we teleport from there
-inside the new parameter space we've created for the function.
+然后，`call()` 告诉解释器在这个新的函数内部环境中执行函数的主体部分。在此之前，当前的环境是函数被调用的环境。现在，我们从那里跳转到我们为函数创建的新的参数空间中。
 
-This is all that's required to pass data into the function. By using different
-environments when we execute the body, calls to the same function with the
-same code can produce different results.
+这就是传递数据到函数中所需要的全部内容。通过在执行函数主体时使用不同的环境，使用相同代码调用同一个函数可以产生不同的结果。
 
-Once the body of the function has finished executing, `executeBlock()` discards
-that function-local environment and restores the previous one that was active
-back at the callsite. Finally, `call()` returns `null`, which returns `nil` to
-the caller. (We'll add return values later.)
+一旦函数的主体执行完毕， `executeBlock()` 会丢弃函数内部的环境，并恢复到之前在调用处处于活动状态的环境。最后，`call()`返回`null`，将`nil`返回给调用者。（稍后我们会添加返回值的功能。）
 
-Mechanically, the code is pretty simple. Walk a couple of lists. Bind some new
-variables. Call a method. But this is where the crystalline *code* of the
-function declaration becomes a living, breathing *invocation*. This is one of my
-favorite snippets in this entire book. Feel free to take a moment to meditate on
-it if you're so inclined.
+就代码本身而言，这段代码非常简单。只需遍历几个列表，绑定一些新变量，调用一个方法。但是，这里是函数声明的*代码*变成了一个*活生生*的调用。这是我在整本书中最喜欢的片段之一。如果你有兴趣的话，可以花点时间来思考一下。
 
-Done? OK. Note when we bind the parameters, we assume the parameter and argument
-lists have the same length. This is safe because `visitCallExpr()` checks the
-arity before calling `call()`. It relies on the function reporting its arity to
-do that.
+搞定了吗？好的。需要注意的是，在绑定参数时，我们假设形参列表和实参列表的长度是相同的。这是安全的，因为在调用`call()`之前，`visitCallExpr()`会检查参数的数量。它依赖于函数报告自己的参数数量来进行判断。
 
 ^code function-arity
 
-That's most of our object representation. While we're in here, we may as well
-implement `toString()`.
+这基本就是我们的函数对象表示了。既然已经到了这一步，我们也可以实现 `toString()`.
 
 ^code function-to-string
 
-This gives nicer output if a user decides to print a function value.
+如果用户要打印函数的值，该方法能提供一个更漂亮的输出值。
 
 ```lox
 fun add(a, b) {
@@ -673,25 +428,17 @@ fun add(a, b) {
 print add; // "<fn add>".
 ```
 
-### Interpreting function declarations
+### 解析函数声明
 
-We'll come back and refine LoxFunction soon, but that's enough to get started.
-Now we can visit a function declaration.
+我们很快就会回来完善LoxFunction，但目前已经足够开始了。现在我们可以开始解析函数声明了。
 
 ^code visit-function
 
-This is similar to how we interpret other literal expressions. We take a
-function *syntax node* -- a compile-time representation of the function -- and
-convert it to its runtime representation. Here, that's a LoxFunction that wraps
-the syntax node.
+这个解释方式跟我们解释其他字面表达式的方式差不多。就像把一个函数的*语法节点*（也就是函数的编译时表示）转换成它的运行时表示一样。在这里，就是用一个包装了语法节点的LoxFunction来表示。
 
-Function declarations are different from other literal nodes in that the
-declaration *also* binds the resulting object to a new variable. So, after
-creating the LoxFunction, we create a new binding in the current environment and
-store a reference to it there.
+函数声明与其他字面量节点不同之处在于，声明*还*会将生成的对象绑定到一个新的变量。因此，在创建LoxFunction之后，我们在当前环境中创建一个新的绑定，并在其中保存对该函数的引用。
 
-With that, we can define and call our own functions all within Lox. Give it a
-try:
+有了这个，我们就可以在Lox中定义和调用自己的函数了。试试看：
 
 ```lox
 fun sayHi(first, last) {
@@ -701,22 +448,16 @@ fun sayHi(first, last) {
 sayHi("Dear", "Reader");
 ```
 
-I don't know about you, but that looks like an honest-to-God programming
-language to me.
+我不知道你怎么想，但对我来说这看起来像是一种真正的编程语言。
 
-## Return Statements
+## Return语句
 
-We can get data into functions by passing parameters, but we've got no way to
-get results back <span name="hotel">*out*</span>. If Lox were an
-expression-oriented language like Ruby or Scheme, the body would be an
-expression whose value is implicitly the function's result. But in Lox, the body
-of a function is a list of statements which don't produce values, so we need
-dedicated syntax for emitting a result. In other words, `return` statements. I'm
-sure you can guess the grammar already.
+我们可以通过传递参数将数据传入函数，但我们无法将结果<span name="hotel">*传出*</span>。如果Lox是一种表达式导向的语言，就像Ruby或Scheme那样，函数体将是一个表达式，其值就是函数的返回值。但在Lox中，函数体是一系列不产生值的语句，因此我们需要专门的语法来返回结果。换句话说，就是`return`语句。我相信你已经猜到语法了。
+
 
 <aside name="hotel">
 
-The Hotel California of data.
+数字加州旅馆。
 
 </aside>
 
@@ -732,16 +473,9 @@ statement      → exprStmt
 returnStmt     → "return" expression? ";" ;
 ```
 
-We've got one more -- the final, in fact -- production under the venerable
-`statement` rule. A `return` statement is the `return` keyword followed by an
-optional expression and terminated with a semicolon.
+我们又得到一个`statement`规则下的新产生式（实际上也是最后一个）。`return`语句由`return`关键字后面跟着一个可选的表达式，并以分号结尾。
 
-The return value is optional to support exiting early from a function that
-doesn't return a useful value. In statically typed languages, "void" functions
-don't return a value and non-void ones do. Since Lox is dynamically typed, there
-are no true void functions. The compiler has no way of preventing you from
-taking the result value of a call to a function that doesn't contain a `return`
-statement.
+返回值是可选的，用于支持提前从不返回有效值的函数中退出。在静态类型的语言中，“void”函数不返回值，而非void函数则返回值。由于Lox是动态类型的，不存在真正的void函数。编译器无法阻止您从不包含 `return` 语句的函数调用中获取结果值。
 
 ```lox
 fun procedure() {
@@ -752,53 +486,40 @@ var result = procedure();
 print result; // ?
 ```
 
-This means every Lox function must return *something*, even if it contains no
-`return` statements at all. We use `nil` for this, which is why LoxFunction's
-implementation of `call()` returns `null` at the end. In that same vein, if you
-omit the value in a `return` statement, we simply treat it as equivalent to:
+这意味着每个Lox函数都必须返回*一些*东西，即使它根本不包含`return`语句。我们使用`nil`来表示这种情况，这就是为什么LoxFunction的`call()`方法在结尾处返回`null`。同样地，如果你省略了 `return` 语句中的值，我们将简单地将其等同于：
 
 ```lox
 return nil;
 ```
 
-Over in our AST generator, we add a <span name="return-ast">new node</span>.
+在AST生成器中，添加一个<span name="return-ast">新节点</span>.
 
 ^code return-ast (1 before, 1 after)
 
 <aside name="return-ast">
 
-The generated code for the new node is in [Appendix II][appendix-return].
+生成新节点的代码位于 [Appendix II][appendix-return].
 
 [appendix-return]: appendix-ii.html#return-statement
 
 </aside>
 
-It keeps the `return` keyword token so we can use its location for error
-reporting, and the value being returned, if any. We parse it like other
-statements, first by recognizing the initial keyword.
+为了能够在出现错误时报告位置以及返回的值（如果有的话），我们保留了`return`关键字的令牌。我们像解析其他语句一样解析它，首先识别出初始关键字。
 
 ^code match-return (1 before, 1 after)
 
-That branches out to:
+分支会跳转到：
 
 ^code parse-return-statement
 
-After snagging the previously consumed `return` keyword, we look for a value
-expression. Since many different tokens can potentially start an expression,
-it's hard to tell if a return value is *present*. Instead, we check if it's
-*absent*. Since a semicolon can't begin an expression, if the next token is
-that, we know there must not be a value.
+在捕获先前消耗的`return`关键字后，我们会寻找一个值表达式。有许多不同的令牌可能会作为表达式的开始，所以很难确定是否*存在*返回值。因此，我们会检查它是否*不存在*。由于分号不能作为表达式的开始，如果下一个标记是分号，我们就知道肯定没有返回值存在。
 
-### Returning from calls
 
-Interpreting a `return` statement is tricky. You can return from anywhere within
-the body of a function, even deeply nested inside other statements. When the
-return is executed, the interpreter needs to jump all the way out of whatever
-context it's currently in and cause the function call to complete, like some
-kind of jacked up control flow construct.
+### 从函数调用中返回
 
-For example, say we're running this program and we're about to execute the
-`return` statement:
+解释 `return` 语句有些棘手。你可以在函数的任何地方返回，甚至在嵌套在其他语句中的深层位置。当执行 `return` 语句时，解释器需要立即跳出当前的上下文，并完成函数调用，就像是某种复杂的控制流结构。
+
+举例来说，假设我们正在运行下面的代码，并且我们即将执行`return`语句：
 
 ```lox
 fun count(n) {
@@ -812,7 +533,7 @@ fun count(n) {
 count(1);
 ```
 
-The Java call stack currently looks roughly like this:
+当前 Java 函数调用栈大概长这样：
 
 ```text
 Interpreter.visitReturnStmt()
@@ -830,45 +551,31 @@ know about you, but to me that sounds like exceptions. When we execute a
 `return` statement, we'll use an exception to unwind the interpreter past the
 visit methods of all of the containing statements back to the code that began
 executing the body.
+我们需要从栈顶一直回溯到 `call()` 函数。我不知道你怎么看，但对我来说，这听起来像是异常处理。当我们执行 `return` 语句时，我们将使用异常来顺利地终止解释器从包含语句的 visit 方法开始的所有操作，直到回到最初执行函数体的那段代码。
 
-The visit method for our new AST node looks like this:
+新的AST节点的visit方法如下：
 
 ^code visit-return
 
-If we have a return value, we evaluate it, otherwise, we use `nil`. Then we take
-that value and wrap it in a custom exception class and throw it.
+如果有返回值，我们会计算它；否则，我们使用 `nil`。接着，我们会将这个值放入一个特定的异常类中并抛出。
 
 ^code return-exception
 
-This class wraps the return value with the accoutrements Java requires for a
-runtime exception class. The weird super constructor call with those `null` and
-`false` arguments disables some JVM machinery that we don't need. Since we're
-using our exception class for <span name="exception">control flow</span> and not
-actual error handling, we don't need overhead like stack traces.
+这个类会将返回值和 Java 运行时异常类所需的其他信息一起封装起来。为了禁用一些我们不需要的 JVM 机制，我们会使用一个奇怪的超级构造函数调用，其中包含了 `null` 和 `false` 参数。由于我们只是将异常类用于<span name="exception">控制流</span>而不是真正的错误处理，所以我们不需要像堆栈跟踪这样的额外开销。
 
 <aside name="exception">
 
-For the record, I'm not generally a fan of using exceptions for control flow.
-But inside a heavily recursive tree-walk interpreter, it's the way to go. Since
-our own syntax tree evaluation is so heavily tied to the Java call stack, we're
-pressed to do some heavyweight call stack manipulation occasionally, and
-exceptions are a handy tool for that.
+记录一下，我通常不喜欢将异常用于控制流。但在一个深度递归的树遍历解释器中，这是必须的。由于我们自己的语法树计算与Java调用栈紧密相关，我们不得不偶尔进行一些重量级的调用栈操作，而异常是一个方便的工具。
 
 </aside>
 
-We want this to unwind all the way to where the function call began, the
-`call()` method in LoxFunction.
+我们希望这个异常能够一直回溯到函数调用开始的地方，也就是LoxFunction中的`call()`方法。
 
 ^code catch-return (3 before, 1 after)
 
-We wrap the call to `executeBlock()` in a try-catch block. When it catches a
-return exception, it pulls out the value and makes that the return value from
-`call()`. If it never catches one of these exceptions, it means the function
-reached the end of its body without hitting a `return` statement. In that case,
-it implicitly returns `nil`.
+我们在执行`executeBlock()` 的调用周围加上了一个`try-catch`块。当它捕获到一个返回异常时，它会提取出值，并将其作为`call()`的返回值。如果它从未捕获到这些异常之一，那就意味着函数在没有遇到返回语句的情况下到达了函数体的末尾。在这种情况下，它会隐式地返回`nil`。
 
-Let's try it out. We finally have enough power to support this classic
-example -- a recursive function to calculate Fibonacci numbers:
+让我们试试看。我们终于有足够的能力来支持这个经典的例子——一个用于计算斐波那契数列的递归函数：
 
 <span name="slow"></span>
 
@@ -883,43 +590,27 @@ for (var i = 0; i < 20; i = i + 1) {
 }
 ```
 
-This tiny program exercises almost every language feature we have spent the past
-several chapters implementing -- expressions, arithmetic, branching, looping,
-variables, functions, function calls, parameter binding, and returns.
+这个小程序涵盖了我们在过去几章中实现的几乎所有语言特性，包括表达式、算术运算、分支、循环、变量、函数、函数调用、参数绑定和返回。
 
 <aside name="slow">
 
-You might notice this is pretty slow. Obviously, recursion isn't the most
-efficient way to calculate Fibonacci numbers, but as a microbenchmark, it does
-a good job of stress testing how fast our interpreter implements function calls.
+你可能会注意到这个过程非常慢。显然，递归不是计算斐波那契数列最高效的方法，但作为一个微基准测试，它很好地测试了我们的解释器在执行函数调用时的速度。
 
-As you can see, the answer is "not very fast". That's OK. Our C interpreter will
-be faster.
+正如你所看到的，答案是“不太快”。没关系，我们的C解释器会更快。
 
 </aside>
 
-## Local Functions and Closures
+## 局部函数和闭包
 
-Our functions are pretty full featured, but there is one hole to patch. In fact,
-it's a big enough gap that we'll spend most of the [next chapter][] sealing it
-up, but we can get started here.
+我们的函数功能相当完善，但还有一个漏洞需要修补。实际上，这个漏洞相当严重，我们将在[下一章][next chapter]花大力气来解决它，但我们可以从这里开始。
 
-LoxFunction's implementation of `call()` creates a new environment where it
-binds the function's parameters. When I showed you that code, I glossed over one
-important point: What is the *parent* of that environment?
+LoxFunction的`call()`实现创建了一个新的环境，将函数的参数绑定到其中。当我向你展示这段代码时，我忽略了一个重要的问题：这个环境的*父级*是什么？
 
-Right now, it is always `globals`, the top-level global environment. That way,
-if an identifier isn't defined inside the function body itself, the interpreter
-can look outside the function in the global scope to find it. In the Fibonacci
-example, that's how the interpreter is able to look up the recursive call to
-`fib` inside the function's own body -- `fib` is a global variable.
+当前，它总是指向`globals`，也就是顶级全局环境。这样，如果在函数体内没有定义某个标识符，解释器就可以在全局范围内寻找它。在斐波那契数列的例子中，解释器就是通过这种方式在函数体内找到了递归调用`fib`的位置，因为`fib`是一个全局变量。
 
-But recall that in Lox, function declarations are allowed *anywhere* a name can
-be bound. That includes the top level of a Lox script, but also the inside of
-blocks or other functions. Lox supports **local functions** that are defined
-inside another function, or nested inside a block.
+但是请记住，在Lox中，函数声明可以出现在*任何*可以绑定名称的地方。这不仅包括Lox脚本的顶层，还包括块或其他函数的内部。Lox支持在另一个函数内部定义的*局部函数*，或者嵌套在块内部的函数。
 
-Consider this classic example:
+考虑下面这个经典的例子:
 
 ```lox
 fun makeCounter() {
@@ -937,85 +628,52 @@ counter(); // "1".
 counter(); // "2".
 ```
 
-Here, `count()` uses `i`, which is declared outside of itself in the containing
-function `makeCounter()`. `makeCounter()` returns a reference to the `count()`
-function and then its own body finishes executing completely.
+这个例子中， `count()` 使用了在包含函数 `makeCounter()`之外声明的变量`i`。`makeCounter()` 函数返回对`count()`函数的引用，然后它的函数体就执行完成了。
 
-Meanwhile, the top-level code invokes the returned `count()` function. That
-executes the body of `count()`, which assigns to and reads `i`, even though the
-function where `i` was defined has already exited.
+同时，顶层代码调用了返回的`count()`函数。该函数将执行`count()`的主体，即使定义`i`的函数已经退出，它仍然给`i`赋值并读取`i`。
 
-If you've never encountered a language with nested functions before, this might
-seem crazy, but users do expect it to work. Alas, if you run it now, you get an
-undefined variable error in the call to `counter()` when the body of `count()`
-tries to look up `i`. That's because the environment chain in effect looks like
-this:
+如果你之前从未遇到过有嵌套函数的编程语言，这可能看起来很疯狂，但用户们确实期望它能工作。然而，如果你现在运行它，当`count()`函数体试图查找`i`时，调用`counter()`将导致一个未定义的变量错误。这是因为有效的作用链看起来是这样的：
 
 <img src="image/functions/global.png" alt="The environment chain from count()'s body to the global scope." />
 
-When we call `count()` (through the reference to it stored in `counter`), we
-create a new empty environment for the function body. The parent of that is the
-global environment. We lost the environment for `makeCounter()` where `i` is
-bound.
+当我们调用`count()`函数（通过存储在counter中的引用）时，我们为函数主体创建了一个新的空环境。该环境的父环境是全局环境。我们失去了定义`i`的`makeCounter()`函数的环境。
 
-Let's go back in time a bit. Here's what the environment chain looked like right
-when we declared `count()` inside the body of `makeCounter()`:
+我们把时间往回拨一点。我们在`makeCounter()`的函数体中声明`count()`时，环境链的样子是下面这样：
 
 <img src="image/functions/body.png" alt="The environment chain inside the body of makeCounter()." />
 
-So at the point where the function is declared, we can see `i`. But when we
-return from `makeCounter()` and exit its body, the interpreter discards that
-environment. Since the interpreter doesn't keep the environment surrounding
-`count()` around, it's up to the function object itself to hang on to it.
+所以，在函数声明的地方，我们可以看到`i`。但是当我们从 `makeCounter()` 返回并退出其主体时，解释器会丢弃这个环境。因为解释器不会保留 `count()` 外围的环境，所以要靠函数对象本身来保存它。
 
-This data structure is called a <span name="closure">**closure**</span> because
-it "closes over" and holds on to the surrounding variables where the function is
-declared. Closures have been around since the early Lisp days, and language
-hackers have come up with all manner of ways to implement them. For jlox, we'll
-do the simplest thing that works. In LoxFunction, we add a field to store an
-environment.
+这个数据结构被称为<span name="closure">**闭包**</span> ，因为它“封闭”并保存了函数声明时的周围变量。闭包自从早期的Lisp时代就存在了，语言开发者已经想出了各种实现方式。对于jlox，我们将采用最简单有效的方法。在LoxFunction中，我们添加一个字段来存储环境。
 
 <aside name="closure">
 
-"Closure" is yet another term coined by Peter J. Landin. I assume before he came
-along that computer scientists communicated with each other using only primitive
-grunts and pawing hand gestures.
+“闭包”是彼得·J·兰丁创造的另一个术语。我猜在他出现之前，计算机科学家之间只能用原始的咕哝声和抓挠手势进行交流。
 
 </aside>
 
 ^code closure-field (1 before, 1 after)
 
-We initialize that in the constructor.
+我们在构造函数中对其初始化。
 
 ^code closure-constructor (1 after)
 
-When we create a LoxFunction, we capture the current environment.
+当我们创建LoxFunction时，我们会捕获当前环境。
 
 ^code visit-closure (1 before, 1 after)
 
-This is the environment that is active when the function is *declared* not when
-it's *called*, which is what we want. It represents the lexical scope
-surrounding the function declaration. Finally, when we call the function, we use
-that environment as the call's parent instead of going straight to `globals`.
+这是函数*声明*时生效的环境，而不是函数被*调用*时的环境，这正是我们想要的。它代表了函数声明时的词法作用域。最后，当我们调用函数时，我们使用该环境作为调用的父环境，而不是直接使用`globals`。
 
 ^code call-closure (1 before, 1 after)
 
-This creates an environment chain that goes from the function's body out through
-the environments where the function is declared, all the way out to the global
-scope. The runtime environment chain matches the textual nesting of the source
-code like we want. The end result when we call that function looks like this:
+这创建了一个从函数体出发，通过函数声明的环境一直到全局作用域的环境链。运行时环境链与我们希望的源代码的文本嵌套形式相匹配。当我们调用该函数时的最终结果如下所示：
+
 
 <img src="image/functions/closure.png" alt="The environment chain with the closure." />
 
-Now, as you can see, the interpreter can still find `i` when it needs to because
-it's in the middle of the environment chain. Try running that `makeCounter()`
-example now. It works!
+现在，正如你所看到的，解释器在需要时仍然可以找到`i`，因为i在环境链中。试着运行`m`akeCounter()`示例。它可以正常工作了！
 
-Functions let us abstract over, reuse, and compose code. Lox is much more
-powerful than the rudimentary arithmetic calculator it used to be. Alas, in our
-rush to cram closures in, we have let a tiny bit of dynamic scoping leak into
-the interpreter. In the [next chapter][], we will explore deeper into lexical
-scope and close that hole.
+函数让我们能够抽象、重用和组合代码。Lox不再仅仅是一个简单的算术计算器，它变得更加强大了。然而，由于我们匆忙地添加闭包，导致一小部分动态作用域的特性渗透到了解释器中。在[下一章][next chapter]中，我们将深入探讨词法作用域，并修复这个问题。
 
 [next chapter]: resolving-and-binding.html
 
@@ -1023,22 +681,11 @@ scope and close that hole.
 
 ## Challenges
 
-1.  Our interpreter carefully checks that the number of arguments passed to a
-    function matches the number of parameters it expects. Since this check is
-    done at runtime on every call, it has a performance cost. Smalltalk
-    implementations don't have that problem. Why not?
+1.  解释器会仔细检查传给函数的实参数量是否与期望的形参数量匹配。由于这个检查是在运行时每次调用时进行的，所以会带来性能开销。然而，Smalltalk的实现却没有这个问题。那是为什么呢？
 
-1.  Lox's function declaration syntax performs two independent operations. It
-    creates a function and also binds it to a name. This improves usability for
-    the common case where you do want to associate a name with the function.
-    But in functional-styled code, you often want to create a function to
-    immediately pass it to some other function or return it. In that case, it
-    doesn't need a name.
-
-    Languages that encourage a functional style usually support **anonymous
-    functions** or **lambdas** -- an expression syntax that creates a function
-    without binding it to a name. Add anonymous function syntax to Lox so that
-    this works:
+1.  Lox的函数声明语法执行两个独立操作。它创建一个函数，并将其绑定到一个名称。这对于通常想要将名称与函数相关联的情况提高了可用性。但在函数风格代码中，你通常想要创建一个函数，以便立即将其传递给其他函数或返回它。在这种情况下，它不需要名称
+    
+    鼓励使用函数风格的语言通常支持**匿名函数**或**lambdas**表达式语法，这是一种创建不绑定到名称的函数的表达式语法。将匿名函数语法添加到Lox，使其如下所示：
 
     ```lox
     fun thrice(fn) {
@@ -1055,23 +702,19 @@ scope and close that hole.
     // "3".
     ```
 
-    How do you handle the tricky case of an anonymous function expression
-    occurring in an expression statement:
+    当一个匿名函数表达式出现在一个表达式语句中时，你准备如何处理这种棘手的情况的呢？
 
     ```lox
     fun () {};
     ```
 
-1.  Is this program valid?
+1.  这段程序是有效的吗？
 
     ```lox
     fun scope(a) {
       var a = "local";
     }
     ```
-
-    In other words, are a function's parameters in the *same* scope as its local
-    variables, or in an outer scope? What does Lox do? What about other
-    languages you are familiar with? What do you think a language *should* do?
+    换句话说，函数的参数是在其局部变量的*相同*作用域中，还是在外层作用域中？Lox怎么做？你熟悉的其他语言又是怎么做的？你认为语言*应该*怎么做？
 
 </div>

@@ -1,31 +1,17 @@
-> Once in a while you find yourself in an odd situation. You get into it by
-> degrees and in the most natural way but, when you are right in the midst of
-> it, you are suddenly astonished and ask yourself how in the world it all came
-> about.
+> 偶尔，你会发现自己处于一种奇怪的境地。你以最自然的方式逐渐进入其中，但当你置身其中时，你会突然大吃一惊，问自己这一切到底是怎么发生的。
 >
-> <cite>Thor Heyerdahl, <em>Kon-Tiki</em></cite>
+> <cite>索尔·海尔达尔, <em>康提基号</em></cite>
 
-Oh, no! Our language implementation is taking on water! Way back when we [added
-variables and blocks][statements], we had scoping nice and tight. But when we
-[later added closures][functions], a hole opened in our formerly waterproof
-interpreter. Most real programs are unlikely to slip through this hole, but as
-language implementers, we take a sacred vow to care about correctness even in
-the deepest, dampest corners of the semantics.
+哦，糟糕！我们的语言实现正在遭受水淹之灾！很久以前，当我们[添加变量和代码块][statements]时，我们的作用域紧密而完美。然而，当我们后来[引入闭包][functions]时，我们原本防水的解释器出现了一道裂缝。虽然大多数真实的程序不太可能从这个裂缝中溜走，但作为语言实现者，我们立下了神圣的誓言，即在语义的最深处、最潮湿的角落，我们也要追求正确无误。现在，我们需要修补这个漏洞，以保护我们的语言世界免受任何不可预测的灾害。
 
 [statements]: statements-and-state.html
 [functions]: functions.html
 
-We will spend this entire chapter exploring that leak, and then carefully
-patching it up. In the process, we will gain a more rigorous understanding of
-lexical scoping as used by Lox and other languages in the C tradition. We'll
-also get a chance to learn about *semantic analysis* -- a powerful technique for
-extracting meaning from the user's source code without having to run it.
+我们将在本章中全面探讨这个漏洞，然后仔细修补它。在此过程中，我们将更加深入地了解词法作用域，以及它在Lox和其他C语言中的应用。我们还将有机会学习*语义分析*——一种从用户源代码中提取意义而无需运行它的强大技术。
 
-## Static Scope
+## 静态作用域
 
-A quick refresher: Lox, like most modern languages, uses *lexical* scoping. This
-means that you can figure out which declaration a variable name refers to just
-by reading the text of the program. For example:
+简单回顾一下：Lox，就像大多数现代语言一样，使用*词法*作用域。这意味着你只需阅读程序的文本，就能确定变量名引用的是哪个声明。例如：
 
 ```lox
 var a = "outer";
@@ -35,32 +21,21 @@ var a = "outer";
 }
 ```
 
-Here, we know that the `a` being printed is the variable declared on the
-previous line, and not the global one. Running the program doesn't -- *can't* --
-affect this. The scope rules are part of the *static* semantics of the language,
-which is why they're also called *static scope*.
+在这个例子中，我们知道被打印的`a`是上一行声明的变量，而不是全局变量。运行程序不会——也*不能*——影响这一点。作用域规则是语言*静态*语义的一部分，这就是为什么它们也被称为*静态作用域*。
 
-I haven't spelled out those scope rules, but now is the time for <span
-name="precise">precision</span>:
+我还没有详细解释这些作用域规则，但现在是时候<span name="precise">讲清楚</span>了：
 
 <aside name="precise">
 
-This is still nowhere near as precise as a real language specification. Those
-docs must be so explicit that even a Martian or an outright malicious programmer
-would be forced to implement the correct semantics provided they followed the
-letter of the spec.
+这仍然远远不及真正的语言规范那么精确。那些文档必须非常明确，以至于即使是火星人或彻头彻尾的恶意程序员，如果遵守规范中的规定，也会被迫实现正确的语义。
 
-That exactitude is important when a language may be implemented by competing
-companies who want their product to be incompatible with the others to lock
-customers onto their platform. For this book, we can thankfully ignore those
-kinds of shady shenanigans.
+当一种语言可能由相互竞争的公司实现时，这种精确性很重要，这些公司希望他们的产品与其它产品不兼容，以将客户锁定在他们的平台上。对于这本书来说，我们可以很庆幸地忽略那些阴暗的欺诈行为。
 
 </aside>
 
-**A variable usage refers to the preceding declaration with the same name in the
-innermost scope that encloses the expression where the variable is used.**
+**变量指向的是使用变量的表达式外围环境中，前面具有相同名称的最内层作用域中的变量声明。**
 
-There's a lot to unpack in that:
+这里有很多要解释的东西:
 
 *   I say "variable usage" instead of "variable expression" to cover both
     variable expressions and assignments. Likewise with "expression where the
